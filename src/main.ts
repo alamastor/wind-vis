@@ -1,7 +1,8 @@
 'use strict';
-import { WindField, WIND_FIELDS } from './fields';
+import {WindField, WIND_FIELDS} from './fields';
 
 const SELECTED_WIND_FIELD = 'test_field_2';
+const SHOW_BACKGROUND = false;
 
 const UNIT_SIZE = 20;
 
@@ -15,7 +16,9 @@ function main() {
   canvas.height = windField.height() * UNIT_SIZE;
   const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
 
-  renderBgCanvas(windField);
+  if (SHOW_BACKGROUND) {
+    renderBgCanvas(windField);
+  }
 
   const particles = [];
   for (let x = 0; x <= windField.width() - 1; x++) {
@@ -96,7 +99,7 @@ function renderBgCanvas(windField: WindField) {
     for (let y = 0; y < windField.height(); y++) {
       plotArrow(ctx, x, y, windField.uField[x][y], windField.vField[x][y]);
     }
-  } 
+  }
 
   for (let y = 0; y <= windField.width(); y++) {
     ctx.moveTo(xToCanvasX(ctx, 0), yToCanvasY(ctx, y));
@@ -125,20 +128,10 @@ function updateAndRender(
   }
 
   particles.forEach((part: Particle) => {
-    if (
-      part.x >= 0 &&
-      part.x <= windField.width() - 1 &&
-      part.y >= 0 &&
-      part.y <= windField.height() - 1
-    ) {
-      const u = interpolatePoint(windField.uField, part.x, part.y);
-      const v = interpolatePoint(windField.vField, part.x, part.y);
-      part.x = part.x + u / 50;
-      part.y = part.y + v / 50;
-    }
+    part.update(windField);
   });
 
-  // ctx.clearRect(0, 0, ctx.canvas.height, ctx.canvas.width);
+  ctx.clearRect(0, 0, ctx.canvas.height, ctx.canvas.width);
   particles.forEach((part: Particle) => {
     part.render(ctx);
   });
@@ -151,32 +144,71 @@ function updateAndRender(
 class Particle {
   x: number;
   y: number;
+  xTail: number[];
+  yTail: number[];
   height: number;
   width: number;
-  r: number;
-  g: number;
-  b: number;
-  a: number;
+  color: string;
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
     this.height = 0.25;
     this.width = 0.25;
-    this.r = Math.random() * 255;
-    this.g = Math.random() * 255;
-    this.b = Math.random() * 255;
-    this.a = 1;
+    this.color =
+      'rgb(' +
+      Math.random() * 255 +
+      ',' +
+      Math.random() * 255 +
+      ',' +
+      Math.random() * 255 +
+      ')';
+    this.xTail = [x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x];
+    this.yTail = [y, y, y, y, y, y, y, y, y, y, y, y, y, y, y, y];
+  }
+
+  update(windField: WindField) {
+    // TODO: Calculate movement from frame time
+
+    this.xTail.shift(); // O(n) - use proper queue data structure if slow
+    this.yTail.shift(); // O(n) - use proper queue data structure if slow
+    if (
+      this.x >= 0 &&
+      this.x <= windField.width() - 1 &&
+      this.y >= 0 &&
+      this.y <= windField.height() - 1
+    ) {
+      this.xTail.push(this.x);
+      this.yTail.push(this.y);
+      const u = interpolatePoint(windField.uField, this.x, this.y);
+      const v = interpolatePoint(windField.vField, this.x, this.y);
+      this.x = this.x + u / 50;
+      this.y = this.y + v / 50;
+    }
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle =
-      'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.a + ')';
+    const particleWidth = this.width;
+    const particleHeight = this.height;
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = 0.5;
     ctx.fillRect(
-      xToCanvasX(ctx, this.x - this.width / 2),
-      yToCanvasY(ctx, this.y + this.height / 2),
+      xToCanvasX(ctx, this.x - particleWidth / 2),
+      yToCanvasY(ctx, this.y + particleHeight / 2),
       this.width * UNIT_SIZE,
       this.height * UNIT_SIZE,
     );
+
+    for (let i = 0; i < this.xTail.length; i++) {
+      let x = this.xTail[i];
+      let y = this.yTail[i];
+      ctx.globalAlpha = 0.11;
+      ctx.fillRect(
+        xToCanvasX(ctx, x - particleWidth / 2),
+        yToCanvasY(ctx, y + particleHeight / 2),
+        this.width * UNIT_SIZE,
+        this.height * UNIT_SIZE,
+      );
+    }
   }
 }
 
