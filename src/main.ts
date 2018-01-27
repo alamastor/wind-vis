@@ -1,8 +1,16 @@
 'use strict';
 
+const SELECTED_WIND_FIELD = 'test_field_2';
+const WIND_FIELDS = {
+  test_field_1: test_field_1(),
+  test_field_2: test_field_2(),
+};
+
 const UNIT_SIZE = 20;
 
-function test_field1(width: number, height: number): [number[][], number[][]] {
+function test_field_1(): [number[][], number[][]] {
+  const width = 50;
+  const height = 50;
   const uField: number[][] = [];
   for (let x = 0; x <= width; x++) {
     uField.push([]);
@@ -30,7 +38,9 @@ function test_field1(width: number, height: number): [number[][], number[][]] {
   return [uField, vField];
 }
 
-function test_field2(width: number, height: number): [number[][], number[][]] {
+function test_field_2(): [number[][], number[][]] {
+  const width = 50;
+  const height = 50;
   const uField: number[][] = [];
   for (let x = 0; x <= width; x++) {
     uField.push([]);
@@ -61,15 +71,16 @@ function main() {
   const width = ctx.canvas.width / UNIT_SIZE;
   const height = ctx.canvas.height / UNIT_SIZE;
 
-  const [uField, vField] = test_field2(width, height);
+  const [uField, vField] = WIND_FIELDS[SELECTED_WIND_FIELD];
 
   renderBgCanvas(uField, vField);
 
   const particles = [];
   for (let x = 0; x <= width - 1; x++) {
-  for (let y = 0; y <= height - 1; y++) {
-    particles.push(new Particle(x, y));
-  }}
+    for (let y = 0; y <= height - 1; y++) {
+      particles.push(new Particle(x, y));
+    }
+  }
   window.requestAnimationFrame(
     updateAndRender.bind(null, ctx, uField, vField, particles, null),
   );
