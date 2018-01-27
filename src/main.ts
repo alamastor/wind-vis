@@ -61,13 +61,13 @@ function main() {
   const width = ctx.canvas.width / UNIT_SIZE;
   const height = ctx.canvas.height / UNIT_SIZE;
 
-  const [uField, vField] = test_field1(width, height);
+  const [uField, vField] = test_field2(width, height);
 
   renderBgCanvas(uField, vField);
 
   const particles = [];
-  for (let x = 1; x <= width - 1; x++) {
-  for (let y = 1; y <= height - 1; y++) {
+  for (let x = 0; x <= width - 1; x++) {
+  for (let y = 0; y <= height - 1; y++) {
     particles.push(new Particle(x, y));
   }}
   window.requestAnimationFrame(
@@ -170,7 +170,7 @@ function updateAndRender(
 
   particles.forEach((part: Particle) => {
     if (
-      part.x >= 1 &&
+      part.x >= 0 &&
       part.x <= uField[0].length - 1 &&
       part.y >= 0 &&
       part.y <= uField.length - 1
