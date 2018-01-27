@@ -1,88 +1,30 @@
 'use strict';
+import { WindField, WIND_FIELDS } from './fields';
 
 const SELECTED_WIND_FIELD = 'test_field_2';
-const WIND_FIELDS = {
-  test_field_1: test_field_1(),
-  test_field_2: test_field_2(),
-};
 
 const UNIT_SIZE = 20;
 
-function test_field_1(): [number[][], number[][]] {
-  const width = 50;
-  const height = 50;
-  const uField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    uField.push([]);
-    for (let y = 0; y <= height; y++) {
-      if (x > y) {
-        uField[x].push(0);
-      } else {
-        uField[x].push(1);
-      }
-    }
-  }
-
-  const vField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    vField.push([]);
-    for (let y = 0; y <= height; y++) {
-      if (x < y) {
-        vField[x].push(0);
-      } else {
-        vField[x].push(1);
-      }
-    }
-  }
-
-  return [uField, vField];
-}
-
-function test_field_2(): [number[][], number[][]] {
-  const width = 50;
-  const height = 50;
-  const uField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    uField.push([]);
-    for (let y = 0; y <= height; y++) {
-      uField[x].push(Math.cos(y * 5) + Math.sin(x * 5) + 1);
-    }
-  }
-
-  const vField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    vField.push([]);
-    for (let y = 0; y <= height; y++) {
-      vField[x].push(Math.sin(x + 10));
-    }
-  }
-
-  return [uField, vField];
-}
-
 function main() {
-  const canvas: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById(
-    'canvas',
+  const windField = WIND_FIELDS[SELECTED_WIND_FIELD];
+
+  const canvas = <HTMLCanvasElement>document.getElementById(
+    'foreground-canvas',
   );
-  const ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D>canvas.getContext(
-    '2d',
-  );
+  canvas.width = windField.width() * UNIT_SIZE;
+  canvas.height = windField.height() * UNIT_SIZE;
+  const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
 
-  const width = ctx.canvas.width / UNIT_SIZE;
-  const height = ctx.canvas.height / UNIT_SIZE;
-
-  const [uField, vField] = WIND_FIELDS[SELECTED_WIND_FIELD];
-
-  renderBgCanvas(uField, vField);
+  renderBgCanvas(windField);
 
   const particles = [];
-  for (let x = 0; x <= width - 1; x++) {
-    for (let y = 0; y <= height - 1; y++) {
+  for (let x = 0; x <= windField.width() - 1; x++) {
+    for (let y = 0; y <= windField.height() - 1; y++) {
       particles.push(new Particle(x, y));
     }
   }
   window.requestAnimationFrame(
-    updateAndRender.bind(null, ctx, uField, vField, particles, null),
+    updateAndRender.bind(null, ctx, windField, particles, null),
   );
 }
 
@@ -142,23 +84,27 @@ function plotArrow(
   ctx.restore();
 }
 
-function renderBgCanvas(uField: number[][], vField: number[][]) {
-  const canvas = <HTMLCanvasElement>document.getElementById('bg-canvas');
+function renderBgCanvas(windField: WindField) {
+  const canvas = <HTMLCanvasElement>document.getElementById(
+    'background-canvas',
+  );
+  canvas.width = windField.width() * UNIT_SIZE;
+  canvas.height = windField.height() * UNIT_SIZE;
   const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
 
-  for (let y = 0; y < uField.length; y++) {
-    for (let x = 0; x < uField[0].length; x++) {
-      plotArrow(ctx, x, y, uField[x][y], vField[x][y]);
+  for (let x = 0; x < windField.width(); x++) {
+    for (let y = 0; y < windField.height(); y++) {
+      plotArrow(ctx, x, y, windField.uField[x][y], windField.vField[x][y]);
     }
-  }
+  } 
 
-  for (let y = 0; y <= uField[0].length; y++) {
+  for (let y = 0; y <= windField.width(); y++) {
     ctx.moveTo(xToCanvasX(ctx, 0), yToCanvasY(ctx, y));
-    ctx.lineTo(xToCanvasX(ctx, uField.length - 1), yToCanvasY(ctx, y));
+    ctx.lineTo(xToCanvasX(ctx, windField.width() - 1), yToCanvasY(ctx, y));
   }
-  for (let x = 0; x <= uField.length; x++) {
+  for (let x = 0; x <= windField.height(); x++) {
     ctx.moveTo(xToCanvasX(ctx, x), yToCanvasY(ctx, 0));
-    ctx.lineTo(xToCanvasX(ctx, x), yToCanvasY(ctx, uField[0].length - 1));
+    ctx.lineTo(xToCanvasX(ctx, x), yToCanvasY(ctx, windField.height() - 1));
   }
   ctx.strokeStyle = 'black';
   ctx.stroke();
@@ -166,8 +112,7 @@ function renderBgCanvas(uField: number[][], vField: number[][]) {
 
 function updateAndRender(
   ctx: CanvasRenderingContext2D,
-  uField: number[][],
-  vField: number[][],
+  windField: WindField,
   particles: Particle[],
   prevTime: number,
   timestamp: number,
@@ -182,12 +127,12 @@ function updateAndRender(
   particles.forEach((part: Particle) => {
     if (
       part.x >= 0 &&
-      part.x <= uField[0].length - 1 &&
+      part.x <= windField.width() - 1 &&
       part.y >= 0 &&
-      part.y <= uField.length - 1
+      part.y <= windField.height() - 1
     ) {
-      const u = interpolatePoint(uField, part.x, part.y);
-      const v = interpolatePoint(vField, part.x, part.y);
+      const u = interpolatePoint(windField.uField, part.x, part.y);
+      const v = interpolatePoint(windField.vField, part.x, part.y);
       part.x = part.x + u / 50;
       part.y = part.y + v / 50;
     }
@@ -199,7 +144,7 @@ function updateAndRender(
   });
 
   window.requestAnimationFrame(
-    updateAndRender.bind(null, ctx, uField, vField, particles, timestamp),
+    updateAndRender.bind(null, ctx, windField, particles, timestamp),
   );
 }
 
