@@ -3,11 +3,11 @@ import {WindField, WIND_FIELDS} from './fields';
 
 const SELECTED_WIND_FIELD = 'gfsField';
 const SHOW_BACKGROUND = false;
-const SHOW_PARTICLE_TAILS = false;
-const CLEAR_PARTICLES_EACH_FRAME = false;
+const SHOW_PARTICLE_TAILS = true;
+const CLEAR_PARTICLES_EACH_FRAME = true;
 const PARTICLE_FADE_START = 5000;
-const PARTICLE_FADE_DURATION = 5000;
-const MAX_PARTICLES = 5000;
+const PARTICLE_LIFETIME = 7000;
+const MAX_PARTICLES = 3000;
 
 const UNIT_SIZE = 4;
 
@@ -25,12 +25,8 @@ function main() {
     renderBgCanvas(windField);
   }
 
-  const particles = [];
-  for (let x = 0; x <= windField.width() - 1; x = x + 10) {
-    for (let y = 0; y <= windField.height() - 1; y = y + 10) {
-      particles.push(new Particle(x, y));
-    }
-  }
+  const particles: Particle[] = [];
+
   window.requestAnimationFrame(
     updateAndRender.bind(null, ctx, windField, particles, null),
   );
@@ -88,7 +84,7 @@ function plotArrow(
   ctx.save();
   ctx.translate(xToCanvasX(ctx, x), yToCanvasY(ctx, y));
   ctx.rotate(-Math.atan2(v, u));
-  drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2));
+  drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
   ctx.restore();
 }
 
@@ -100,17 +96,17 @@ function renderBgCanvas(windField: WindField) {
   canvas.height = windField.height() * UNIT_SIZE;
   const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
 
-  for (let x = 0; x < windField.width(); x++) {
-    for (let y = 0; y < windField.height(); y++) {
+  for (let x = 0; x < windField.width(); x = x + 5) {
+    for (let y = 0; y < windField.height(); y = y + 5) {
       plotArrow(ctx, x, y, windField.uField[x][y], windField.vField[x][y]);
     }
   }
 
-  for (let y = 0; y <= windField.width(); y++) {
+  for (let y = 0; y <= windField.height(); y++) {
     ctx.moveTo(xToCanvasX(ctx, 0), yToCanvasY(ctx, y));
     ctx.lineTo(xToCanvasX(ctx, windField.width() - 1), yToCanvasY(ctx, y));
   }
-  for (let x = 0; x <= windField.height(); x++) {
+  for (let x = 0; x <= windField.width(); x++) {
     ctx.moveTo(xToCanvasX(ctx, x), yToCanvasY(ctx, 0));
     ctx.lineTo(xToCanvasX(ctx, x), yToCanvasY(ctx, windField.height() - 1));
   }
@@ -132,7 +128,7 @@ function updateAndRender(
     deltaT = 0;
   }
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     if (particles.length < MAX_PARTICLES) {
       particles.push(
         new Particle(
@@ -143,10 +139,8 @@ function updateAndRender(
     }
   }
 
-  particles.forEach((part: Particle | null) => {
-    if (part != null) {
-      part.update(windField, deltaT);
-    }
+  particles.forEach((part: Particle) => {
+    part.update(windField, deltaT);
   });
 
   if (CLEAR_PARTICLES_EACH_FRAME) {
@@ -154,12 +148,20 @@ function updateAndRender(
   }
 
   for (let i = 0; i < particles.length; i++) {
-    if (particles[i].lifeTime >= PARTICLE_FADE_START + PARTICLE_FADE_DURATION) {
+    let p = particles[i];
+    if (
+      p.lifeTime >= PARTICLE_LIFETIME ||
+      p.x <= 0 ||
+      p.x >= windField.width() - 1 ||
+      p.y <= 0 ||
+      p.y >= windField.height() - 1
+    ) {
       particles[i] = new Particle(
-        Math.random() * windField.width(),
-        Math.random() * windField.height(),
+        Math.random() * (windField.width() - 1),
+        Math.random() * (windField.height() - 1),
       );
     }
+    p = particles[i];
     if (particles[i] != null) {
       particles[i].render(ctx);
     }
@@ -194,17 +196,19 @@ class Particle {
       ',' +
       Math.random() * 255 +
       ')';
-    this.alpha = 0.5;
+    this.alpha = 0.3;
     this.lifeTime = 0;
-    this.xTail = [x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x];
-    this.yTail = [y, y, y, y, y, y, y, y, y, y, y, y, y, y, y, y];
+    this.xTail = [];
+    this.yTail = [];
   }
 
   update(windField: WindField, deltaT: number) {
     // TODO: Calculate movement from frame time
 
-    this.xTail.shift(); // O(n) - use proper queue data structure if slow
-    this.yTail.shift(); // O(n) - use proper queue data structure if slow
+    if (this.xTail.length > 5) {
+      this.xTail.shift(); // O(n) - use proper queue data structure if slow
+      this.yTail.shift(); // O(n) - use proper queue data structure if slow
+    }
     if (
       this.x >= 0 &&
       this.x <= windField.width() - 1 &&
@@ -230,8 +234,8 @@ class Particle {
     if (this.lifeTime >= PARTICLE_FADE_START) {
       alpha =
         this.alpha *
-        ((PARTICLE_FADE_DURATION - (this.lifeTime - PARTICLE_FADE_START)) /
-          PARTICLE_FADE_DURATION);
+        ((PARTICLE_LIFETIME - PARTICLE_FADE_START - this.lifeTime) /
+          (PARTICLE_LIFETIME - PARTICLE_FADE_START));
     }
 
     ctx.globalAlpha = alpha;
@@ -243,13 +247,11 @@ class Particle {
     );
 
     if (SHOW_PARTICLE_TAILS) {
+      ctx.globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < this.xTail.length; i++) {
-        let x = this.xTail[i];
-        let y = this.yTail[i];
-        ctx.globalAlpha = Math.min(0.11, alpha);
         ctx.fillRect(
-          xToCanvasX(ctx, x - particleWidth / 2),
-          yToCanvasY(ctx, y + particleHeight / 2),
+          xToCanvasX(ctx, this.xTail[i] - particleWidth / 2),
+          yToCanvasY(ctx, this.yTail[i] + particleHeight / 2),
           this.width * UNIT_SIZE,
           this.height * UNIT_SIZE,
         );
