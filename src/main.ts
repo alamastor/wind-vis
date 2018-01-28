@@ -1,10 +1,15 @@
 'use strict';
 import {WindField, WIND_FIELDS} from './fields';
 
-const SELECTED_WIND_FIELD = 'test_field_2';
+const SELECTED_WIND_FIELD = 'gfsField';
 const SHOW_BACKGROUND = false;
+const SHOW_PARTICLE_TAILS = false;
+const CLEAR_PARTICLES_EACH_FRAME = false;
+const PARTICLE_FADE_START = 5000;
+const PARTICLE_FADE_DURATION = 5000;
+const MAX_PARTICLES = 5000;
 
-const UNIT_SIZE = 20;
+const UNIT_SIZE = 4;
 
 function main() {
   const windField = WIND_FIELDS[SELECTED_WIND_FIELD];
@@ -21,8 +26,8 @@ function main() {
   }
 
   const particles = [];
-  for (let x = 0; x <= windField.width() - 1; x++) {
-    for (let y = 0; y <= windField.height() - 1; y++) {
+  for (let x = 0; x <= windField.width() - 1; x = x + 10) {
+    for (let y = 0; y <= windField.height() - 1; y = y + 10) {
       particles.push(new Particle(x, y));
     }
   }
@@ -120,21 +125,45 @@ function updateAndRender(
   prevTime: number,
   timestamp: number,
 ) {
-  let dt;
+  let deltaT: number;
   if (prevTime !== null) {
-    dt = timestamp - prevTime;
+    deltaT = timestamp - prevTime;
   } else {
-    dt = 0;
+    deltaT = 0;
   }
 
-  particles.forEach((part: Particle) => {
-    part.update(windField);
+  for (let i = 0; i < 10; i++) {
+    if (particles.length < MAX_PARTICLES) {
+      particles.push(
+        new Particle(
+          Math.random() * windField.width(),
+          Math.random() * windField.height(),
+        ),
+      );
+    }
+  }
+
+  particles.forEach((part: Particle | null) => {
+    if (part != null) {
+      part.update(windField, deltaT);
+    }
   });
 
-  ctx.clearRect(0, 0, ctx.canvas.height, ctx.canvas.width);
-  particles.forEach((part: Particle) => {
-    part.render(ctx);
-  });
+  if (CLEAR_PARTICLES_EACH_FRAME) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+
+  for (let i = 0; i < particles.length; i++) {
+    if (particles[i].lifeTime >= PARTICLE_FADE_START + PARTICLE_FADE_DURATION) {
+      particles[i] = new Particle(
+        Math.random() * windField.width(),
+        Math.random() * windField.height(),
+      );
+    }
+    if (particles[i] != null) {
+      particles[i].render(ctx);
+    }
+  }
 
   window.requestAnimationFrame(
     updateAndRender.bind(null, ctx, windField, particles, timestamp),
@@ -149,11 +178,14 @@ class Particle {
   height: number;
   width: number;
   color: string;
+  alpha: number;
+  lifeTime: number;
+  dead: boolean;
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
-    this.height = 0.25;
-    this.width = 0.25;
+    this.height = 1;
+    this.width = 1;
     this.color =
       'rgb(' +
       Math.random() * 255 +
@@ -162,11 +194,13 @@ class Particle {
       ',' +
       Math.random() * 255 +
       ')';
+    this.alpha = 0.5;
+    this.lifeTime = 0;
     this.xTail = [x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x];
     this.yTail = [y, y, y, y, y, y, y, y, y, y, y, y, y, y, y, y];
   }
 
-  update(windField: WindField) {
+  update(windField: WindField, deltaT: number) {
     // TODO: Calculate movement from frame time
 
     this.xTail.shift(); // O(n) - use proper queue data structure if slow
@@ -177,6 +211,7 @@ class Particle {
       this.y >= 0 &&
       this.y <= windField.height() - 1
     ) {
+      this.lifeTime += deltaT;
       this.xTail.push(this.x);
       this.yTail.push(this.y);
       const u = interpolatePoint(windField.uField, this.x, this.y);
@@ -190,7 +225,16 @@ class Particle {
     const particleWidth = this.width;
     const particleHeight = this.height;
     ctx.fillStyle = this.color;
-    ctx.globalAlpha = 0.5;
+
+    let alpha = this.alpha;
+    if (this.lifeTime >= PARTICLE_FADE_START) {
+      alpha =
+        this.alpha *
+        ((PARTICLE_FADE_DURATION - (this.lifeTime - PARTICLE_FADE_START)) /
+          PARTICLE_FADE_DURATION);
+    }
+
+    ctx.globalAlpha = alpha;
     ctx.fillRect(
       xToCanvasX(ctx, this.x - particleWidth / 2),
       yToCanvasY(ctx, this.y + particleHeight / 2),
@@ -198,18 +242,21 @@ class Particle {
       this.height * UNIT_SIZE,
     );
 
-    for (let i = 0; i < this.xTail.length; i++) {
-      let x = this.xTail[i];
-      let y = this.yTail[i];
-      ctx.globalAlpha = 0.11;
-      ctx.fillRect(
-        xToCanvasX(ctx, x - particleWidth / 2),
-        yToCanvasY(ctx, y + particleHeight / 2),
-        this.width * UNIT_SIZE,
-        this.height * UNIT_SIZE,
-      );
+    if (SHOW_PARTICLE_TAILS) {
+      for (let i = 0; i < this.xTail.length; i++) {
+        let x = this.xTail[i];
+        let y = this.yTail[i];
+        ctx.globalAlpha = Math.min(0.11, alpha);
+        ctx.fillRect(
+          xToCanvasX(ctx, x - particleWidth / 2),
+          yToCanvasY(ctx, y + particleHeight / 2),
+          this.width * UNIT_SIZE,
+          this.height * UNIT_SIZE,
+        );
+      }
     }
   }
 }
 
 window.onload = main;
+false;

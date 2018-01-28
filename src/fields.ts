@@ -1,4 +1,5 @@
 'use strict';
+import { gfsData } from './gfs'
 
 export class WindField {
   uField: number[][];
@@ -24,7 +25,7 @@ export class WindField {
   }
 }
 
-function test_field_1(): WindField {
+function testField1(): WindField {
   const width = 25
   const height = 25;
   const uField: number[][] = [];
@@ -54,7 +55,7 @@ function test_field_1(): WindField {
   return new WindField(uField, vField);
 }
 
-function test_field_2(): WindField {
+function testField2(): WindField {
   const width = 25;
   const height = 25;
   const uField: number[][] = [];
@@ -76,7 +77,12 @@ function test_field_2(): WindField {
   return new WindField(uField, vField);
 }
 
+function gfsField() {
+  return new WindField(gfsData.u_data, gfsData.v_data);
+}
+
 export const WIND_FIELDS = {
-  test_field_1: test_field_1(),
-  test_field_2: test_field_2(),
+  testField1: testField1(),
+  testField2: testField2(),
+  gfsField: gfsField(),
 };
