@@ -1,13 +1,16 @@
 'use strict';
-import { gfsData } from './gfs'
+import axios from 'axios';
+import * as moment from 'moment';
+
+import {gfsData} from './gfs';
+
+const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 
 export class WindField {
   uField: number[][];
   vField: number[][];
 
-  constructor(uField: number[][], vField: number[][]) {
-    this.uField = uField;
-    this.vField = vField;
+  constructor(uField: number[][], vField: number[][]) { this.uField = uField; this.vField = vField;
     if (
       uField.length !== vField.length ||
       uField[0].length !== vField[0].length
@@ -25,8 +28,8 @@ export class WindField {
   }
 }
 
-function testField1(): WindField {
-  const width = 25
+async function testField1(): Promise<WindField> {
+  const width = 25;
   const height = 25;
   const uField: number[][] = [];
   for (let x = 0; x <= width; x++) {
@@ -52,10 +55,10 @@ function testField1(): WindField {
     }
   }
 
-  return new WindField(uField, vField);
+  return Promise.resolve(new WindField(uField, vField));
 }
 
-function testField2(): WindField {
+async function testField2(): Promise<WindField> {
   const width = 25;
   const height = 25;
   const uField: number[][] = [];
@@ -74,12 +77,24 @@ function testField2(): WindField {
     }
   }
 
-  return new WindField(uField, vField);
+  return Promise.resolve(new WindField(uField, vField));
 }
 
-function gfsField() {
-  return new WindField(gfsData.u_data, gfsData.v_data);
+async function gfsField() {
+  const cycle = await getCycle();
+  const gfsFileName = `gfs_100_${cycle.format('YYYYMMDD_HHmmss')}_000.json`;
+  console.log(gfsFileName);
+  const response = await axios.get(`${GFS_JSON_SERVER}/${gfsFileName}`);
+  const gfsData = response.data.gfsData
+  return Promise.resolve(new WindField(gfsData.uData, gfsData.vData));
 }
+
+
+async function getCycle(): Promise<moment.Moment> {
+  const response = await axios.get(GFS_JSON_SERVER + "/cycle.json");
+  return moment(response.data.cycle, 'YYYYMMDD_HHmmss');
+}
+
 
 export const WIND_FIELDS = {
   testField1: testField1(),

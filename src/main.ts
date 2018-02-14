@@ -12,24 +12,28 @@ const MAX_PARTICLES = 3000;
 const UNIT_SIZE = 4;
 
 function main() {
-  const windField = WIND_FIELDS[SELECTED_WIND_FIELD];
+  WIND_FIELDS[SELECTED_WIND_FIELD].then(windField => {
+    const canvas = <HTMLCanvasElement>document.getElementById(
+      'foreground-canvas',
+    );
+    canvas.width = windField.width() * UNIT_SIZE;
+    canvas.height = windField.height() * UNIT_SIZE;
+    const map = <HTMLImageElement>document.getElementById('map');
+    map.width = windField.width() * UNIT_SIZE;
+    map.height = windField.height() * UNIT_SIZE;
 
-  const canvas = <HTMLCanvasElement>document.getElementById(
-    'foreground-canvas',
-  );
-  canvas.width = windField.width() * UNIT_SIZE;
-  canvas.height = windField.height() * UNIT_SIZE;
-  const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
+    const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
 
-  if (SHOW_BACKGROUND) {
-    renderBgCanvas(windField);
-  }
+    if (SHOW_BACKGROUND) {
+      renderBgCanvas(windField);
+    }
 
-  const particles: Particle[] = [];
+    const particles: Particle[] = [];
 
-  window.requestAnimationFrame(
-    updateAndRender.bind(null, ctx, windField, particles, null),
-  );
+    window.requestAnimationFrame(
+      updateAndRender.bind(null, ctx, windField, particles, null),
+    );
+  });
 }
 
 function xToCanvasX(ctx: CanvasRenderingContext2D, x: number) {
