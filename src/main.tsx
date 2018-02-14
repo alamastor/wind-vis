@@ -1,4 +1,7 @@
 'use strict';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+
 import {WindField, WIND_FIELDS} from './fields';
 
 const SELECTED_WIND_FIELD = 'gfsField';
@@ -11,29 +14,35 @@ const MAX_PARTICLES = 3000;
 
 const UNIT_SIZE = 4;
 
-function main() {
-  WIND_FIELDS[SELECTED_WIND_FIELD].then(windField => {
-    const canvas = <HTMLCanvasElement>document.getElementById(
-      'foreground-canvas',
-    );
-    canvas.width = windField.width() * UNIT_SIZE;
-    canvas.height = windField.height() * UNIT_SIZE;
-    const map = <HTMLImageElement>document.getElementById('map');
-    map.width = windField.width() * UNIT_SIZE;
-    map.height = windField.height() * UNIT_SIZE;
+class ParticleField extends React.Component {
+  componentDidMount() {
+    WIND_FIELDS[SELECTED_WIND_FIELD].then(windField => {
+      const canvas = document.getElementById(
+        'foreground-canvas',
+      ) as HTMLCanvasElement;
+      canvas.width = windField.width() * UNIT_SIZE;
+      canvas.height = windField.height() * UNIT_SIZE;
+      const map = document.getElementById('map') as HTMLImageElement;
+      map.width = windField.width() * UNIT_SIZE;
+      map.height = windField.height() * UNIT_SIZE;
 
-    const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
+      const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-    if (SHOW_BACKGROUND) {
-      renderBgCanvas(windField);
-    }
+      if (SHOW_BACKGROUND) {
+        renderBgCanvas(windField);
+      }
 
-    const particles: Particle[] = [];
+      const particles: Particle[] = [];
 
-    window.requestAnimationFrame(
-      updateAndRender.bind(null, ctx, windField, particles, null),
-    );
-  });
+      window.requestAnimationFrame(
+        updateAndRender.bind(null, ctx, windField, particles, null),
+      );
+    });
+  }
+
+  render() {
+    return null;
+  }
 }
 
 function xToCanvasX(ctx: CanvasRenderingContext2D, x: number) {
@@ -93,12 +102,12 @@ function plotArrow(
 }
 
 function renderBgCanvas(windField: WindField) {
-  const canvas = <HTMLCanvasElement>document.getElementById(
+  const canvas = document.getElementById(
     'background-canvas',
-  );
+  ) as HTMLCanvasElement;
   canvas.width = windField.width() * UNIT_SIZE;
   canvas.height = windField.height() * UNIT_SIZE;
-  const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   for (let x = 0; x < windField.width(); x = x + 5) {
     for (let y = 0; y < windField.height(); y = y + 5) {
@@ -264,5 +273,4 @@ class Particle {
   }
 }
 
-window.onload = main;
-false;
+ReactDOM.render(<ParticleField />, document.getElementById('root'));

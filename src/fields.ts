@@ -2,8 +2,6 @@
 import axios from 'axios';
 import * as moment from 'moment';
 
-import {gfsData} from './gfs';
-
 const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 
 export class WindField {
