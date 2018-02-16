@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import ParticleField from './components/ParticleField';
+import App from './containers/App';
 
-ReactDOM.render(<ParticleField />, document.getElementById('root'));
+ReactDOM.render(<App />, document.getElementById('root'));
