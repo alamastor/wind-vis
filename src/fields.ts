@@ -1,4 +1,3 @@
-'use strict';
 import axios from 'axios';
 import * as moment from 'moment';
 
