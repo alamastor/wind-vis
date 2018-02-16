@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import {WindField, WIND_FIELDS} from '../fields';
+import {WindField} from '../fields';
 
 const SELECTED_WIND_FIELD = 'gfsField';
 const SHOW_BACKGROUND = false;
@@ -13,30 +13,98 @@ const MAX_PARTICLES = 3000;
 
 const UNIT_SIZE = 4;
 
-export default class extends React.Component {
-  componentDidMount() {
-    WIND_FIELDS[SELECTED_WIND_FIELD].then(windField => {
+interface Props {
+  windField: WindField | null;
+}
+interface State {}
+
+export default class extends React.Component<Props, State> {
+  rendering: Boolean = false;
+
+  componentDidUpdate() {
+    if (this.props.windField != null && !this.rendering) {
       const canvas = document.getElementById(
         'foreground-canvas',
       ) as HTMLCanvasElement;
-      canvas.width = windField.width() * UNIT_SIZE;
-      canvas.height = windField.height() * UNIT_SIZE;
+      this.props.windField;
+      canvas.width = this.props.windField.width() * UNIT_SIZE;
+      canvas.height = this.props.windField.height() * UNIT_SIZE;
       const map = document.getElementById('map') as HTMLImageElement;
-      map.width = windField.width() * UNIT_SIZE;
-      map.height = windField.height() * UNIT_SIZE;
+      map.width = this.props.windField.width() * UNIT_SIZE;
+      map.height = this.props.windField.height() * UNIT_SIZE;
 
       const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
       if (SHOW_BACKGROUND) {
-        renderBgCanvas(windField);
+        renderBgCanvas(this.props.windField);
       }
 
       const particles: Particle[] = [];
 
       window.requestAnimationFrame(
-        updateAndRender.bind(null, ctx, windField, particles, null),
+        this.updateAndRender.bind(this, ctx, particles, null),
       );
-    });
+      this.rendering = true;
+    }
+  }
+  updateAndRender(
+    ctx: CanvasRenderingContext2D,
+    particles: Particle[],
+    prevTime: number,
+    timestamp: number,
+  ) {
+    if (this.props.windField != null) {
+      const windField = this.props.windField;
+      let deltaT: number;
+      if (prevTime !== null) {
+        deltaT = timestamp - prevTime;
+      } else {
+        deltaT = 0;
+      }
+
+      for (let i = 0; i < 5; i++) {
+        if (particles.length < MAX_PARTICLES) {
+          particles.push(
+            new Particle(
+              Math.random() * windField.width(),
+              Math.random() * windField.height(),
+            ),
+          );
+        }
+      }
+
+      particles.forEach((part: Particle) => {
+        part.update(windField, deltaT);
+      });
+
+      if (CLEAR_PARTICLES_EACH_FRAME) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        let p = particles[i];
+        if (
+          p.lifeTime >= PARTICLE_LIFETIME ||
+          p.x <= 0 ||
+          p.x >= windField.width() - 1 ||
+          p.y <= 0 ||
+          p.y >= windField.height() - 1
+        ) {
+          particles[i] = new Particle(
+            Math.random() * (windField.width() - 1),
+            Math.random() * (windField.height() - 1),
+          );
+        }
+        p = particles[i];
+        if (particles[i] != null) {
+          particles[i].render(ctx);
+        }
+      }
+
+      window.requestAnimationFrame(
+        this.updateAndRender.bind(this, ctx, particles, timestamp),
+      );
+    }
   }
 
   render() {
@@ -124,64 +192,6 @@ function renderBgCanvas(windField: WindField) {
   }
   ctx.strokeStyle = 'black';
   ctx.stroke();
-}
-
-function updateAndRender(
-  ctx: CanvasRenderingContext2D,
-  windField: WindField,
-  particles: Particle[],
-  prevTime: number,
-  timestamp: number,
-) {
-  let deltaT: number;
-  if (prevTime !== null) {
-    deltaT = timestamp - prevTime;
-  } else {
-    deltaT = 0;
-  }
-
-  for (let i = 0; i < 5; i++) {
-    if (particles.length < MAX_PARTICLES) {
-      particles.push(
-        new Particle(
-          Math.random() * windField.width(),
-          Math.random() * windField.height(),
-        ),
-      );
-    }
-  }
-
-  particles.forEach((part: Particle) => {
-    part.update(windField, deltaT);
-  });
-
-  if (CLEAR_PARTICLES_EACH_FRAME) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  }
-
-  for (let i = 0; i < particles.length; i++) {
-    let p = particles[i];
-    if (
-      p.lifeTime >= PARTICLE_LIFETIME ||
-      p.x <= 0 ||
-      p.x >= windField.width() - 1 ||
-      p.y <= 0 ||
-      p.y >= windField.height() - 1
-    ) {
-      particles[i] = new Particle(
-        Math.random() * (windField.width() - 1),
-        Math.random() * (windField.height() - 1),
-      );
-    }
-    p = particles[i];
-    if (particles[i] != null) {
-      particles[i].render(ctx);
-    }
-  }
-
-  window.requestAnimationFrame(
-    updateAndRender.bind(null, ctx, windField, particles, timestamp),
-  );
 }
 
 class Particle {
