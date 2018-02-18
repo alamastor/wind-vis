@@ -2,9 +2,11 @@ import axios from 'axios';
 import * as moment from 'moment';
 import 'moment-timezone';
 
+import {Degree} from './units';
+
 const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 
-export class WindField {
+export class VectorField {
   uField: number[][];
   vField: number[][];
 
@@ -19,65 +21,13 @@ export class WindField {
     }
   }
 
-  width(): number {
+  getWidth(): number {
     return this.uField.length;
   }
 
-  height(): number {
+  getHeight(): number {
     return this.uField[0].length;
   }
-}
-
-async function testField1(): Promise<WindField> {
-  const width = 25;
-  const height = 25;
-  const uField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    uField.push([]);
-    for (let y = 0; y <= height; y++) {
-      if (x > y) {
-        uField[x].push(0);
-      } else {
-        uField[x].push(1);
-      }
-    }
-  }
-
-  const vField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    vField.push([]);
-    for (let y = 0; y <= height; y++) {
-      if (x < y) {
-        vField[x].push(0);
-      } else {
-        vField[x].push(1);
-      }
-    }
-  }
-
-  return Promise.resolve(new WindField(uField, vField));
-}
-
-async function testField2(): Promise<WindField> {
-  const width = 25;
-  const height = 25;
-  const uField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    uField.push([]);
-    for (let y = 0; y <= height; y++) {
-      uField[x].push(Math.cos(y * 5) + Math.sin(x * 5) + 1);
-    }
-  }
-
-  const vField: number[][] = [];
-  for (let x = 0; x <= width; x++) {
-    vField.push([]);
-    for (let y = 0; y <= height; y++) {
-      vField[x].push(Math.sin(x + 10));
-    }
-  }
-
-  return Promise.resolve(new WindField(uField, vField));
 }
 
 async function gfsData(): Promise<ModelData> {
@@ -94,13 +44,10 @@ async function gfsData(): Promise<ModelData> {
     forecastTime.add(tau, 'hours');
     data.push({
       dt: forecastTime,
-      windField: new WindField(gfsData.uData, gfsData.vData),
+      vectorField: new VectorField(gfsData.uData, gfsData.vData),
     });
   }
-  return Promise.resolve({
-    cycle: cycle,
-    data: data,
-  });
+  return Promise.resolve(new ModelData(cycle, data, 1, 1));
 }
 
 async function getCycle(): Promise<moment.Moment> {
@@ -110,15 +57,35 @@ async function getCycle(): Promise<moment.Moment> {
 
 export interface TauData {
   dt: moment.Moment;
-  windField: WindField;
+  vectorField: VectorField;
 }
-export interface ModelData {
+export class ModelData {
   cycle: moment.Moment;
   data: TauData[];
+  uResolution: Degree;
+  vResolution: Degree;
+
+  constructor(
+    cycle: moment.Moment,
+    data: TauData[],
+    uResolution: Degree,
+    vResolution: Degree,
+  ) {
+    this.cycle = cycle;
+    this.data = data;
+    this.uResolution = uResolution;
+    this.vResolution = vResolution;
+  }
+
+  getLatDegrees() {
+    return this.data[0].vectorField.getHeight() * this.vResolution;
+  }
+
+  getLonDegrees() {
+    return this.data[0].vectorField.getWidth() * this.uResolution;
+  }
 }
 
 export const WIND_FIELDS = {
-  testField1: testField1(),
-  testField2: testField2(),
   gfsData: gfsData(),
 };
