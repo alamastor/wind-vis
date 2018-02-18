@@ -1,19 +1,36 @@
 import * as React from 'react';
+import {Dispatch, connect} from 'react-redux';
+import {Action, setDisplayParticles} from './actions';
 
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
+import {RootState} from '../../reducers';
 
 import {
   ParticleRenderer,
   VectorRenderer,
 } from '../../components/VectorFieldRenderers';
 import BackgroundMap from '../../components/BackgroundMap';
+import DisplayOptions from '../../components/DisplayOptions';
 
-interface Props {}
+const mapStateToProps = (state: RootState) => ({
+  displayParticles: state.app.displayParticles,
+});
+
+const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
+  setDisplayParticles: (display: boolean) => {
+    dispatch(setDisplayParticles(display));
+  },
+});
+
+interface Props {
+  displayParticles: boolean;
+  setDisplayParticles: (display: boolean) => void;
+}
 interface State {
   currentData: TauData | null;
 }
-export default class extends React.Component<Props, State> {
+class App extends React.Component<Props, State> {
   dataIdx: number = 0;
   modelData: ModelData | null = null;
   constructor(props: Props) {
@@ -44,11 +61,13 @@ export default class extends React.Component<Props, State> {
       const height = degreesToPixels(this.modelData.getLatDegrees());
       return (
         <div>
-          <ParticleRenderer
-            vectorField={this.state.currentData.vectorField}
-            width={width}
-            height={height}
-          />
+          {this.props.displayParticles ? (
+            <ParticleRenderer
+              vectorField={this.state.currentData.vectorField}
+              width={width}
+              height={height}
+            />
+          ) : null}
           <VectorRenderer
             vectorField={this.state.currentData.vectorField}
             width={width}
@@ -56,6 +75,10 @@ export default class extends React.Component<Props, State> {
           />
           <BackgroundMap width={width} height={height} />
           <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>
+          <DisplayOptions
+            displayParticles={this.props.displayParticles}
+            setDisplayParticles={this.props.setDisplayParticles}
+          />
         </div>
       );
     } else {
@@ -63,3 +86,5 @@ export default class extends React.Component<Props, State> {
     }
   }
 }
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
