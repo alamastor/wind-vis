@@ -1,10 +1,13 @@
-import {DISPLAY_PARTICLES} from './constants';
+const BASE = 'windVis/App';
 
-export type Action = {type: string; [propName: string]: any};
+export interface Action {
+  type: 'APP_DISPLAY_PARTICLES';
+  display: boolean;
+}
 
 export function setDisplayParticles(display: boolean): Action {
   return {
-    type: DISPLAY_PARTICLES,
+    type: 'APP_DISPLAY_PARTICLES',
     display,
   };
 }
