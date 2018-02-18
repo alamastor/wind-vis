@@ -3,7 +3,10 @@ import * as React from 'react';
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
 
-import ParticleField from '../../components/ParticleField';
+import {
+  ParticleRenderer,
+  VectorRenderer,
+} from '../../components/VectorFieldRenderers';
 import BackgroundMap from '../../components/BackgroundMap';
 
 interface Props {}
@@ -41,7 +44,12 @@ export default class extends React.Component<Props, State> {
       const height = degreesToPixels(this.modelData.getLatDegrees());
       return (
         <div>
-          <ParticleField
+          <ParticleRenderer
+            vectorField={this.state.currentData.vectorField}
+            width={width}
+            height={height}
+          />
+          <VectorRenderer
             vectorField={this.state.currentData.vectorField}
             width={width}
             height={height}
