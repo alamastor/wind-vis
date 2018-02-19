@@ -2,9 +2,11 @@ import {Action} from './actions';
 
 export interface AppState {
   readonly displayParticles: boolean;
+  readonly displayVectors: boolean;
 }
 const initialState = {
   displayParticles: true,
+  displayVectors: false,
 };
 
 export default function app(state: AppState = initialState, action: Action) {
@@ -12,6 +14,10 @@ export default function app(state: AppState = initialState, action: Action) {
     case 'APP_DISPLAY_PARTICLES':
       return Object.assign({}, state, {
         displayParticles: action.display,
+      });
+    case 'APP_DISPLAY_VECTORS':
+      return Object.assign({}, state, {
+        displayVectors: action.display,
       });
     default:
       return state;
