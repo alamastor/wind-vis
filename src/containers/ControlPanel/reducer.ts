@@ -4,11 +4,15 @@ export interface ControlPanelState {
   readonly displayParticles: boolean;
   readonly displayVectors: boolean;
   readonly paused: boolean;
+  readonly showParticleTails: boolean;
+  readonly clearParticlesEachFrame: boolean;
 }
 export const initialState = {
   displayParticles: true,
   displayVectors: false,
   paused: false,
+  showParticleTails: true,
+  clearParticlesEachFrame: false,
 };
 
 export default function controlPanel(
@@ -30,6 +34,17 @@ export default function controlPanel(
       return Object.assign({}, state, {
         paused: !state.paused,
       });
+
+    case 'CONTROL_PANEL_SHOW_PARTICLE_TAILS':
+      return Object.assign({}, state, {
+        showParticleTails: action.show,
+      });
+
+    case 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME':
+      return Object.assign({}, state, {
+        clearParticlesEachFrame: action.clear,
+      });
+
     default:
       return state;
   }

@@ -4,9 +4,6 @@ import * as ReactDOM from 'react-dom';
 import {VectorField} from '../fields';
 
 const SELECTED_WIND_FIELD = 'gfsField';
-const SHOW_BACKGROUND = false;
-const SHOW_PARTICLE_TAILS = true;
-const CLEAR_PARTICLES_EACH_FRAME = true;
 const PARTICLE_FADE_START = 5000;
 const PARTICLE_LIFETIME = 7000;
 const MAX_PARTICLES = 3000;
@@ -18,7 +15,10 @@ interface Props {
 }
 interface State {}
 
-abstract class VectorFieldRenderer extends React.Component<Props, State> {
+abstract class VectorFieldRenderer<P, S> extends React.Component<
+  Props & P,
+  State & S
+> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
 
@@ -66,7 +66,15 @@ abstract class VectorFieldRenderer extends React.Component<Props, State> {
   }
 }
 
-export class ParticleRenderer extends VectorFieldRenderer {
+interface ParticleRendererProps {
+  showParticleTails: boolean;
+  clearParticlesEachFrame: boolean;
+}
+interface ParticleRendererState {}
+export class ParticleRenderer extends VectorFieldRenderer<
+  ParticleRendererProps,
+  ParticleRendererState
+> {
   particles: Particle[] = [];
 
   componentDidMount() {
@@ -97,7 +105,7 @@ export class ParticleRenderer extends VectorFieldRenderer {
       part.update(this.props.vectorField, deltaT);
     });
 
-    if (CLEAR_PARTICLES_EACH_FRAME) {
+    if (this.props.clearParticlesEachFrame) {
       this.getCtx().clearRect(
         0,
         0,
@@ -147,7 +155,7 @@ export class ParticleRenderer extends VectorFieldRenderer {
       this.yUnitsToCanvasYUnits(particle.height),
     );
 
-    if (SHOW_PARTICLE_TAILS) {
+    if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
         this.getCtx().fillRect(
@@ -161,7 +169,12 @@ export class ParticleRenderer extends VectorFieldRenderer {
   }
 }
 
-export class VectorRenderer extends VectorFieldRenderer {
+interface VectorRendererProps {}
+interface VectorRendererState {}
+export class VectorRenderer extends VectorFieldRenderer<
+  VectorRendererProps,
+  VectorRendererState
+> {
   componentDidMount() {
     this.canvas.width = this.props.width;
     this.canvas.height = this.props.height;

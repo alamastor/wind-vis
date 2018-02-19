@@ -15,12 +15,16 @@ const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
   displayVectors: state.controlPanel.displayVectors,
   paused: state.controlPanel.paused,
+  showParticleTails: state.controlPanel.showParticleTails,
+  clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
 });
 
 interface Props {
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
+  showParticleTails: boolean;
+  clearParticlesEachFrame: boolean;
 }
 interface State {
   currentData: TauData | null;
@@ -87,6 +91,8 @@ class App extends React.Component<Props, State> {
               vectorField={this.state.currentData.vectorField}
               width={width}
               height={height}
+              showParticleTails={this.props.showParticleTails}
+              clearParticlesEachFrame={this.props.clearParticlesEachFrame}
             />
           ) : null}
           {this.props.displayVectors ? (
