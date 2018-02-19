@@ -4,7 +4,7 @@ export interface AppState {
   readonly displayParticles: boolean;
   readonly displayVectors: boolean;
 }
-const initialState = {
+export const initialState = {
   displayParticles: true,
   displayVectors: false,
 };
