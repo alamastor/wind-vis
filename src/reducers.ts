@@ -1,10 +1,11 @@
 import {combineReducers} from 'redux';
 
-import appReducer, {AppState} from './containers/App/reducer';
-import {Action as AppAction} from './containers/App/actions';
+import controlPanelReducer, {
+  ControlPanelState,
+} from './containers/ControlPanel/reducer';
 
 export interface RootState {
-  app: AppState;
+  controlPanel: ControlPanelState;
 }
 
-export default combineReducers({app: appReducer});
+export default combineReducers({controlPanel: controlPanelReducer});

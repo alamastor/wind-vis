@@ -9,20 +9,26 @@ describe('appReducer', () => {
   it('should set display particles', () => {
     const expectedResult = Object.assign({}, state, {displayParticles: false});
     expect(
-      appReducer(undefined, {type: 'APP_DISPLAY_PARTICLES', display: false}),
+      appReducer(undefined, {
+        type: 'CONTROL_PANEL_DISPLAY_PARTICLES',
+        display: false,
+      }),
     ).toEqual(expectedResult);
   });
 
   it('should set display vectors', () => {
     const expectedResult = Object.assign({}, state, {displayVectors: true});
     expect(
-      appReducer(undefined, {type: 'APP_DISPLAY_VECTORS', display: true}),
+      appReducer(undefined, {
+        type: 'CONTROL_PANEL_DISPLAY_VECTORS',
+        display: true,
+      }),
     ).toEqual(expectedResult);
   });
 
   it('should set paused', () => {
     const expectedResult = Object.assign({}, state, {paused: true});
-    expect(appReducer(undefined, {type: 'APP_TOGGLE_PAUSE'})).toEqual(
+    expect(appReducer(undefined, {type: 'CONTROL_PANEL_TOGGLE_PAUSE'})).toEqual(
       expectedResult,
     );
   });

@@ -1,48 +1,26 @@
 import * as React from 'react';
 import {Dispatch, connect} from 'react-redux';
-import {
-  Action,
-  setDisplayParticles,
-  setDisplayVectors,
-  togglePaused,
-} from './actions';
 
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
 import {RootState} from '../../reducers';
-
 import {
   ParticleRenderer,
   VectorRenderer,
 } from '../../components/VectorFieldRenderers';
 import BackgroundMap from '../../components/BackgroundMap';
-import DisplayOptions from '../../components/DisplayOptions';
+import ControlPanel from '../../containers/ControlPanel';
 
 const mapStateToProps = (state: RootState) => ({
-  displayParticles: state.app.displayParticles,
-  displayVectors: state.app.displayVectors,
-  paused: state.app.paused,
-});
-
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  setDisplayParticles: (display: boolean) => {
-    dispatch(setDisplayParticles(display));
-  },
-  setDisplayVectors: (display: boolean) => {
-    dispatch(setDisplayVectors(display));
-  },
-  togglePaused: () => {
-    dispatch(togglePaused());
-  },
+  displayParticles: state.controlPanel.displayParticles,
+  displayVectors: state.controlPanel.displayVectors,
+  paused: state.controlPanel.paused,
 });
 
 interface Props {
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
-  setDisplayParticles: (display: boolean) => void;
-  setDisplayVectors: (display: boolean) => void;
-  togglePaused: () => void;
 }
 interface State {
   currentData: TauData | null;
@@ -120,14 +98,7 @@ class App extends React.Component<Props, State> {
           ) : null}
           <BackgroundMap width={width} height={height} />
           <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>
-          <DisplayOptions
-            displayParticles={this.props.displayParticles}
-            setDisplayParticles={this.props.setDisplayParticles}
-            displayVectors={this.props.displayVectors}
-            setDisplayVectors={this.props.setDisplayVectors}
-            paused={this.props.paused}
-            togglePaused={this.props.togglePaused}
-          />
+          <ControlPanel />
         </div>
       );
     } else {
@@ -136,4 +107,4 @@ class App extends React.Component<Props, State> {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(mapStateToProps)(App);

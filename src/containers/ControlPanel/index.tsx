@@ -1,4 +1,31 @@
 import * as React from 'react';
+import {Dispatch, connect} from 'react-redux';
+
+import {RootState} from '../../reducers';
+import {
+  Action,
+  setDisplayParticles,
+  setDisplayVectors,
+  togglePaused,
+} from './actions';
+
+const mapStateToProps = (state: RootState) => ({
+  displayParticles: state.controlPanel.displayParticles,
+  displayVectors: state.controlPanel.displayVectors,
+  paused: state.controlPanel.paused,
+});
+
+const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
+  setDisplayParticles: (display: boolean) => {
+    dispatch(setDisplayParticles(display));
+  },
+  setDisplayVectors: (display: boolean) => {
+    dispatch(setDisplayVectors(display));
+  },
+  togglePaused: () => {
+    dispatch(togglePaused());
+  },
+});
 
 interface Props {
   displayParticles: boolean;
@@ -9,7 +36,7 @@ interface Props {
   togglePaused: () => void;
 }
 
-export default class extends React.Component<Props, {}> {
+class ControlPanel extends React.Component<Props, {}> {
   constructor(props: Props) {
     super(props);
     this.handleDisplayParticlesChange = this.handleDisplayParticlesChange.bind(
@@ -62,3 +89,5 @@ export default class extends React.Component<Props, {}> {
     );
   }
 }
+
+export default connect(mapStateToProps, mapDispatchToProps)(ControlPanel);
