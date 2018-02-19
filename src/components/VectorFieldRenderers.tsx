@@ -43,7 +43,9 @@ abstract class VectorFieldRenderer extends React.Component<Props, State> {
   }
 
   yUnitsToCanvasYUnits(yUnits: number) {
-    return yUnits * (this.props.height / this.props.vectorField.getHeight());
+    return (
+      yUnits * (this.props.height / (this.props.vectorField.getHeight() - 1))
+    );
   }
 
   yToCanvasY(y: number) {
