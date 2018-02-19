@@ -3,8 +3,10 @@ import * as React from 'react';
 interface Props {
   displayParticles: boolean;
   displayVectors: boolean;
+  paused: boolean;
   setDisplayParticles: (display: boolean) => void;
   setDisplayVectors: (display: boolean) => void;
+  togglePaused: () => void;
 }
 
 export default class extends React.Component<Props, {}> {
@@ -16,6 +18,7 @@ export default class extends React.Component<Props, {}> {
     this.handleDisplayVectorsChange = this.handleDisplayVectorsChange.bind(
       this,
     );
+    this.handleTogglePaused = this.handleTogglePaused.bind(this);
   }
 
   handleDisplayParticlesChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -24,6 +27,11 @@ export default class extends React.Component<Props, {}> {
 
   handleDisplayVectorsChange(event: React.ChangeEvent<HTMLInputElement>) {
     this.props.setDisplayVectors(event.target.checked);
+  }
+
+  handleTogglePaused(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    this.props.togglePaused();
   }
 
   render() {
@@ -47,6 +55,9 @@ export default class extends React.Component<Props, {}> {
             onChange={this.handleDisplayVectorsChange}
           />
         </label>
+        <button onClick={this.handleTogglePaused}>
+          {this.props.paused ? 'Resume' : 'Pause'}
+        </button>
       </form>
     );
   }

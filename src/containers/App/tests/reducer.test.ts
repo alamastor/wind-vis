@@ -1,14 +1,9 @@
-import appReducer, {initialState} from '../reducer';
+import appReducer, {AppState, initialState} from '../reducer';
 
 describe('appReducer', () => {
-  let state;
+  let state: AppState;
   beforeEach(() => {
     state = initialState;
-  });
-
-  it('should return the initialState', () => {
-    const expectedResult = state;
-    expect(appReducer(undefined, {})).toEqual(expectedResult);
   });
 
   it('should set display particles', () => {
@@ -23,5 +18,12 @@ describe('appReducer', () => {
     expect(
       appReducer(undefined, {type: 'APP_DISPLAY_VECTORS', display: true}),
     ).toEqual(expectedResult);
+  });
+
+  it('should set paused', () => {
+    const expectedResult = Object.assign({}, state, {paused: true});
+    expect(appReducer(undefined, {type: 'APP_TOGGLE_PAUSE'})).toEqual(
+      expectedResult,
+    );
   });
 });
