@@ -12,7 +12,7 @@ export const initialState = {
   displayVectors: false,
   paused: false,
   showParticleTails: true,
-  clearParticlesEachFrame: false,
+  clearParticlesEachFrame: true,
 };
 
 export default function controlPanel(
