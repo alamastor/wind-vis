@@ -1,25 +1,34 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import VectorFieldBase from '../VectorFieldBase';
 import {VectorField} from '../../fields';
+import Projection from '../../Projection';
 
 const PARTICLE_FADE_START = 5000;
 const PARTICLE_LIFETIME = 7000;
 const MAX_PARTICLES = 3000;
 
 interface ParticleRendererProps {
+  vectorField: VectorField;
+  width: number;
+  height: number;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
 }
 interface ParticleRendererState {}
-export default class extends VectorFieldBase<
+export default class extends React.Component<
   ParticleRendererProps,
   ParticleRendererState
 > {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
   particles: Particle[] = [];
+  proj: Projection;
+
+  constructor(props: ParticleRendererProps) {
+    super(props);
+    this.proj = new Projection(props.vectorField, props.width, props.height);
+  }
 
   getCtx(): CanvasRenderingContext2D {
     if (!this.ctx) {
@@ -94,20 +103,20 @@ export default class extends VectorFieldBase<
 
     this.getCtx().globalAlpha = alpha;
     this.getCtx().fillRect(
-      this.xToComponentX(particle.x - particle.width / 2),
-      this.yToComponentY(particle.y + particle.height / 2),
-      this.scaleX(particle.width),
-      this.scaleY(particle.height),
+      this.proj.transformX(particle.x - particle.width / 2),
+      this.proj.transformY(particle.y + particle.height / 2),
+      this.proj.scaleX(particle.width),
+      this.proj.scaleY(particle.height),
     );
 
     if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
         this.getCtx().fillRect(
-          this.xToComponentX(particle.xTail[i] - particle.width / 2),
-          this.yToComponentY(particle.yTail[i] + particle.height / 2),
-          this.scaleX(particle.width),
-          this.scaleY(particle.height),
+          this.proj.transformX(particle.xTail[i] - particle.width / 2),
+          this.proj.transformY(particle.yTail[i] + particle.height / 2),
+          this.proj.scaleX(particle.width),
+          this.proj.scaleY(particle.height),
         );
       }
     }

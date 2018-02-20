@@ -1,16 +1,27 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import VectorFieldBase from '../VectorFieldBase';
+import {VectorField} from '../../fields';
+import Projection from '../../Projection';
 
-interface VectorRendererProps {}
+interface VectorRendererProps {
+  vectorField: VectorField;
+  width: number;
+  height: number;
+}
 interface VectorRendererState {}
-export default class extends VectorFieldBase<
+export default class extends React.Component<
   VectorRendererProps,
   VectorRendererState
 > {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
+  proj: Projection;
+
+  constructor(props: VectorRendererProps) {
+    super(props);
+    this.props = new Projection(props.vectorField, props.width, props.height);
+  }
 
   getCtx(): CanvasRenderingContext2D {
     if (!this.ctx) {
@@ -49,17 +60,17 @@ export default class extends VectorFieldBase<
     ctx.stroke();
 
     for (let x = 0; x <= this.props.vectorField.getWidth(); x = x + 5) {
-      ctx.moveTo(this.xToComponentX(x), this.yToComponentY(0));
+      ctx.moveTo(this.proj.transformX(x), this.proj.transformY(0));
       ctx.lineTo(
-        this.xToComponentX(x),
-        this.yToComponentY(this.props.vectorField.getHeight() - 1),
+        this.proj.transformX(x),
+        this.proj.transformY(this.props.vectorField.getHeight() - 1),
       );
     }
     for (let y = 0; y <= this.props.vectorField.getHeight(); y = y + 5) {
-      ctx.moveTo(this.xToComponentX(0), this.yToComponentY(y));
+      ctx.moveTo(this.proj.transformX(0), this.proj.transformY(y));
       ctx.lineTo(
-        this.xToComponentX(this.props.vectorField.getWidth() - 1),
-        this.yToComponentY(y),
+        this.proj.transformX(this.props.vectorField.getWidth() - 1),
+        this.proj.transformY(y),
       );
     }
     ctx.strokeStyle = 'black';
@@ -69,7 +80,7 @@ export default class extends VectorFieldBase<
   plotArrow(x: number, y: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    ctx.translate(this.xToComponentX(x), this.yToComponentY(y));
+    ctx.translate(this.proj.transformX(x), this.proj.transformY(y));
     ctx.rotate(-Math.atan2(v, u));
     drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
     ctx.restore();
