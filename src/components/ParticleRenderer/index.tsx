@@ -17,10 +17,18 @@ export default class extends VectorFieldBase<
   ParticleRendererProps,
   ParticleRendererState
 > {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D | null;
   particles: Particle[] = [];
 
+  getCtx(): CanvasRenderingContext2D {
+    if (!this.ctx) {
+      this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
+    }
+    return this.ctx;
+  }
+
   componentDidMount() {
-    super.componentDidMount();
     window.requestAnimationFrame(this.updateAndRender.bind(this));
   }
 
@@ -48,12 +56,7 @@ export default class extends VectorFieldBase<
     });
 
     if (this.props.clearParticlesEachFrame) {
-      this.getCtx().clearRect(
-        0,
-        0,
-        this.getCtx().canvas.width,
-        this.getCtx().canvas.height,
-      );
+      this.getCtx().clearRect(0, 0, this.props.width, this.props.height);
     }
 
     for (let i = 0; i < this.particles.length; i++) {
@@ -91,23 +94,38 @@ export default class extends VectorFieldBase<
 
     this.getCtx().globalAlpha = alpha;
     this.getCtx().fillRect(
-      this.xToCanvasX(particle.x - particle.width / 2),
-      this.yToCanvasY(particle.y + particle.height / 2),
-      this.xUnitsToCanvasXUnits(particle.width),
-      this.yUnitsToCanvasYUnits(particle.height),
+      this.xToComponentX(particle.x - particle.width / 2),
+      this.yToComponentY(particle.y + particle.height / 2),
+      this.scaleX(particle.width),
+      this.scaleY(particle.height),
     );
 
     if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
         this.getCtx().fillRect(
-          this.xToCanvasX(particle.xTail[i] - particle.width / 2),
-          this.yToCanvasY(particle.yTail[i] + particle.height / 2),
-          this.xUnitsToCanvasXUnits(particle.width),
-          this.yUnitsToCanvasYUnits(particle.height),
+          this.xToComponentX(particle.xTail[i] - particle.width / 2),
+          this.yToComponentY(particle.yTail[i] + particle.height / 2),
+          this.scaleX(particle.width),
+          this.scaleY(particle.height),
         );
       }
     }
+  }
+
+  render() {
+    return (
+      <div>
+        <canvas
+          width={this.props.width}
+          height={this.props.height}
+          ref={(canvas: HTMLCanvasElement) => {
+            this.canvas = canvas;
+          }}
+          style={{position: 'fixed'}}
+        />
+      </div>
+    );
   }
 }
 

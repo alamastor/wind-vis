@@ -9,9 +9,17 @@ export default class extends VectorFieldBase<
   VectorRendererProps,
   VectorRendererState
 > {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D | null;
+
+  getCtx(): CanvasRenderingContext2D {
+    if (!this.ctx) {
+      this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
+    }
+    return this.ctx;
+  }
+
   componentDidMount() {
-    this.canvas.width = this.props.width;
-    this.canvas.height = this.props.height;
     this.renderOnCanvas();
   }
 
@@ -21,7 +29,7 @@ export default class extends VectorFieldBase<
 
   renderOnCanvas() {
     const ctx = this.getCtx();
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.clearRect(0, 0, this.props.width, this.props.height);
 
     ctx.beginPath();
     const color = 'rgb(140, 200, 300)';
@@ -41,17 +49,17 @@ export default class extends VectorFieldBase<
     ctx.stroke();
 
     for (let x = 0; x <= this.props.vectorField.getWidth(); x = x + 5) {
-      ctx.moveTo(this.xToCanvasX(x), this.yToCanvasY(0));
+      ctx.moveTo(this.xToComponentX(x), this.yToComponentY(0));
       ctx.lineTo(
-        this.xToCanvasX(x),
-        this.yToCanvasY(this.props.vectorField.getHeight() - 1),
+        this.xToComponentX(x),
+        this.yToComponentY(this.props.vectorField.getHeight() - 1),
       );
     }
     for (let y = 0; y <= this.props.vectorField.getHeight(); y = y + 5) {
-      ctx.moveTo(this.xToCanvasX(0), this.yToCanvasY(y));
+      ctx.moveTo(this.xToComponentX(0), this.yToComponentY(y));
       ctx.lineTo(
-        this.xToCanvasX(this.props.vectorField.getWidth() - 1),
-        this.yToCanvasY(y),
+        this.xToComponentX(this.props.vectorField.getWidth() - 1),
+        this.yToComponentY(y),
       );
     }
     ctx.strokeStyle = 'black';
@@ -61,10 +69,25 @@ export default class extends VectorFieldBase<
   plotArrow(x: number, y: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    ctx.translate(this.xToCanvasX(x), this.yToCanvasY(y));
+    ctx.translate(this.xToComponentX(x), this.yToComponentY(y));
     ctx.rotate(-Math.atan2(v, u));
     drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
     ctx.restore();
+  }
+
+  render() {
+    return (
+      <div>
+        <canvas
+          width={this.props.width}
+          height={this.props.height}
+          ref={(canvas: HTMLCanvasElement) => {
+            this.canvas = canvas;
+          }}
+          style={{position: 'fixed'}}
+        />
+      </div>
+    );
   }
 }
 
