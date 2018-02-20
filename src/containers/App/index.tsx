@@ -4,10 +4,8 @@ import {Dispatch, connect} from 'react-redux';
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
 import {RootState} from '../../reducers';
-import {
-  ParticleRenderer,
-  VectorRenderer,
-} from '../../components/VectorFieldRenderers';
+import ParticleRenderer from '../../components/ParticleRenderer';
+import VectorRenderer from '../../components/VectorRenderer';
 import BackgroundMap from '../../components/BackgroundMap';
 import ControlPanel from '../../containers/ControlPanel';
 
