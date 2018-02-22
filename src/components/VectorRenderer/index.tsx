@@ -4,23 +4,20 @@ import * as ReactDOM from 'react-dom';
 import {VectorField} from '../../fields';
 import Projection from '../../Projection';
 
-interface VectorRendererProps {
+interface Props {
   vectorField: VectorField;
   width: number;
   height: number;
 }
-interface VectorRendererState {}
-export default class extends React.Component<
-  VectorRendererProps,
-  VectorRendererState
-> {
+interface State {}
+export default class extends React.Component<Props, State> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
   proj: Projection;
 
-  constructor(props: VectorRendererProps) {
+  constructor(props: Props) {
     super(props);
-    this.props = new Projection(props.vectorField, props.width, props.height);
+    this.proj = new Projection(props.vectorField, props.width, props.height);
   }
 
   getCtx(): CanvasRenderingContext2D {
