@@ -6,6 +6,7 @@ import {degreesToPixels} from '../../units';
 import {RootState} from '../../reducers';
 import ParticleRenderer from '../../components/ParticleRenderer';
 import VectorRenderer from '../../components/VectorRenderer';
+import HoverPositionCalculator from '../../components/HoverPositionCalculator';
 import BackgroundMap from '../../components/BackgroundMap';
 import ControlPanel from '../../containers/ControlPanel';
 
@@ -100,6 +101,14 @@ class App extends React.Component<Props, State> {
               height={height}
             />
           ) : null}
+          <HoverPositionCalculator
+            width={width}
+            height={height}
+            minLat={-90}
+            maxLat={90}
+            minLon={0}
+            maxLon={359}
+          />
           <BackgroundMap width={width} height={height} />
           <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>
           <ControlPanel />

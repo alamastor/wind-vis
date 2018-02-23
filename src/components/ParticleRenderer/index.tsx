@@ -8,26 +8,30 @@ const PARTICLE_FADE_START = 5000;
 const PARTICLE_LIFETIME = 7000;
 const MAX_PARTICLES = 3000;
 
-interface ParticleRendererProps {
+interface Props {
   vectorField: VectorField;
   width: number;
   height: number;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
 }
-interface ParticleRendererState {}
-export default class extends React.Component<
-  ParticleRendererProps,
-  ParticleRendererState
-> {
+interface State {}
+export default class extends React.Component<Props, State> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
   particles: Particle[] = [];
   proj: Projection;
 
-  constructor(props: ParticleRendererProps) {
+  constructor(props: Props) {
     super(props);
-    this.proj = new Projection(props.vectorField, props.width, props.height);
+    this.proj = new Projection(
+      props.vectorField.getMinLat(),
+      props.vectorField.getMaxLat(),
+      props.vectorField.getMinLon(),
+      props.vectorField.getMaxLon(),
+      props.width,
+      props.height,
+    );
   }
 
   getCtx(): CanvasRenderingContext2D {
@@ -53,8 +57,11 @@ export default class extends React.Component<
       if (this.particles.length < MAX_PARTICLES) {
         this.particles.push(
           new Particle(
-            Math.random() * this.props.vectorField.getWidth(),
-            Math.random() * this.props.vectorField.getHeight(),
+            Math.random() *
+              (this.props.vectorField.getMaxLat() -
+                this.props.vectorField.getMinLat()) +
+              this.props.vectorField.getMinLat(),
+            Math.random() * this.props.vectorField.getMaxLon(),
           ),
         );
       }
@@ -72,14 +79,17 @@ export default class extends React.Component<
       let p = this.particles[i];
       if (
         this.particles[i].lifeTime >= PARTICLE_LIFETIME ||
-        this.particles[i].x <= 0 ||
-        this.particles[i].x >= this.props.vectorField.getWidth() - 1 ||
-        this.particles[i].y <= 0 ||
-        this.particles[i].y >= this.props.vectorField.getHeight() - 1
+        this.particles[i].lat <= this.props.vectorField.getMinLat() ||
+        this.particles[i].lat >= this.props.vectorField.getMaxLat() ||
+        this.particles[i].lon <= this.props.vectorField.getMinLon() ||
+        this.particles[i].lon >= this.props.vectorField.getMaxLon()
       ) {
         this.particles[i] = new Particle(
-          Math.random() * (this.props.vectorField.getWidth() - 1),
-          Math.random() * (this.props.vectorField.getHeight() - 1),
+          Math.random() *
+            (this.props.vectorField.getMaxLat() -
+              this.props.vectorField.getMinLat()) +
+            this.props.vectorField.getMinLat(),
+          Math.random() * (this.props.vectorField.getMaxLon() - 1),
         );
       }
       if (this.particles[i] != null) {
@@ -103,20 +113,20 @@ export default class extends React.Component<
 
     this.getCtx().globalAlpha = alpha;
     this.getCtx().fillRect(
-      this.proj.transformX(particle.x - particle.width / 2),
-      this.proj.transformY(particle.y + particle.height / 2),
-      this.proj.scaleX(particle.width),
-      this.proj.scaleY(particle.height),
+      this.proj.transformLon(particle.lon - particle.width / 2),
+      this.proj.transformLat(particle.lat + particle.height / 2),
+      this.proj.scaleLon(particle.width),
+      this.proj.scaleLat(particle.height),
     );
 
     if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
         this.getCtx().fillRect(
-          this.proj.transformX(particle.xTail[i] - particle.width / 2),
-          this.proj.transformY(particle.yTail[i] + particle.height / 2),
-          this.proj.scaleX(particle.width),
-          this.proj.scaleY(particle.height),
+          this.proj.transformLon(particle.xTail[i] - particle.width / 2),
+          this.proj.transformLat(particle.yTail[i] + particle.height / 2),
+          this.proj.scaleLon(particle.width),
+          this.proj.scaleLat(particle.height),
         );
       }
     }
@@ -138,25 +148,9 @@ export default class extends React.Component<
   }
 }
 
-function interpolatePoint(field: number[][], x: number, y: number) {
-  const ulPoint = field[Math.floor(x)][Math.ceil(y)];
-  const urPoint = field[Math.ceil(x)][Math.ceil(y)];
-  const lrPoint = field[Math.ceil(x)][Math.floor(y)];
-  const llPoint = field[Math.floor(x)][Math.floor(y)];
-
-  const uPoint = linearInterp(x - Math.floor(x), ulPoint, urPoint);
-  const lPoint = linearInterp(x - Math.floor(x), llPoint, lrPoint);
-
-  return linearInterp(y - Math.floor(y), lPoint, uPoint);
-}
-
-function linearInterp(x: number, y1: number, y2: number) {
-  return x * (y2 - y1) + y1;
-}
-
 class Particle {
-  x: number;
-  y: number;
+  lat: number;
+  lon: number;
   xTail: number[];
   yTail: number[];
   height: number;
@@ -165,9 +159,9 @@ class Particle {
   alpha: number;
   lifeTime: number;
   dead: boolean;
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  constructor(lat: number, lon: number) {
+    this.lat = lat;
+    this.lon = lon;
     this.height = 1;
     this.width = 1;
     this.color =
@@ -192,18 +186,18 @@ class Particle {
       this.yTail.shift(); // O(n) - use proper queue data structure if slow
     }
     if (
-      this.x >= 0 &&
-      this.x <= vectorField.getWidth() - 1 &&
-      this.y >= 0 &&
-      this.y <= vectorField.getHeight() - 1
+      this.lon >= vectorField.getMinLon() &&
+      this.lon <= vectorField.getMaxLon() &&
+      this.lat >= vectorField.getMinLat() &&
+      this.lat <= vectorField.getMaxLat()
     ) {
       this.lifeTime += deltaT;
-      this.xTail.push(this.x);
-      this.yTail.push(this.y);
-      const u = interpolatePoint(vectorField.uField, this.x, this.y);
-      const v = interpolatePoint(vectorField.vField, this.x, this.y);
-      this.x = this.x + u / 50;
-      this.y = this.y + v / 50;
+      this.yTail.push(this.lat);
+      this.xTail.push(this.lon);
+      const u = vectorField.uField.getValue(this.lat, this.lon);
+      const v = vectorField.vField.getValue(this.lat, this.lon);
+      this.lat = this.lat + v / 50;
+      this.lon = this.lon + u / 50;
     }
   }
 }

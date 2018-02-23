@@ -17,7 +17,14 @@ export default class extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.proj = new Projection(props.vectorField, props.width, props.height);
+    this.proj = new Projection(
+      props.vectorField.getMinLat(),
+      props.vectorField.getMaxLat(),
+      props.vectorField.getMinLon(),
+      props.vectorField.getMaxLon(),
+      props.width,
+      props.height,
+    );
   }
 
   getCtx(): CanvasRenderingContext2D {
@@ -44,40 +51,63 @@ export default class extends React.Component<Props, State> {
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.3;
-    for (let x = 0; x < this.props.vectorField.getWidth(); x = x + 5) {
-      for (let y = 0; y < this.props.vectorField.getHeight(); y = y + 5) {
+    for (
+      let lon = this.props.vectorField.getMinLon();
+      lon <= this.props.vectorField.getMaxLon();
+      lon = lon + 5
+    ) {
+      for (
+        let lat = this.props.vectorField.getMinLat();
+        lat <= this.props.vectorField.getMaxLat();
+        lat = lat + 5
+      ) {
         this.plotArrow(
-          x,
-          y,
-          this.props.vectorField.uField[x][y],
-          this.props.vectorField.vField[x][y],
+          lat,
+          lon,
+          this.props.vectorField.uField.getValue(lat, lon),
+          this.props.vectorField.vField.getValue(lat, lon),
         );
       }
     }
     ctx.stroke();
 
-    for (let x = 0; x <= this.props.vectorField.getWidth(); x = x + 5) {
-      ctx.moveTo(this.proj.transformX(x), this.proj.transformY(0));
+    for (
+      let lon = this.props.vectorField.getMinLon();
+      lon <= this.props.vectorField.getMaxLon();
+      lon = lon + 5
+    ) {
+      ctx.moveTo(
+        this.proj.transformLon(lon),
+        this.proj.transformLat(this.props.vectorField.getMinLat()),
+      );
       ctx.lineTo(
-        this.proj.transformX(x),
-        this.proj.transformY(this.props.vectorField.getHeight() - 1),
+        this.proj.transformLon(lon),
+        this.proj.transformLat(this.props.vectorField.getMaxLat()),
       );
     }
-    for (let y = 0; y <= this.props.vectorField.getHeight(); y = y + 5) {
-      ctx.moveTo(this.proj.transformX(0), this.proj.transformY(y));
+
+    for (
+      let lat = this.props.vectorField.getMinLat();
+      lat <= this.props.vectorField.getMaxLat();
+      lat = lat + 5
+    ) {
+      ctx.moveTo(
+        this.proj.transformLon(this.props.vectorField.getMinLon()),
+        this.proj.transformLat(lat),
+      );
       ctx.lineTo(
-        this.proj.transformX(this.props.vectorField.getWidth() - 1),
-        this.proj.transformY(y),
+        this.proj.transformLon(this.props.vectorField.getMaxLon()),
+        this.proj.transformLat(lat),
       );
     }
     ctx.strokeStyle = 'black';
     ctx.stroke();
   }
 
-  plotArrow(x: number, y: number, u: number, v: number) {
+  plotArrow(lat: number, lon: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    ctx.translate(this.proj.transformX(x), this.proj.transformY(y));
+    ctx.translate(this.proj.transformLon(lon), this.proj.transformLat(lat));
     ctx.rotate(-Math.atan2(v, u));
     drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
     ctx.restore();

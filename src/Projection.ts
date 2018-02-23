@@ -1,27 +1,43 @@
 import {VectorField} from './fields';
 
 export default class {
-  vectorField: VectorField;
+  minLat: number;
+  maxLat: number;
+  minLon: number;
+  maxLon: number;
   width: number;
   height: number;
-  constructor(vectorField: VectorField, width: number, height: number) {
-    this.vectorField = vectorField;
-    this.width = width;
-    this.height = height;
-  }
-  scaleX(xUnits: number) {
-    return xUnits * (this.width / this.vectorField.getWidth());
+  constructor(
+    minLat: number,
+    maxLat: number,
+    minLon: number,
+    maxLon: number,
+    width: number,
+    height: number,
+  ) {
+    [
+      this.minLat,
+      this.maxLat,
+      this.minLon,
+      this.maxLon,
+      this.width,
+      this.height,
+    ] = [minLat, maxLat, minLon, maxLon, width, height];
   }
 
-  transformX(x: number) {
-    return this.scaleX(x);
+  scaleLat(lat: number) {
+    return lat * (this.height / (this.maxLat - this.minLat));
   }
 
-  scaleY(yUnits: number) {
-    return yUnits * (this.height / (this.vectorField.getHeight() - 1));
+  transformLat(lat: number) {
+    return this.height * (lat - this.maxLat) / (this.minLat - this.maxLat);
   }
 
-  transformY(y: number) {
-    return this.height - this.scaleY(y);
+  scaleLon(lon: number) {
+    return lon * (this.width / (this.maxLon - this.minLon));
+  }
+
+  transformLon(lon: number) {
+    return this.width * (lon - this.minLon) / (this.maxLon - this.minLon);
   }
 }
