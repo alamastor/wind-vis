@@ -102,12 +102,9 @@ class App extends React.Component<Props, State> {
             />
           ) : null}
           <HoverPositionCalculator
+            vectorField={this.state.currentData.vectorField}
             width={width}
             height={height}
-            minLat={-90}
-            maxLat={90}
-            minLon={0}
-            maxLon={359}
           />
           <BackgroundMap width={width} height={height} />
           <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>

@@ -40,4 +40,12 @@ export default class {
   transformLon(lon: number) {
     return this.width * (lon - this.minLon) / (this.maxLon - this.minLon);
   }
+
+  transformX(x: number) {
+    return x * (this.maxLon - this.minLon) / this.width + this.minLon;
+  }
+
+  transformY(y: number) {
+    return y * (this.minLat - this.maxLat) / this.height + this.maxLat;
+  }
 }

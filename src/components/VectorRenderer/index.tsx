@@ -74,7 +74,7 @@ export default class extends React.Component<Props, State> {
     for (
       let lon = this.props.vectorField.getMinLon();
       lon <= this.props.vectorField.getMaxLon();
-      lon = lon + 5
+      lon = lon + 10
     ) {
       ctx.moveTo(
         this.proj.transformLon(lon),
@@ -89,7 +89,7 @@ export default class extends React.Component<Props, State> {
     for (
       let lat = this.props.vectorField.getMinLat();
       lat <= this.props.vectorField.getMaxLat();
-      lat = lat + 5
+      lat = lat + 10
     ) {
       ctx.moveTo(
         this.proj.transformLon(this.props.vectorField.getMinLon()),
@@ -115,16 +115,14 @@ export default class extends React.Component<Props, State> {
 
   render() {
     return (
-      <div>
-        <canvas
-          width={this.props.width}
-          height={this.props.height}
-          ref={(canvas: HTMLCanvasElement) => {
-            this.canvas = canvas;
-          }}
-          style={{position: 'fixed'}}
-        />
-      </div>
+      <canvas
+        width={this.props.width}
+        height={this.props.height}
+        ref={(canvas: HTMLCanvasElement) => {
+          this.canvas = canvas;
+        }}
+        style={{position: 'fixed'}}
+      />
     );
   }
 }

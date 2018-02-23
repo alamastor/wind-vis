@@ -134,16 +134,14 @@ export default class extends React.Component<Props, State> {
 
   render() {
     return (
-      <div>
-        <canvas
-          width={this.props.width}
-          height={this.props.height}
-          ref={(canvas: HTMLCanvasElement) => {
-            this.canvas = canvas;
-          }}
-          style={{position: 'fixed'}}
-        />
-      </div>
+      <canvas
+        width={this.props.width}
+        height={this.props.height}
+        ref={(canvas: HTMLCanvasElement) => {
+          this.canvas = canvas;
+        }}
+        style={{position: 'fixed'}}
+      />
     );
   }
 }
