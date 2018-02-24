@@ -2,9 +2,8 @@ import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 
-import {RootState} from '../../reducers';
+import {RootState, RootAction as Action} from '../../reducers';
 import {
-  Action,
   setDisplayParticles,
   setDisplayVectors,
   togglePaused,

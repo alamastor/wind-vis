@@ -1,13 +1,15 @@
 import * as React from 'react';
+import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
-import {RootState} from '../../reducers';
+import {RootState, RootAction as Action} from '../../reducers';
 import ParticleRenderer from '../../components/ParticleRenderer';
 import VectorRenderer from '../../components/VectorRenderer';
 import HoverPositionCalculator from '../../components/HoverPositionCalculator';
 import BackgroundMap from '../../components/BackgroundMap';
+import {updateCursorData, resetCursorData} from './actions';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
@@ -17,12 +19,23 @@ const mapStateToProps = (state: RootState) => ({
   clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
 });
 
+const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
+  bindActionCreators(
+    {
+      updateCursorData,
+      resetCursorData,
+    },
+    dispatch,
+  );
+
 interface Props {
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
+  updateCursorData: (lat: number, lon: number, u: number, v: number) => Action;
+  resetCursorData: () => Action;
 }
 interface State {
   currentData: TauData | null;
@@ -104,6 +117,8 @@ class App extends React.Component<Props, State> {
             vectorField={this.state.currentData.vectorField}
             width={width}
             height={height}
+            updateCursorData={this.props.updateCursorData}
+            resetCursorData={this.props.resetCursorData}
           />
           <BackgroundMap width={width} height={height} />
           <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>
@@ -115,4 +130,4 @@ class App extends React.Component<Props, State> {
   }
 }
 
-export default connect(mapStateToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

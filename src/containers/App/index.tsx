@@ -4,6 +4,7 @@ import {Dispatch, connect} from 'react-redux';
 import {RootState} from '../../reducers';
 import ControlPanel from '../ControlPanel';
 import MapVis from '../MapVis';
+import CursorPositionInfo from '../CursorPositionInfo';
 
 const mapStateToProps = (state: RootState) => ({});
 
@@ -15,6 +16,7 @@ class App extends React.Component<Props, State> {
       <div id="app">
         <MapVis />
         <ControlPanel />
+        <CursorPositionInfo />
       </div>
     );
   }
