@@ -1,8 +1,11 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import {style} from 'typestyle';
 
 import {VectorField} from '../../fields';
 import Projection from '../../Projection';
+
+const className = style({position: 'fixed'});
 
 interface Props {
   vectorField: VectorField;
@@ -116,12 +119,13 @@ export default class extends React.Component<Props, State> {
   render() {
     return (
       <canvas
+        id="vector-renderer"
+        className={className}
         width={this.props.width}
         height={this.props.height}
         ref={(canvas: HTMLCanvasElement) => {
           this.canvas = canvas;
         }}
-        style={{position: 'fixed'}}
       />
     );
   }
