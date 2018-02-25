@@ -27,12 +27,32 @@ export default class extends React.Component<Props, State> {
       props.vectorField.getMaxLat(),
       props.vectorField.getMinLon(),
       props.vectorField.getMaxLon(),
-      props.width,
-      props.height,
+      this.getDivWidth(),
+      this.getDivHeight(),
     );
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseOut = this.onMouseOut.bind(this);
     this.state = {cursorLat: null, cursorLon: null};
+  }
+
+  getDivWidth() {
+    if (this.props.width < this.props.height * 2) {
+      // width limited
+      return this.props.width;
+    } else {
+      // height limited
+      return this.props.height * 2;
+    }
+  }
+
+  getDivHeight() {
+    if (this.props.width < this.props.height * 2) {
+      // width limited
+      return this.props.width / 2;
+    } else {
+      // height limited
+      return this.props.height;
+    }
   }
 
   componentDidUpdate() {
@@ -74,8 +94,12 @@ export default class extends React.Component<Props, State> {
         }}
         style={{
           position: 'fixed',
-          width: this.props.width,
-          height: this.props.height,
+          width: this.getDivWidth(),
+          height: this.getDivHeight(),
+          marginTop: `${(this.props.height - this.getDivHeight()) / 2}px`,
+          marginRight: `${(this.props.width - this.getDivWidth()) / 2}px`,
+          marginBottom: `${(this.props.height - this.getDivHeight()) / 2}px`,
+          marginLeft: `${(this.props.width - this.getDivWidth()) / 2}px`,
         }}
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}

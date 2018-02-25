@@ -5,8 +5,6 @@ import {style} from 'typestyle';
 import {VectorField} from '../../fields';
 import Projection from '../../Projection';
 
-const className = style({position: 'fixed'});
-
 interface Props {
   vectorField: VectorField;
   width: number;
@@ -25,8 +23,8 @@ export default class extends React.Component<Props, State> {
       props.vectorField.getMaxLat(),
       props.vectorField.getMinLon(),
       props.vectorField.getMaxLon(),
-      props.width,
-      props.height,
+      this.getCanvasWidth(),
+      this.getCanvasHeight(),
     );
   }
 
@@ -35,6 +33,26 @@ export default class extends React.Component<Props, State> {
       this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
     }
     return this.ctx;
+  }
+
+  getCanvasWidth() {
+    if (this.props.width < this.props.height * 2) {
+      // width limited
+      return this.props.width;
+    } else {
+      // height limited
+      return this.props.height * 2;
+    }
+  }
+
+  getCanvasHeight() {
+    if (this.props.width < this.props.height * 2) {
+      // width limited
+      return this.props.width / 2;
+    } else {
+      // height limited
+      return this.props.height;
+    }
   }
 
   componentDidMount() {
@@ -117,12 +135,19 @@ export default class extends React.Component<Props, State> {
   }
 
   render() {
+    const className = style({
+      position: 'fixed',
+      marginTop: `${(this.props.height - this.getCanvasHeight()) / 2}px`,
+      marginRight: `${(this.props.width - this.getCanvasWidth()) / 2}px`,
+      marginBottom: `${(this.props.height - this.getCanvasHeight()) / 2}px`,
+      marginLeft: `${(this.props.width - this.getCanvasWidth()) / 2}px`,
+    });
     return (
       <canvas
         id="vector-renderer"
         className={className}
-        width={this.props.width}
-        height={this.props.height}
+        width={this.getCanvasWidth()}
+        height={this.getCanvasHeight()}
         ref={(canvas: HTMLCanvasElement) => {
           this.canvas = canvas;
         }}

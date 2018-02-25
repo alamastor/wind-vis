@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
+import {style} from 'typestyle';
 
 import {TauData, ModelData, WIND_FIELDS} from '../../fields';
 import {degreesToPixels} from '../../units';
@@ -29,6 +30,8 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
   );
 
 interface Props {
+  width: number;
+  height: number;
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
@@ -93,15 +96,18 @@ class App extends React.Component<Props, State> {
 
   render() {
     if (this.modelData && this.state.currentData) {
-      const width = degreesToPixels(this.modelData.getLonDegrees());
-      const height = degreesToPixels(this.modelData.getLatDegrees());
       return (
-        <div id="map-vis">
+        <div
+          id="map-vis"
+          className={style({
+            width: this.props.width,
+            height: this.props.height,
+          })}>
           {this.props.displayParticles ? (
             <ParticleRenderer
               vectorField={this.state.currentData.vectorField}
-              width={width}
-              height={height}
+              width={this.props.width}
+              height={this.props.height}
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
             />
@@ -109,19 +115,21 @@ class App extends React.Component<Props, State> {
           {this.props.displayVectors ? (
             <VectorRenderer
               vectorField={this.state.currentData.vectorField}
-              width={width}
-              height={height}
+              width={this.props.width}
+              height={this.props.height}
             />
           ) : null}
           <HoverPositionCalculator
             vectorField={this.state.currentData.vectorField}
-            width={width}
-            height={height}
+            width={this.props.width}
+            height={this.props.height}
             updateCursorData={this.props.updateCursorData}
             resetCursorData={this.props.resetCursorData}
           />
-          <BackgroundMap width={width} height={height} />
-          <div>{this.state.currentData.dt.format('HHZ DD/MM/YYYY')}</div>
+          <BackgroundMap width={this.props.width} height={this.props.height} />
+          <div className={style({position: 'absolute', top: 0, left: 0})}>
+            {this.state.currentData.dt.format('HHZ DD/MM/YYYY')}
+          </div>
         </div>
       );
     } else {
