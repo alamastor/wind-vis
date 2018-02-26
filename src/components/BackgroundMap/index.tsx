@@ -4,17 +4,23 @@ import {style} from 'typestyle';
 
 const Globe = require('../../img/globe.png');
 
-export default (props: {width: number; height: number; zoom: number}) => {
+export default (props: {
+  width: number;
+  height: number;
+  zoom: number;
+  midLat: number;
+  midLon: number;
+}) => {
   let width: number;
   let height: number;
   if (props.width < props.height * 2) {
     // width limited
-    width = props.width;
-    height = props.width / 2;
+    width = props.zoom * props.width;
+    height = props.zoom * props.width / 2;
   } else {
     // height limited
-    width = props.height * 2;
-    height = props.height;
+    width = props.zoom * props.height * 2;
+    height = props.zoom * props.height;
   }
   return (
     <div
@@ -22,17 +28,17 @@ export default (props: {width: number; height: number; zoom: number}) => {
       className={style({
         width: props.width,
         height: props.height,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
         overflow: 'hidden',
+        display: 'block',
       })}>
       <img
         src={Globe}
         className={style({
-          display: 'block',
-          width: width * props.zoom,
-          height: height * props.zoom,
+          position: 'relative',
+          top: (props.height - height) / 2,
+          left: (props.width - width) / 2,
+          width: width,
+          height: height,
         })}
       />
     </div>

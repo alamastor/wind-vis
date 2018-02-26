@@ -8,7 +8,7 @@ import {degreesToPixels} from '../../units';
 import {RootState, RootAction as Action} from '../../reducers';
 import ParticleRenderer from '../../components/ParticleRenderer';
 import VectorRenderer from '../../components/VectorRenderer';
-import HoverPositionCalculator from '../../components/HoverPositionCalculator';
+import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
 import {updateCursorData, resetCursorData} from './actions';
 
@@ -123,7 +123,7 @@ class App extends React.Component<Props, State> {
               zoom={this.props.zoomLevel}
             />
           ) : null}
-          <HoverPositionCalculator
+          <MouseManager
             vectorField={this.state.currentData.vectorField}
             width={this.props.width}
             height={this.props.height}
@@ -135,6 +135,8 @@ class App extends React.Component<Props, State> {
             width={this.props.width}
             height={this.props.height}
             zoom={this.props.zoomLevel}
+            midLat={45}
+            midLon={90}
           />
           <div className={style({position: 'absolute', top: 0, left: 0})}>
             {this.state.currentData.dt.format('HHZ DD/MM/YYYY')}

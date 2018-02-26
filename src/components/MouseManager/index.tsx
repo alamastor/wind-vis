@@ -13,13 +13,13 @@ interface Props {
   updateCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
 }
-interface State {
-  cursorLat: number | null;
-  cursorLon: number | null;
-}
+interface State {}
 export default class extends React.Component<Props, State> {
   proj: Projection;
   div: HTMLDivElement;
+  dragging: Boolean = false;
+  cursorLat: number | null = null;
+  cursorLon: number | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -34,7 +34,8 @@ export default class extends React.Component<Props, State> {
     );
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseOut = this.onMouseOut.bind(this);
-    this.state = {cursorLat: null, cursorLon: null};
+    this.onMouseUp = this.onMouseUp.bind(this);
+    this.onMouseDown = this.onMouseDown.bind(this);
   }
 
   componentDidUpdate() {
@@ -47,9 +48,9 @@ export default class extends React.Component<Props, State> {
       this.props.height,
       this.props.zoom,
     );
-    if (this.state.cursorLat != null && this.state.cursorLon != null) {
-      const lat = this.state.cursorLat;
-      const lon = this.state.cursorLon;
+    if (this.cursorLat != null && this.cursorLon != null) {
+      const lat = this.cursorLat;
+      const lon = this.cursorLon;
       this.props.updateCursorData(
         lat,
         lon,
@@ -63,7 +64,7 @@ export default class extends React.Component<Props, State> {
     const lat = this.proj.transformY(event.clientY - this.div.offsetTop);
     const lon = this.proj.transformX(event.clientX - this.div.offsetLeft);
     if (this.props.vectorField.pointInBounds(lat, lon)) {
-      this.setState({cursorLat: lat, cursorLon: lon});
+      [this.cursorLat, this.cursorLon] = [lat, lon];
       this.props.updateCursorData(
         lat,
         lon,
@@ -71,14 +72,22 @@ export default class extends React.Component<Props, State> {
         this.props.vectorField.vField.getValue(lat, lon),
       );
     } else {
-      this.setState({cursorLat: null, cursorLon: null});
+      [this.cursorLat, this.cursorLon] = [null, null];
       this.props.resetCursorData();
     }
   }
 
   onMouseOut() {
-    this.setState({cursorLat: null, cursorLon: null});
+    [this.cursorLat, this.cursorLon] = [null, null];
     this.props.resetCursorData();
+  }
+
+  onMouseDown() {
+    this.dragging = true;
+  }
+
+  onMouseUp() {
+    this.dragging = false;
   }
 
   render() {
@@ -95,6 +104,7 @@ export default class extends React.Component<Props, State> {
         }}
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}
+        onMouseDown={this.onMouseDown}
       />
     );
   }
