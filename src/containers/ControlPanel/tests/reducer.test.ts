@@ -54,4 +54,16 @@ describe('controlPanelReducer', () => {
       }),
     ).toEqual(expectedResult);
   });
+
+  it('should set zoom level', () => {
+    const expectedResult = Object.assign({}, state, {
+      zoomLevel: 2,
+    });
+    expect(
+      controlPanelReducer(undefined, {
+        type: 'CONTROL_PANEL_SET_ZOOM_LEVEL',
+        zoomLevel: 2,
+      }),
+    ).toEqual(expectedResult);
+  });
 });

@@ -9,6 +9,7 @@ import {
   togglePaused,
   setShowParticleTails,
   setClearParticlesEachFrame,
+  setZoomLevel,
 } from './actions';
 
 const mapStateToProps = (state: RootState) => ({
@@ -17,6 +18,7 @@ const mapStateToProps = (state: RootState) => ({
   paused: state.controlPanel.paused,
   showParticleTails: state.controlPanel.showParticleTails,
   clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
+  zoomLevel: state.controlPanel.zoomLevel,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -27,6 +29,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       togglePaused,
       setShowParticleTails,
       setClearParticlesEachFrame,
+      setZoomLevel,
     },
     dispatch,
   );
@@ -37,11 +40,13 @@ interface Props {
   paused: boolean;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
+  zoomLevel: number;
   setDisplayParticles: (display: boolean) => Action;
   setDisplayVectors: (display: boolean) => Action;
   togglePaused: () => Action;
   setShowParticleTails: (show: boolean) => Action;
   setClearParticlesEachFrame: (clear: boolean) => Action;
+  setZoomLevel: (zoomLevel: number) => Action;
 }
 
 class ControlPanel extends React.Component<Props, {}> {
@@ -60,6 +65,7 @@ class ControlPanel extends React.Component<Props, {}> {
     this.handleClearParticlesEachFrameChange = this.handleClearParticlesEachFrameChange.bind(
       this,
     );
+    this.handleZoomLevelChange = this.handleZoomLevelChange.bind(this);
   }
 
   handleDisplayParticlesChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -83,6 +89,10 @@ class ControlPanel extends React.Component<Props, {}> {
     event: React.ChangeEvent<HTMLInputElement>,
   ) {
     this.props.setClearParticlesEachFrame(event.target.checked);
+  }
+
+  handleZoomLevelChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.props.setZoomLevel(Number.parseFloat(event.target.value));
   }
 
   render() {
@@ -122,6 +132,18 @@ class ControlPanel extends React.Component<Props, {}> {
             type="checkbox"
             checked={this.props.clearParticlesEachFrame}
             onChange={this.handleClearParticlesEachFrameChange}
+          />
+        </label>
+        <label>
+          Zoom:
+          <input
+            name="zoomLevel"
+            type="range"
+            min="1"
+            max="10"
+            step="0.1"
+            value={this.props.zoomLevel}
+            onChange={this.handleZoomLevelChange}
           />
         </label>
         <button onClick={this.handleTogglePaused}>

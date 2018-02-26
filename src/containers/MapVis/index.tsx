@@ -16,6 +16,7 @@ const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
   displayVectors: state.controlPanel.displayVectors,
   paused: state.controlPanel.paused,
+  zoomLevel: state.controlPanel.zoomLevel,
   showParticleTails: state.controlPanel.showParticleTails,
   clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
 });
@@ -32,7 +33,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
 interface Props {
   width: number;
   height: number;
-  zoom: number;
+  zoomLevel: number;
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
@@ -109,7 +110,7 @@ class App extends React.Component<Props, State> {
               vectorField={this.state.currentData.vectorField}
               width={this.props.width}
               height={this.props.height}
-              zoom={this.props.zoom}
+              zoom={this.props.zoomLevel}
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
             />
@@ -119,21 +120,21 @@ class App extends React.Component<Props, State> {
               vectorField={this.state.currentData.vectorField}
               width={this.props.width}
               height={this.props.height}
-              zoom={this.props.zoom}
+              zoom={this.props.zoomLevel}
             />
           ) : null}
           <HoverPositionCalculator
             vectorField={this.state.currentData.vectorField}
             width={this.props.width}
             height={this.props.height}
-            zoom={this.props.zoom}
+            zoom={this.props.zoomLevel}
             updateCursorData={this.props.updateCursorData}
             resetCursorData={this.props.resetCursorData}
           />
           <BackgroundMap
             width={this.props.width}
             height={this.props.height}
-            zoom={this.props.zoom}
+            zoom={this.props.zoomLevel}
           />
           <div className={style({position: 'absolute', top: 0, left: 0})}>
             {this.state.currentData.dt.format('HHZ DD/MM/YYYY')}

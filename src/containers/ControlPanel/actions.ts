@@ -19,6 +19,10 @@ export type Action =
   | {
       type: 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME';
       clear: boolean;
+    }
+  | {
+      type: 'CONTROL_PANEL_SET_ZOOM_LEVEL';
+      zoomLevel: number;
     };
 
 export function setDisplayParticles(display: boolean): RootAction {
@@ -50,5 +54,12 @@ export function setClearParticlesEachFrame(clear: boolean): RootAction {
   return {
     type: 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME',
     clear,
+  };
+}
+
+export function setZoomLevel(zoomLevel: number): RootAction {
+  return {
+    type: 'CONTROL_PANEL_SET_ZOOM_LEVEL',
+    zoomLevel,
   };
 }

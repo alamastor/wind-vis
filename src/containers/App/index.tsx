@@ -14,7 +14,7 @@ class App extends React.Component<Props, State> {
   render() {
     return (
       <div id="app">
-        <MapVis width={1000} height={600} zoom={2} />
+        <MapVis width={1000} height={600} />
         <ControlPanel />
         <CursorPositionInfo />
       </div>
