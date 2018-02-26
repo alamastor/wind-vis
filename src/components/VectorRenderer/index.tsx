@@ -9,6 +9,7 @@ interface Props {
   vectorField: VectorField;
   width: number;
   height: number;
+  zoom: number;
 }
 interface State {}
 export default class extends React.Component<Props, State> {
@@ -23,8 +24,9 @@ export default class extends React.Component<Props, State> {
       props.vectorField.getMaxLat(),
       props.vectorField.getMinLon(),
       props.vectorField.getMaxLon(),
-      this.getCanvasWidth(),
-      this.getCanvasHeight(),
+      props.width,
+      props.height,
+      props.zoom,
     );
   }
 
@@ -35,31 +37,20 @@ export default class extends React.Component<Props, State> {
     return this.ctx;
   }
 
-  getCanvasWidth() {
-    if (this.props.width < this.props.height * 2) {
-      // width limited
-      return this.props.width;
-    } else {
-      // height limited
-      return this.props.height * 2;
-    }
-  }
-
-  getCanvasHeight() {
-    if (this.props.width < this.props.height * 2) {
-      // width limited
-      return this.props.width / 2;
-    } else {
-      // height limited
-      return this.props.height;
-    }
-  }
-
   componentDidMount() {
     this.renderOnCanvas();
   }
 
   componentDidUpdate() {
+    this.proj = new Projection(
+      this.props.vectorField.getMinLat(),
+      this.props.vectorField.getMaxLat(),
+      this.props.vectorField.getMinLon(),
+      this.props.vectorField.getMaxLon(),
+      this.props.width,
+      this.props.height,
+      this.props.zoom,
+    );
     this.renderOnCanvas();
   }
 
@@ -135,19 +126,14 @@ export default class extends React.Component<Props, State> {
   }
 
   render() {
-    const className = style({
-      position: 'fixed',
-      marginTop: `${(this.props.height - this.getCanvasHeight()) / 2}px`,
-      marginRight: `${(this.props.width - this.getCanvasWidth()) / 2}px`,
-      marginBottom: `${(this.props.height - this.getCanvasHeight()) / 2}px`,
-      marginLeft: `${(this.props.width - this.getCanvasWidth()) / 2}px`,
-    });
     return (
       <canvas
         id="vector-renderer"
-        className={className}
-        width={this.getCanvasWidth()}
-        height={this.getCanvasHeight()}
+        className={style({
+          position: 'fixed',
+        })}
+        width={this.props.width}
+        height={this.props.height}
         ref={(canvas: HTMLCanvasElement) => {
           this.canvas = canvas;
         }}

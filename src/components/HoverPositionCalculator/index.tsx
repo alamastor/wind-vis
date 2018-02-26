@@ -9,6 +9,7 @@ interface Props {
   vectorField: VectorField;
   width: number;
   height: number;
+  zoom: number;
   updateCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
 }
@@ -27,35 +28,25 @@ export default class extends React.Component<Props, State> {
       props.vectorField.getMaxLat(),
       props.vectorField.getMinLon(),
       props.vectorField.getMaxLon(),
-      this.getDivWidth(),
-      this.getDivHeight(),
+      props.width,
+      props.height,
+      props.zoom,
     );
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseOut = this.onMouseOut.bind(this);
     this.state = {cursorLat: null, cursorLon: null};
   }
 
-  getDivWidth() {
-    if (this.props.width < this.props.height * 2) {
-      // width limited
-      return this.props.width;
-    } else {
-      // height limited
-      return this.props.height * 2;
-    }
-  }
-
-  getDivHeight() {
-    if (this.props.width < this.props.height * 2) {
-      // width limited
-      return this.props.width / 2;
-    } else {
-      // height limited
-      return this.props.height;
-    }
-  }
-
   componentDidUpdate() {
+    this.proj = new Projection(
+      this.props.vectorField.getMinLat(),
+      this.props.vectorField.getMaxLat(),
+      this.props.vectorField.getMinLon(),
+      this.props.vectorField.getMaxLon(),
+      this.props.width,
+      this.props.height,
+      this.props.zoom,
+    );
     if (this.state.cursorLat != null && this.state.cursorLon != null) {
       const lat = this.state.cursorLat;
       const lon = this.state.cursorLon;
@@ -71,13 +62,18 @@ export default class extends React.Component<Props, State> {
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     const lat = this.proj.transformY(event.clientY - this.div.offsetTop);
     const lon = this.proj.transformX(event.clientX - this.div.offsetLeft);
-    this.setState({cursorLat: lat, cursorLon: lon});
-    this.props.updateCursorData(
-      lat,
-      lon,
-      this.props.vectorField.uField.getValue(lat, lon),
-      this.props.vectorField.vField.getValue(lat, lon),
-    );
+    if (this.props.vectorField.pointInBounds(lat, lon)) {
+      this.setState({cursorLat: lat, cursorLon: lon});
+      this.props.updateCursorData(
+        lat,
+        lon,
+        this.props.vectorField.uField.getValue(lat, lon),
+        this.props.vectorField.vField.getValue(lat, lon),
+      );
+    } else {
+      this.setState({cursorLat: null, cursorLon: null});
+      this.props.resetCursorData();
+    }
   }
 
   onMouseOut() {
@@ -94,12 +90,8 @@ export default class extends React.Component<Props, State> {
         }}
         style={{
           position: 'fixed',
-          width: this.getDivWidth(),
-          height: this.getDivHeight(),
-          marginTop: `${(this.props.height - this.getDivHeight()) / 2}px`,
-          marginRight: `${(this.props.width - this.getDivWidth()) / 2}px`,
-          marginBottom: `${(this.props.height - this.getDivHeight()) / 2}px`,
-          marginLeft: `${(this.props.width - this.getDivWidth()) / 2}px`,
+          width: this.props.width,
+          height: this.props.height,
         }}
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}

@@ -32,6 +32,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
 interface Props {
   width: number;
   height: number;
+  zoom: number;
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
@@ -108,6 +109,7 @@ class App extends React.Component<Props, State> {
               vectorField={this.state.currentData.vectorField}
               width={this.props.width}
               height={this.props.height}
+              zoom={this.props.zoom}
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
             />
@@ -117,16 +119,22 @@ class App extends React.Component<Props, State> {
               vectorField={this.state.currentData.vectorField}
               width={this.props.width}
               height={this.props.height}
+              zoom={this.props.zoom}
             />
           ) : null}
           <HoverPositionCalculator
             vectorField={this.state.currentData.vectorField}
             width={this.props.width}
             height={this.props.height}
+            zoom={this.props.zoom}
             updateCursorData={this.props.updateCursorData}
             resetCursorData={this.props.resetCursorData}
           />
-          <BackgroundMap width={this.props.width} height={this.props.height} />
+          <BackgroundMap
+            width={this.props.width}
+            height={this.props.height}
+            zoom={this.props.zoom}
+          />
           <div className={style({position: 'absolute', top: 0, left: 0})}>
             {this.state.currentData.dt.format('HHZ DD/MM/YYYY')}
           </div>

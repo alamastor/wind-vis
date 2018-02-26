@@ -38,6 +38,10 @@ export class VectorField {
   getMaxLon(): number {
     return this.uField.getMaxLon();
   }
+
+  pointInBounds(lat: number, lon: number): boolean {
+    return this.uField.pointInBounds(lat, lon);
+  }
 }
 
 export class DataField {
@@ -110,13 +114,17 @@ export class DataField {
     return this._data[0].length;
   }
 
+  pointInBounds(lat: number, lon: number) {
+    return (
+      lat >= this.getMinLat() &&
+      lat <= this.getMaxLat() &&
+      lon >= this.getMinLon() &&
+      lon <= this.getMaxLon()
+    );
+  }
+
   getValue(lat: number, lon: number) {
-    if (
-      lat < this.getMinLat() ||
-      lat > this.getMaxLat() ||
-      lon < this.getMinLon() ||
-      lon > this.getMaxLon()
-    ) {
+    if (!this.pointInBounds(lat, lon)) {
       throw new Error('point out of bounds');
     }
     const x =
