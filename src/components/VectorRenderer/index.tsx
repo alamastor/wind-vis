@@ -10,9 +10,11 @@ interface Props {
   width: number;
   height: number;
   zoom: number;
+  centerLat: number;
+  centerLon: number;
 }
 interface State {}
-export default class extends React.Component<Props, State> {
+export default class VectorRenderer extends React.Component<Props, State> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
   proj: Projection;
@@ -27,6 +29,8 @@ export default class extends React.Component<Props, State> {
       props.width,
       props.height,
       props.zoom,
+      props.centerLat,
+      props.centerLon,
     );
   }
 
@@ -50,6 +54,8 @@ export default class extends React.Component<Props, State> {
       this.props.width,
       this.props.height,
       this.props.zoom,
+      this.props.centerLat,
+      this.props.centerLon,
     );
     this.renderOnCanvas();
   }

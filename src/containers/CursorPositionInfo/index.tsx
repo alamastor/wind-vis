@@ -4,10 +4,10 @@ import {Dispatch, connect} from 'react-redux';
 import {RootState} from '../../reducers';
 
 const mapStateToProps = (state: RootState) => ({
-  lat: state.mapVis.lat,
-  lon: state.mapVis.lon,
-  u: state.mapVis.u,
-  v: state.mapVis.v,
+  lat: state.mapVis.cursorLat,
+  lon: state.mapVis.cursorLon,
+  u: state.mapVis.cursorU,
+  v: state.mapVis.cursorV,
 });
 
 interface Props {

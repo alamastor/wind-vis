@@ -1,31 +1,46 @@
 import {Action} from './actions';
 
 export interface State {
-  lat: number | null;
-  lon: number | null;
-  u: number | null;
-  v: number | null;
+  cursorLat: number | null;
+  cursorLon: number | null;
+  cursorU: number | null;
+  cursorV: number | null;
+  centerLat: number;
+  centerLon: number;
 }
 
 export const initialState = {
-  lat: null,
-  lon: null,
-  u: null,
-  v: null,
+  cursorLat: null,
+  cursorLon: null,
+  cursorU: null,
+  cursorV: null,
+  centerLat: 0,
+  centerLon: 180,
 };
 
 export default function(state: State = initialState, action: Action): State {
   switch (action.type) {
-    case 'MAP_VIS_CURSOR_UPDATE':
+    case 'MAP_VIS_SET_CURSOR':
       return Object.assign({}, state, {
-        lat: action.lat,
-        lon: action.lon,
-        u: action.u,
-        v: action.v,
+        cursorLat: action.lat,
+        cursorLon: action.lon,
+        cursorU: action.u,
+        cursorV: action.v,
       });
 
-    case 'MAP_VIS_CURSOR_RESET':
-      return initialState;
+    case 'MAP_VIS_RESET_CURSOR':
+      return Object.assign({}, state, {
+        cursorLat: initialState.cursorLat,
+        cursorLon: initialState.cursorLon,
+        cursorU: initialState.cursorU,
+        cursorV: initialState.cursorV,
+      });
+
+    case 'MAP_VIS_SET_CENTER_POINT':
+      return Object.assign({}, state, {
+        centerLat: action.lat,
+        centerLon: action.lon,
+      });
 
     default:
       return state;

@@ -2,22 +2,23 @@ import {RootAction} from '../../reducers';
 
 export type Action =
   | {
-      type: 'MAP_VIS_CURSOR_UPDATE';
+      type: 'MAP_VIS_SET_CURSOR';
       lat: number;
       lon: number;
       u: number;
       v: number;
     }
-  | {type: 'MAP_VIS_CURSOR_RESET'};
+  | {type: 'MAP_VIS_RESET_CURSOR'}
+  | {type: 'MAP_VIS_SET_CENTER_POINT'; lat: number; lon: number};
 
-export function updateCursorData(
+export function setCursorData(
   lat: number,
   lon: number,
   u: number,
   v: number,
 ): RootAction {
   return {
-    type: 'MAP_VIS_CURSOR_UPDATE',
+    type: 'MAP_VIS_SET_CURSOR',
     lat: lat,
     lon: lon,
     u: u,
@@ -26,5 +27,9 @@ export function updateCursorData(
 }
 
 export function resetCursorData(): RootAction {
-  return {type: 'MAP_VIS_CURSOR_RESET'};
+  return {type: 'MAP_VIS_RESET_CURSOR'};
+}
+
+export function setCenterPoint(lat: number, lon: number): RootAction {
+  return {type: 'MAP_VIS_SET_CENTER_POINT', lat: lat, lon: lon};
 }

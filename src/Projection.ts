@@ -17,6 +17,8 @@ export default class {
     width: number,
     height: number,
     zoom: number = 1,
+    midLat: number = 0,
+    midLon: number = 40,
   ) {
     [this.minLat, this.maxLat, this.minLon, this.maxLon] = [
       minLat,
@@ -35,6 +37,11 @@ export default class {
     }
     this.xOffset = (width - this.width) / 2;
     this.yOffset = (height - this.height) / 2;
+    const midX = this.transformLon(midLon);
+    const midY = this.transformLat(midLat);
+    // TODO: Clean this up!!
+    this.xOffset = width / 2 - midX + (width - this.width) / 2;
+    this.yOffset = height / 2 - midY + (height - this.height) / 2;
   }
 
   scaleLat(lat: number) {
@@ -59,11 +66,19 @@ export default class {
     );
   }
 
+  scaleX(x: number) {
+    return x * (this.maxLon - this.minLon) / this.width;
+  }
+
   transformX(x: number) {
     return (
       (x - this.xOffset) * (this.maxLon - this.minLon) / this.width +
       this.minLon
     );
+  }
+
+  scaleY(y: number) {
+    return y * (this.maxLon - this.minLon) / this.width;
   }
 
   transformY(y: number) {

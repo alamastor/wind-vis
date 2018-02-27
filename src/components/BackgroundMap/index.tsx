@@ -4,12 +4,12 @@ import {style} from 'typestyle';
 
 const Globe = require('../../img/globe.png');
 
-export default (props: {
+const BackgroundMap = (props: {
   width: number;
   height: number;
   zoom: number;
-  midLat: number;
-  midLon: number;
+  centerLat: number;
+  centerLon: number;
 }) => {
   let width: number;
   let height: number;
@@ -22,6 +22,10 @@ export default (props: {
     width = props.zoom * props.height * 2;
     height = props.zoom * props.height;
   }
+  const midX = width * props.centerLon / 360; // Assume full globe map
+  const midY = height * (props.centerLat + 90) / 180; // Assume full globe map
+  const xOffset = width / 2 - midX + (props.width - width) / 2;
+  const yOffset = midY - height / 2 + (props.height - height) / 2;
   return (
     <div
       id="map"
@@ -35,12 +39,15 @@ export default (props: {
         src={Globe}
         className={style({
           position: 'relative',
-          top: (props.height - height) / 2,
-          left: (props.width - width) / 2,
+          top: yOffset,
+          left: xOffset,
           width: width,
           height: height,
+          pointerEvents: 'none',
         })}
       />
     </div>
   );
 };
+
+export default BackgroundMap;
