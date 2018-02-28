@@ -43,6 +43,7 @@ export default class MouseManager extends React.Component<Props, State> {
     this.onMouseOut = this.onMouseOut.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
+    this.onDrag = this.onDrag.bind(this);
   }
 
   componentDidUpdate() {
@@ -70,14 +71,7 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (this.dragging) {
-      this.props.setCenterPoint(
-        this.props.centerLat + this.proj.scaleY(event.clientY - this.dragPrevY),
-        this.props.centerLon - this.proj.scaleX(event.clientX - this.dragPrevX),
-      );
-      this.dragPrevX = event.clientX;
-      this.dragPrevY = event.clientY;
-    } else {
+    if (!this.dragging) {
       const lat = this.proj.transformY(event.clientY - this.div.offsetTop);
       const lon = this.proj.transformX(event.clientX - this.div.offsetLeft);
       if (this.props.vectorField.pointInBounds(lat, lon)) {
@@ -95,19 +89,38 @@ export default class MouseManager extends React.Component<Props, State> {
     }
   }
 
-  onMouseOut() {
+  onDrag(event: MouseEvent) {
+    console.log('asdf');
+    event.preventDefault();
+    this.props.setCenterPoint(
+      this.props.centerLat + this.proj.scaleY(event.clientY - this.dragPrevY),
+      this.props.centerLon - this.proj.scaleX(event.clientX - this.dragPrevX),
+    );
+    this.dragPrevX = event.clientX;
+    this.dragPrevY = event.clientY;
+  }
+
+  onMouseOut(event: React.MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
     [this.cursorLat, this.cursorLon] = [null, null];
     this.props.resetCursorData();
     this.dragging = false;
   }
 
   onMouseDown(event: React.MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
     this.dragging = true;
     this.dragPrevX = event.clientX;
     this.dragPrevY = event.clientY;
+    document.addEventListener('mousemove', this.onDrag);
+    document.addEventListener('mouseup', this.onMouseUp);
   }
 
-  onMouseUp() {
+  onMouseUp(event: MouseEvent) {
+    console.log('mouse up');
+    event.preventDefault();
+    document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('mouseup', this.onMouseUp);
     this.dragging = false;
   }
 
@@ -126,13 +139,6 @@ export default class MouseManager extends React.Component<Props, State> {
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}
         onMouseDown={this.onMouseDown}
-        onMouseUp={this.onMouseUp}
-        onDragStart={() => {
-          console.log('onDragStart');
-        }}
-        onDrag={() => {
-          console.log('onDrag');
-        }}
       />
     );
   }
