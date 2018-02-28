@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
-const Globe = require('../../img/globe.png');
+const Globe = require('../../img/globe-large.png');
 
 const BackgroundMap = (props: {
   width: number;
