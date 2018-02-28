@@ -1,5 +1,8 @@
 import {Action} from './actions';
 
+export const minZoomLevel = 1;
+export const maxZoomLevel = 15;
+
 export interface ControlPanelState {
   readonly displayParticles: boolean;
   readonly displayVectors: boolean;
@@ -48,8 +51,12 @@ export default function controlPanel(
       });
 
     case 'CONTROL_PANEL_SET_ZOOM_LEVEL':
+      const zoomLevel = Math.min(
+        Math.max(minZoomLevel, action.zoomLevel),
+        maxZoomLevel,
+      );
       return Object.assign({}, state, {
-        zoomLevel: action.zoomLevel,
+        zoomLevel: zoomLevel,
       });
 
     default:

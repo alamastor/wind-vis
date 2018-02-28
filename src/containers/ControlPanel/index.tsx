@@ -11,6 +11,7 @@ import {
   setClearParticlesEachFrame,
   setZoomLevel,
 } from './actions';
+import {minZoomLevel, maxZoomLevel} from './reducer';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
@@ -139,8 +140,8 @@ class ControlPanel extends React.Component<Props, {}> {
           <input
             name="zoomLevel"
             type="range"
-            min="1"
-            max="10"
+            min={minZoomLevel.toString()}
+            max={maxZoomLevel.toString()}
             step="0.1"
             value={this.props.zoomLevel}
             onChange={this.handleZoomLevelChange}

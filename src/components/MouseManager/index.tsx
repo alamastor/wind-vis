@@ -9,12 +9,13 @@ interface Props {
   vectorField: VectorField;
   width: number;
   height: number;
-  zoom: number;
+  zoomLevel: number;
   centerLat: number;
   centerLon: number;
   setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
+  setZoomLevel: (zoomLevel: number) => Action;
 }
 interface State {}
 export default class MouseManager extends React.Component<Props, State> {
@@ -35,7 +36,7 @@ export default class MouseManager extends React.Component<Props, State> {
       props.vectorField.getMaxLon(),
       props.width,
       props.height,
-      props.zoom,
+      props.zoomLevel,
       props.centerLat,
       props.centerLon,
     );
@@ -44,6 +45,7 @@ export default class MouseManager extends React.Component<Props, State> {
     this.onMouseUp = this.onMouseUp.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onDrag = this.onDrag.bind(this);
+    this.onWheel = this.onWheel.bind(this);
   }
 
   componentDidUpdate() {
@@ -54,7 +56,7 @@ export default class MouseManager extends React.Component<Props, State> {
       this.props.vectorField.getMaxLon(),
       this.props.width,
       this.props.height,
-      this.props.zoom,
+      this.props.zoomLevel,
       this.props.centerLat,
       this.props.centerLon,
     );
@@ -90,7 +92,6 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   onDrag(event: MouseEvent) {
-    console.log('asdf');
     event.preventDefault();
     this.props.setCenterPoint(
       this.props.centerLat + this.proj.scaleY(event.clientY - this.dragPrevY),
@@ -117,11 +118,15 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   onMouseUp(event: MouseEvent) {
-    console.log('mouse up');
     event.preventDefault();
     document.removeEventListener('mousemove', this.onDrag);
     document.removeEventListener('mouseup', this.onMouseUp);
     this.dragging = false;
+  }
+
+  onWheel(event: React.WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    this.props.setZoomLevel(this.props.zoomLevel - event.deltaY / 10);
   }
 
   render() {
@@ -139,6 +144,7 @@ export default class MouseManager extends React.Component<Props, State> {
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}
         onMouseDown={this.onMouseDown}
+        onWheel={this.onWheel}
       />
     );
   }

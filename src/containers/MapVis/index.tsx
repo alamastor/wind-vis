@@ -10,6 +10,7 @@ import VectorRenderer from '../../components/VectorRenderer';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
+import {setZoomLevel} from '../ControlPanel/actions';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
@@ -28,6 +29,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       setCursorData,
       resetCursorData,
       setCenterPoint,
+      setZoomLevel,
     },
     dispatch,
   );
@@ -46,6 +48,7 @@ interface Props {
   setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
+  setZoomLevel: (zoomLevel: number) => Action;
 }
 interface State {
   currentData: TauData | null;
@@ -136,12 +139,13 @@ class App extends React.Component<Props, State> {
             vectorField={this.state.currentData.vectorField}
             width={this.props.width}
             height={this.props.height}
-            zoom={this.props.zoomLevel}
+            zoomLevel={this.props.zoomLevel}
             centerLat={this.props.centerLat}
             centerLon={this.props.centerLon}
             setCursorData={this.props.setCursorData}
             resetCursorData={this.props.resetCursorData}
             setCenterPoint={this.props.setCenterPoint}
+            setZoomLevel={this.props.setZoomLevel}
           />
           <BackgroundMap
             width={this.props.width}
