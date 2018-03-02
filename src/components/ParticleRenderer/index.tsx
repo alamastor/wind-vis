@@ -5,8 +5,8 @@ import {style} from 'typestyle';
 import VectorField from '../../utils/fielddata/VectorField';
 import Projection from '../../Projection';
 
-const PARTICLE_FADE_START = 5000;
-const PARTICLE_LIFETIME = 7000;
+const PARTICLE_FADE_START = 2000;
+const PARTICLE_BASE_LIFETIME = 4000;
 const MAX_PARTICLES = 3000;
 
 interface Props {
@@ -83,13 +83,14 @@ export default class ParticleRenderer extends React.Component<Props, State> {
                 this.props.vectorField.getMinLat()) +
               this.props.vectorField.getMinLat(),
             Math.random() * this.props.vectorField.getMaxLon(),
+            PARTICLE_BASE_LIFETIME + Math.random() * PARTICLE_BASE_LIFETIME,
           ),
         );
       }
     }
 
-    this.particles.forEach((part: Particle) => {
-      part.update(this.props.vectorField, deltaT);
+    this.particles.forEach((particle: Particle) => {
+      particle.update(this.props.vectorField, deltaT);
     });
 
     if (this.props.clearParticlesEachFrame) {
@@ -99,7 +100,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     for (let i = 0; i < this.particles.length; i++) {
       let p = this.particles[i];
       if (
-        this.particles[i].lifeTime >= PARTICLE_LIFETIME ||
+        this.particles[i].age >= this.particles[i].lifeTime ||
         this.particles[i].lat <= this.props.vectorField.getMinLat() ||
         this.particles[i].lat >= this.props.vectorField.getMaxLat() ||
         this.particles[i].lon <= this.props.vectorField.getMinLon() ||
@@ -111,6 +112,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
               this.props.vectorField.getMinLat()) +
             this.props.vectorField.getMinLat(),
           Math.random() * (this.props.vectorField.getMaxLon() - 1),
+          PARTICLE_BASE_LIFETIME + Math.random() * PARTICLE_BASE_LIFETIME,
         );
       }
       if (this.particles[i] != null) {
@@ -125,12 +127,6 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     this.getCtx().fillStyle = particle.color;
 
     let alpha = particle.alpha;
-    if (particle.lifeTime >= PARTICLE_FADE_START) {
-      alpha =
-        particle.alpha *
-        ((PARTICLE_LIFETIME - PARTICLE_FADE_START - particle.lifeTime) /
-          (PARTICLE_LIFETIME - PARTICLE_FADE_START));
-    }
 
     this.getCtx().globalAlpha = alpha;
     this.getCtx().fillRect(
@@ -172,31 +168,24 @@ export default class ParticleRenderer extends React.Component<Props, State> {
 class Particle {
   lat: number;
   lon: number;
-  xTail: number[];
-  yTail: number[];
-  height: number;
-  width: number;
-  color: string;
-  alpha: number;
+  xTail: number[] = [];
+  yTail: number[] = [];
+  height = 1;
+  width = 1;
+  color = 'rgb(' +
+    Math.random() * 255 +
+    ',' +
+    Math.random() * 255 +
+    ',' +
+    Math.random() * 255 +
+    ')';
+  alpha = 0.3;
   lifeTime: number;
-  dead: boolean;
-  constructor(lat: number, lon: number) {
+  age = 0;
+  constructor(lat: number, lon: number, lifeTime: number) {
     this.lat = lat;
     this.lon = lon;
-    this.height = 1;
-    this.width = 1;
-    this.color =
-      'rgb(' +
-      Math.random() * 255 +
-      ',' +
-      Math.random() * 255 +
-      ',' +
-      Math.random() * 255 +
-      ')';
-    this.alpha = 0.3;
-    this.lifeTime = 0;
-    this.xTail = [];
-    this.yTail = [];
+    this.lifeTime = lifeTime;
   }
 
   update(vectorField: VectorField, deltaT: number) {
@@ -212,13 +201,18 @@ class Particle {
       this.lat >= vectorField.getMinLat() &&
       this.lat <= vectorField.getMaxLat()
     ) {
-      this.lifeTime += deltaT;
+      this.age += deltaT;
       this.yTail.push(this.lat);
       this.xTail.push(this.lon);
       const u = vectorField.uField.getValue(this.lat, this.lon);
       const v = vectorField.vField.getValue(this.lat, this.lon);
       this.lat = this.lat + v / 50;
       this.lon = this.lon + u / 50;
+    }
+    if (this.age >= PARTICLE_FADE_START) {
+      this.alpha =
+        0.3 *
+        ((this.age - this.lifeTime) / (PARTICLE_FADE_START - this.lifeTime));
     }
   }
 }
