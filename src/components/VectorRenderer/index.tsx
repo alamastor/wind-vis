@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
-import {VectorField} from '../../fields';
+import VectorField from '../../utils/fielddata/VectorField';
 import Projection from '../../Projection';
 
 interface Props {

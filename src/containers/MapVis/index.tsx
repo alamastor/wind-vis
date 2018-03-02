@@ -2,14 +2,23 @@ import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';
-import {TauData, ModelData, WIND_FIELDS} from '../../fields';
-import {degreesToPixels} from '../../units';
+import * as moment from 'moment';
+
+import {getCycle, getData} from '../../utils/fielddata';
+import VectorField from '../../utils/fielddata/VectorField';
+import DataField from '../../utils/fielddata/DataField';
+import {
+  State as FieldDataState,
+  tauToDt,
+  tauAvailable,
+} from './fieldDataReducer';
 import {RootState, RootAction as Action} from '../../reducers';
 import ParticleRenderer from '../../components/ParticleRenderer';
 import VectorRenderer from '../../components/VectorRenderer';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
+import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
 
 const mapStateToProps = (state: RootState) => ({
@@ -21,6 +30,7 @@ const mapStateToProps = (state: RootState) => ({
   centerLon: state.mapVis.centerLon,
   showParticleTails: state.controlPanel.showParticleTails,
   clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
+  fieldData: state.fieldData,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -30,6 +40,8 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       resetCursorData,
       setCenterPoint,
       setZoomLevel,
+      setCycle,
+      addData,
     },
     dispatch,
   );
@@ -45,31 +57,51 @@ interface Props {
   paused: boolean;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
+  fieldData: FieldDataState;
   setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
   setZoomLevel: (zoomLevel: number) => Action;
+  setCycle: (cycle: moment.Moment) => Action;
+  addData: (tau: number, data: {u: number[][]; v: number[][]}) => Action;
 }
 interface State {
-  currentData: TauData | null;
+  currentTau: number;
 }
-class App extends React.Component<Props, State> {
-  dataIdx: number = 0;
-  modelData: ModelData | null = null;
-  readonly frameInterval: number = 500;
-  lastUpdate: Date = new Date();
-  updateRemainingTime: number = 500;
+class MapVis extends React.Component<Props, State> {
+  readonly frameInterval = 500;
+  lastUpdate = new Date();
+  updateRemainingTime = 500;
   timeoutId: number | null;
+  tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x);
+  awaitingData = false;
+
   constructor(props: Props) {
     super(props);
-    this.state = {currentData: null};
+    this.state = {currentTau: 0};
   }
 
   componentDidMount() {
-    WIND_FIELDS.gfsData.then(gfsData => {
-      this.modelData = gfsData;
-      this.setNextTau();
-    });
+    this.fetchNextTau();
+    this.setNextTau();
+  }
+
+  fetchNextTau() {
+    if (this.props.fieldData.cycle == null) {
+      getCycle().then((cycle: moment.Moment) => {
+        this.props.setCycle(cycle);
+        this.fetchNextTau();
+      });
+    } else {
+      const tau = this.tausToFetch.pop();
+      const cyc = moment(this.props.fieldData.cycle);
+      if (cyc != null && tau != null) {
+        getData(cyc, tau).then((data: {u: number[][]; v: number[][]}) => {
+          this.props.addData(tau, data);
+          this.fetchNextTau();
+        });
+      }
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -81,31 +113,40 @@ class App extends React.Component<Props, State> {
       this.updateRemainingTime =
         this.frameInterval - (Date.now() - this.lastUpdate.getTime());
     } else if (!this.props.paused && prevProps.paused) {
-      setTimeout(
-        this.setNextTau.bind(this, this.modelData),
-        this.updateRemainingTime,
-      );
+      setTimeout(this.setNextTau.bind(this), this.updateRemainingTime);
+    } else if (this.awaitingData) {
+      this.setNextTau();
     }
   }
 
   setNextTau() {
-    if (!this.props.paused && this.modelData != null) {
-      this.lastUpdate = new Date();
-      this.setState({currentData: this.modelData.data[this.dataIdx]});
-      this.timeoutId = setTimeout(
-        this.setNextTau.bind(this, this.modelData),
-        this.frameInterval,
-      );
-      if (this.dataIdx < this.modelData.data.length - 1) {
-        this.dataIdx++;
+    if (!this.props.paused) {
+      const nextTau = (this.state.currentTau + 3) % 180;
+      if (tauAvailable(this.props.fieldData, nextTau)) {
+        this.lastUpdate = new Date();
+        this.setState({currentTau: nextTau});
+        this.timeoutId = setTimeout(
+          this.setNextTau.bind(this),
+          this.frameInterval,
+        );
+        this.awaitingData = false;
       } else {
-        this.dataIdx = 0;
+        this.awaitingData = true;
       }
     }
   }
 
   render() {
-    if (this.modelData && this.state.currentData) {
+    const currentDataDt = tauToDt(this.props.fieldData, this.state.currentTau);
+    if (
+      currentDataDt != null &&
+      tauAvailable(this.props.fieldData, this.state.currentTau)
+    ) {
+      const currentData = this.props.fieldData.data[this.state.currentTau];
+      const vectorField = new VectorField(
+        new DataField(currentData.u, -90, 90, 0, 359, 1),
+        new DataField(currentData.v, -90, 90, 0, 359, 1),
+      );
       return (
         <div
           id="map-vis"
@@ -115,7 +156,7 @@ class App extends React.Component<Props, State> {
           })}>
           {this.props.displayParticles ? (
             <ParticleRenderer
-              vectorField={this.state.currentData.vectorField}
+              vectorField={vectorField}
               width={this.props.width}
               height={this.props.height}
               zoom={this.props.zoomLevel}
@@ -127,7 +168,7 @@ class App extends React.Component<Props, State> {
           ) : null}
           {this.props.displayVectors ? (
             <VectorRenderer
-              vectorField={this.state.currentData.vectorField}
+              vectorField={vectorField}
               width={this.props.width}
               height={this.props.height}
               zoom={this.props.zoomLevel}
@@ -136,7 +177,7 @@ class App extends React.Component<Props, State> {
             />
           ) : null}
           <MouseManager
-            vectorField={this.state.currentData.vectorField}
+            vectorField={vectorField}
             width={this.props.width}
             height={this.props.height}
             zoomLevel={this.props.zoomLevel}
@@ -155,14 +196,37 @@ class App extends React.Component<Props, State> {
             centerLon={this.props.centerLon}
           />
           <div className={style({position: 'absolute', top: 0, left: 0})}>
-            {this.state.currentData.dt.format('HHZ DD/MM/YYYY')}
+            {currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}
+          </div>
+        </div>
+      );
+    } else if (currentDataDt != null) {
+      return (
+        <div
+          id="spinner"
+          className={style({
+            width: this.props.width,
+            height: this.props.height,
+          })}>
+          <div className={style({position: 'absolute', top: 0, left: 0})}>
+            <div>{currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}</div>
+            <div>Fetching Data</div>
           </div>
         </div>
       );
     } else {
-      return <div />;
+      return (
+        <div
+          id="spinner"
+          className={style({
+            width: this.props.width,
+            height: this.props.height,
+          })}>
+          <div>Fetching Data</div>
+        </div>
+      );
     }
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(MapVis);

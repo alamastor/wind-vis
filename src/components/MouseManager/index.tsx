@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import {RootAction as Action} from '../../reducers';
-import {VectorField} from '../../fields';
+import VectorField from '../../utils/fielddata/VectorField';
 import Projection from '../../Projection';
 
 interface Props {

@@ -1,4 +1,5 @@
 import {Action} from './actions';
+import {RootAction} from '../../reducers';
 
 export interface State {
   cursorLat: number | null;
@@ -18,7 +19,10 @@ export const initialState = {
   centerLon: 180,
 };
 
-export default function(state: State = initialState, action: Action): State {
+export default function(
+  state: State = initialState,
+  action: RootAction,
+): State {
   switch (action.type) {
     case 'MAP_VIS_SET_CURSOR':
       return Object.assign({}, state, {

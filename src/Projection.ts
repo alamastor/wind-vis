@@ -1,4 +1,4 @@
-import {VectorField} from './fields';
+import VectorField from './utils/fielddata/VectorField';
 
 export default class {
   minLat: number;
