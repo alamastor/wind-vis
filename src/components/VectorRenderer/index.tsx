@@ -7,32 +7,14 @@ import Projection from '../../Projection';
 
 interface Props {
   vectorField: VectorField;
+  projection: Projection;
   width: number;
   height: number;
-  zoom: number;
-  centerLat: number;
-  centerLon: number;
 }
 interface State {}
 export default class VectorRenderer extends React.Component<Props, State> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
-  proj: Projection;
-
-  constructor(props: Props) {
-    super(props);
-    this.proj = new Projection(
-      props.vectorField.getMinLat(),
-      props.vectorField.getMaxLat(),
-      props.vectorField.getMinLon(),
-      props.vectorField.getMaxLon(),
-      props.width,
-      props.height,
-      props.zoom,
-      props.centerLat,
-      props.centerLon,
-    );
-  }
 
   getCtx(): CanvasRenderingContext2D {
     if (!this.ctx) {
@@ -46,17 +28,6 @@ export default class VectorRenderer extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
-    this.proj = new Projection(
-      this.props.vectorField.getMinLat(),
-      this.props.vectorField.getMaxLat(),
-      this.props.vectorField.getMinLon(),
-      this.props.vectorField.getMaxLon(),
-      this.props.width,
-      this.props.height,
-      this.props.zoom,
-      this.props.centerLat,
-      this.props.centerLon,
-    );
     this.renderOnCanvas();
   }
 
@@ -95,12 +66,12 @@ export default class VectorRenderer extends React.Component<Props, State> {
       lon = lon + 10
     ) {
       ctx.moveTo(
-        this.proj.transformLon(lon),
-        this.proj.transformLat(this.props.vectorField.getMinLat()),
+        this.props.projection.transformLon(lon),
+        this.props.projection.transformLat(this.props.vectorField.getMinLat()),
       );
       ctx.lineTo(
-        this.proj.transformLon(lon),
-        this.proj.transformLat(this.props.vectorField.getMaxLat()),
+        this.props.projection.transformLon(lon),
+        this.props.projection.transformLat(this.props.vectorField.getMaxLat()),
       );
     }
 
@@ -110,12 +81,12 @@ export default class VectorRenderer extends React.Component<Props, State> {
       lat = lat + 10
     ) {
       ctx.moveTo(
-        this.proj.transformLon(this.props.vectorField.getMinLon()),
-        this.proj.transformLat(lat),
+        this.props.projection.transformLon(this.props.vectorField.getMinLon()),
+        this.props.projection.transformLat(lat),
       );
       ctx.lineTo(
-        this.proj.transformLon(this.props.vectorField.getMaxLon()),
-        this.proj.transformLat(lat),
+        this.props.projection.transformLon(this.props.vectorField.getMaxLon()),
+        this.props.projection.transformLat(lat),
       );
     }
     ctx.strokeStyle = 'black';
@@ -125,7 +96,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
   plotArrow(lat: number, lon: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    ctx.translate(this.proj.transformLon(lon), this.proj.transformLat(lat));
+    ctx.translate(
+      this.props.projection.transformLon(lon),
+      this.props.projection.transformLat(lat),
+    );
     ctx.rotate(-Math.atan2(v, u));
     drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
     ctx.restore();

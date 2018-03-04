@@ -11,35 +11,17 @@ const MAX_PARTICLES = 3000;
 
 interface Props {
   vectorField: VectorField;
+  projection: Projection;
   width: number;
   height: number;
-  zoom: number;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
-  centerLat: number;
-  centerLon: number;
 }
 interface State {}
 export default class ParticleRenderer extends React.Component<Props, State> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
   particles: Particle[] = [];
-  proj: Projection;
-
-  constructor(props: Props) {
-    super(props);
-    this.proj = new Projection(
-      props.vectorField.getMinLat(),
-      props.vectorField.getMaxLat(),
-      props.vectorField.getMinLon(),
-      props.vectorField.getMaxLon(),
-      props.width,
-      props.height,
-      props.zoom,
-      props.centerLat,
-      props.centerLon,
-    );
-  }
 
   getCtx(): CanvasRenderingContext2D {
     if (!this.ctx) {
@@ -50,20 +32,6 @@ export default class ParticleRenderer extends React.Component<Props, State> {
 
   componentDidMount() {
     window.requestAnimationFrame(this.updateAndRender.bind(this));
-  }
-
-  componentDidUpdate() {
-    this.proj = new Projection(
-      this.props.vectorField.getMinLat(),
-      this.props.vectorField.getMaxLat(),
-      this.props.vectorField.getMinLon(),
-      this.props.vectorField.getMaxLon(),
-      this.props.width,
-      this.props.height,
-      this.props.zoom,
-      this.props.centerLat,
-      this.props.centerLon,
-    );
   }
 
   updateAndRender(prevTime: number, timestamp: number) {
@@ -130,20 +98,24 @@ export default class ParticleRenderer extends React.Component<Props, State> {
 
     this.getCtx().globalAlpha = alpha;
     this.getCtx().fillRect(
-      this.proj.transformLon(particle.lon - particle.width / 2),
-      this.proj.transformLat(particle.lat + particle.height / 2),
-      this.proj.scaleLon(particle.width),
-      this.proj.scaleLat(particle.height),
+      this.props.projection.transformLon(particle.lon - particle.width / 2),
+      this.props.projection.transformLat(particle.lat + particle.height / 2),
+      this.props.projection.scaleLon(particle.width),
+      this.props.projection.scaleLat(particle.height),
     );
 
     if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
         this.getCtx().fillRect(
-          this.proj.transformLon(particle.xTail[i] - particle.width / 2),
-          this.proj.transformLat(particle.yTail[i] + particle.height / 2),
-          this.proj.scaleLon(particle.width),
-          this.proj.scaleLat(particle.height),
+          this.props.projection.transformLon(
+            particle.xTail[i] - particle.width / 2,
+          ),
+          this.props.projection.transformLat(
+            particle.yTail[i] + particle.height / 2,
+          ),
+          this.props.projection.scaleLon(particle.width),
+          this.props.projection.scaleLat(particle.height),
         );
       }
     }

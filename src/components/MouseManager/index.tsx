@@ -7,11 +7,12 @@ import Projection from '../../Projection';
 
 interface Props {
   vectorField: VectorField;
+  projection: Projection;
   width: number;
   height: number;
-  zoomLevel: number;
   centerLat: number;
   centerLon: number;
+  zoomLevel: number;
   setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
@@ -19,7 +20,6 @@ interface Props {
 }
 interface State {}
 export default class MouseManager extends React.Component<Props, State> {
-  proj: Projection;
   div: HTMLDivElement;
   dragging: Boolean = false;
   dragPrevX: number = 0;
@@ -29,17 +29,6 @@ export default class MouseManager extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.proj = new Projection(
-      props.vectorField.getMinLat(),
-      props.vectorField.getMaxLat(),
-      props.vectorField.getMinLon(),
-      props.vectorField.getMaxLon(),
-      props.width,
-      props.height,
-      props.zoomLevel,
-      props.centerLat,
-      props.centerLon,
-    );
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseOut = this.onMouseOut.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
@@ -49,17 +38,6 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
-    this.proj = new Projection(
-      this.props.vectorField.getMinLat(),
-      this.props.vectorField.getMaxLat(),
-      this.props.vectorField.getMinLon(),
-      this.props.vectorField.getMaxLon(),
-      this.props.width,
-      this.props.height,
-      this.props.zoomLevel,
-      this.props.centerLat,
-      this.props.centerLon,
-    );
     if (this.cursorLat != null && this.cursorLon != null) {
       const lat = this.cursorLat;
       const lon = this.cursorLon;
@@ -74,8 +52,12 @@ export default class MouseManager extends React.Component<Props, State> {
 
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     if (!this.dragging) {
-      const lat = this.proj.transformY(event.clientY - this.div.offsetTop);
-      const lon = this.proj.transformX(event.clientX - this.div.offsetLeft);
+      const lat = this.props.projection.transformY(
+        event.clientY - this.div.offsetTop,
+      );
+      const lon = this.props.projection.transformX(
+        event.clientX - this.div.offsetLeft,
+      );
       if (this.props.vectorField.pointInBounds(lat, lon)) {
         [this.cursorLat, this.cursorLon] = [lat, lon];
         this.props.setCursorData(
@@ -94,8 +76,10 @@ export default class MouseManager extends React.Component<Props, State> {
   onDrag(event: MouseEvent) {
     event.preventDefault();
     this.props.setCenterPoint(
-      this.props.centerLat + this.proj.scaleY(event.clientY - this.dragPrevY),
-      this.props.centerLon - this.proj.scaleX(event.clientX - this.dragPrevX),
+      this.props.centerLat +
+        this.props.projection.scaleY(event.clientY - this.dragPrevY),
+      this.props.centerLon -
+        this.props.projection.scaleX(event.clientX - this.dragPrevX),
     );
     this.dragPrevX = event.clientX;
     this.dragPrevY = event.clientY;

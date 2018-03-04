@@ -20,6 +20,7 @@ import BackgroundMap from '../../components/BackgroundMap';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
+import Projection from '../../Projection';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
@@ -147,6 +148,18 @@ class MapVis extends React.Component<Props, State> {
         new DataField(currentData.u, -90, 90, 0, 359, 1),
         new DataField(currentData.v, -90, 90, 0, 359, 1),
       );
+      const projection = new Projection(
+        vectorField.getMinLat(),
+        vectorField.getMaxLat(),
+        vectorField.getMinLon(),
+        vectorField.getMaxLon(),
+        this.props.width,
+        this.props.height,
+        this.props.zoomLevel,
+        this.props.centerLat,
+        this.props.centerLon,
+      );
+
       return (
         <div
           id="map-vis"
@@ -157,32 +170,29 @@ class MapVis extends React.Component<Props, State> {
           {this.props.displayParticles ? (
             <ParticleRenderer
               vectorField={vectorField}
+              projection={projection}
               width={this.props.width}
               height={this.props.height}
-              zoom={this.props.zoomLevel}
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
-              centerLat={this.props.centerLat}
-              centerLon={this.props.centerLon}
             />
           ) : null}
           {this.props.displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}
+              projection={projection}
               width={this.props.width}
               height={this.props.height}
-              zoom={this.props.zoomLevel}
-              centerLat={this.props.centerLat}
-              centerLon={this.props.centerLon}
             />
           ) : null}
           <MouseManager
             vectorField={vectorField}
+            projection={projection}
             width={this.props.width}
             height={this.props.height}
-            zoomLevel={this.props.zoomLevel}
             centerLat={this.props.centerLat}
             centerLon={this.props.centerLon}
+            zoomLevel={this.props.zoomLevel}
             setCursorData={this.props.setCursorData}
             resetCursorData={this.props.resetCursorData}
             setCenterPoint={this.props.setCenterPoint}
