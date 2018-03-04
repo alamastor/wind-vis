@@ -16,6 +16,7 @@ interface Props {
   height: number;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
+  resetPariclesOnInit: boolean;
 }
 interface State {}
 export default class ParticleRenderer extends React.Component<Props, State> {
@@ -32,6 +33,15 @@ export default class ParticleRenderer extends React.Component<Props, State> {
 
   componentDidMount() {
     window.requestAnimationFrame(this.updateAndRender.bind(this));
+  }
+
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (
+      this.props.resetPariclesOnInit &&
+      this.props.vectorField !== prevProps.vectorField
+    ) {
+      this.particles = [];
+    }
   }
 
   updateAndRender(prevTime: number, timestamp: number) {

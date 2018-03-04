@@ -175,6 +175,7 @@ class MapVis extends React.Component<Props, State> {
               height={this.props.height}
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
+              resetPariclesOnInit={this.state.currentTau === 0}
             />
           ) : null}
           {this.props.displayVectors ? (
