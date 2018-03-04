@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
+import {style} from 'typestyle';
 
 import {RootState, RootAction as Action} from '../../reducers';
 import {
@@ -98,7 +99,13 @@ class ControlPanel extends React.Component<Props, {}> {
 
   render() {
     return (
-      <form>
+      <form
+        className={style({
+          gridArea: 'control',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 1,
+        })}>
         <label>
           Display Particles:
           <input
@@ -147,7 +154,9 @@ class ControlPanel extends React.Component<Props, {}> {
             onChange={this.handleZoomLevelChange}
           />
         </label>
-        <button onClick={this.handleTogglePaused}>
+        <button
+          className={style({width: '150px'})}
+          onClick={this.handleTogglePaused}>
           {this.props.paused ? 'Resume' : 'Pause'}
         </button>
       </form>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {Dispatch, connect} from 'react-redux';
+import {style} from 'typestyle';
 
 import {RootState} from '../../reducers';
 
@@ -63,15 +64,19 @@ class CursorPositionInfo extends React.Component<Props, State> {
     }
   }
 
-  infoString(): string {
-    return `lat: ${this.latString()}
-            lon: ${this.lonString()}
-            wind speed: ${this.windSpeedString()}
-            wind dir: ${this.windDirString()}`;
-  }
-
   render() {
-    return <div id="cursor-position-info">{this.infoString()}</div>;
+    return (
+      <div
+        id="cursor-position-info"
+        className={style({
+          gridArea: '3 / 1',
+        })}>
+        <div>lat: {this.latString()}</div>
+        <div>lon: {this.lonString()}</div>
+        <div>wind speed: {this.windSpeedString()}</div>
+        <div>wind dir: {this.windDirString()}</div>
+      </div>
+    );
   }
 }
 

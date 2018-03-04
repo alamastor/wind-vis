@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {Dispatch, connect} from 'react-redux';
+import {style} from 'typestyle';
 
 import {RootState} from '../../reducers';
 import ControlPanel from '../ControlPanel';
@@ -13,8 +14,18 @@ interface State {}
 class App extends React.Component<Props, State> {
   render() {
     return (
-      <div id="app">
-        <MapVis width={1000} height={600} />
+      <div
+        id="app"
+        className={style({
+          display: 'grid',
+          width: '100%',
+          height: '100%',
+          gridTemplateRows: '1fr 10vh',
+          gridTemplateColumns: '1fr 300px',
+          gridTemplateAreas: `".... control"
+                              "info ......."`,
+        })}>
+        <MapVis width={window.innerWidth} height={window.innerHeight} />
         <ControlPanel />
         <CursorPositionInfo />
       </div>

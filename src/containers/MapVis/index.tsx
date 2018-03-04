@@ -164,8 +164,11 @@ class MapVis extends React.Component<Props, State> {
         <div
           id="map-vis"
           className={style({
-            width: this.props.width,
-            height: this.props.height,
+            position: 'absolute',
+            gridArea: '1 / 1 / -1 / -1',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
           })}>
           {this.props.displayParticles ? (
             <ParticleRenderer
@@ -206,7 +209,7 @@ class MapVis extends React.Component<Props, State> {
             centerLat={this.props.centerLat}
             centerLon={this.props.centerLon}
           />
-          <div className={style({position: 'absolute', top: 0, left: 0})}>
+          <div className={style({position: 'absolute', top: '0', left: '0'})}>
             {currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}
           </div>
         </div>
@@ -219,7 +222,7 @@ class MapVis extends React.Component<Props, State> {
             width: this.props.width,
             height: this.props.height,
           })}>
-          <div className={style({position: 'absolute', top: 0, left: 0})}>
+          <div className={style({})}>
             <div>{currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}</div>
             <div>Fetching Data</div>
           </div>
