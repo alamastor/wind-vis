@@ -101,7 +101,13 @@ export default class VectorRenderer extends React.Component<Props, State> {
       this.props.projection.transformLat(lat),
     );
     ctx.rotate(-Math.atan2(v, u));
-    drawArrow(ctx, Math.sqrt(u ** 2 + v ** 2) / 10);
+    drawArrow(
+      ctx,
+      Math.sqrt(
+        this.props.projection.scaleLon(u) ** 2 +
+          this.props.projection.scaleLat(v) ** 2,
+      ) / 30,
+    );
     ctx.restore();
   }
 
