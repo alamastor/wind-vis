@@ -5,8 +5,10 @@ export default class {
   maxLon: number;
   minLat: number;
   maxLat: number;
-  width: number;
   height: number;
+  width: number;
+  displayWidth: number;
+  displayHeight: number;
   xOffset: number;
   yOffset: number;
   constructor(
@@ -14,34 +16,46 @@ export default class {
     maxLon: number,
     minLat: number,
     maxLat: number,
-    width: number,
-    height: number,
+    displayWidth: number,
+    displayHeight: number,
     zoom: number = 1,
     midLon: number = 40,
     midLat: number = 0,
   ) {
-    [this.minLat, this.maxLat, this.minLon, this.maxLon] = [
-      minLat,
-      maxLat,
-      minLon,
-      maxLon,
-    ];
-    if (width < height * 2) {
+    [
+      this.minLat,
+      this.maxLat,
+      this.minLon,
+      this.maxLon,
+      this.displayWidth,
+      this.displayHeight,
+    ] = [minLat, maxLat, minLon, maxLon, displayWidth, displayHeight];
+    if (this._widthLimited) {
       // width limited
-      this.width = zoom * width;
-      this.height = zoom * width / 2;
+      this.width = zoom * displayWidth;
+      this.height = zoom * displayWidth / 2;
     } else {
       // height limited
-      this.width = zoom * height * 2;
-      this.height = zoom * height;
+      this.width = zoom * displayHeight * 2;
+      this.height = zoom * displayHeight;
     }
-    this.xOffset = (width - this.width) / 2;
-    this.yOffset = (height - this.height) / 2;
+
+    // Calculate offsets just based on area and zoom
+    this.xOffset = (displayWidth - this.width) / 2;
+    this.yOffset = (displayHeight - this.height) / 2;
+
+    // Update offset to take mid position into account
     const midX = this.transformLon(midLon);
     const midY = this.transformLat(midLat);
-    // TODO: Clean this up!!
-    this.xOffset = width / 2 - midX + (width - this.width) / 2;
-    this.yOffset = height / 2 - midY + (height - this.height) / 2;
+    this.xOffset = displayWidth / 2 - midX + (displayWidth - this.width) / 2;
+    this.yOffset = displayHeight / 2 - midY + (displayHeight - this.height) / 2;
+  }
+
+  _widthLimited() {
+    const lonWidth = this.maxLon - this.minLon;
+    const latHeight = this.maxLat - this.minLat;
+    const ratio = lonWidth / latHeight;
+    return this.displayWidth < this.displayHeight * ratio;
   }
 
   scaleLat(lat: number) {
