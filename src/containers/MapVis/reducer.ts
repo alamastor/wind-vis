@@ -2,8 +2,8 @@ import {Action} from './actions';
 import {RootAction} from '../../reducers';
 
 export interface State {
-  cursorLat: number | null;
   cursorLon: number | null;
+  cursorLat: number | null;
   cursorU: number | null;
   cursorV: number | null;
   centerLat: number;
@@ -11,8 +11,8 @@ export interface State {
 }
 
 export const initialState = {
-  cursorLat: null,
   cursorLon: null,
+  cursorLat: null,
   cursorU: null,
   cursorV: null,
   centerLat: 0,
@@ -26,24 +26,24 @@ export default function(
   switch (action.type) {
     case 'MAP_VIS_SET_CURSOR':
       return Object.assign({}, state, {
-        cursorLat: action.lat,
         cursorLon: action.lon,
+        cursorLat: action.lat,
         cursorU: action.u,
         cursorV: action.v,
       });
 
     case 'MAP_VIS_RESET_CURSOR':
       return Object.assign({}, state, {
-        cursorLat: initialState.cursorLat,
         cursorLon: initialState.cursorLon,
+        cursorLat: initialState.cursorLat,
         cursorU: initialState.cursorU,
         cursorV: initialState.cursorV,
       });
 
     case 'MAP_VIS_SET_CENTER_POINT':
       return Object.assign({}, state, {
-        centerLat: action.lat,
         centerLon: action.lon,
+        centerLat: action.lat,
       });
 
     default:

@@ -5,15 +5,15 @@ import {style} from 'typestyle';
 import {RootState} from '../../reducers';
 
 const mapStateToProps = (state: RootState) => ({
-  lat: state.mapVis.cursorLat,
   lon: state.mapVis.cursorLon,
+  lat: state.mapVis.cursorLat,
   u: state.mapVis.cursorU,
   v: state.mapVis.cursorV,
 });
 
 interface Props {
-  lat: number | null;
   lon: number | null;
+  lat: number | null;
   u: number | null;
   v: number | null;
 }

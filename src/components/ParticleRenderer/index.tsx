@@ -56,11 +56,11 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       if (this.particles.length < MAX_PARTICLES) {
         this.particles.push(
           new Particle(
+            Math.random() * this.props.vectorField.getMaxLon(),
             Math.random() *
               (this.props.vectorField.getMaxLat() -
                 this.props.vectorField.getMinLat()) +
               this.props.vectorField.getMinLat(),
-            Math.random() * this.props.vectorField.getMaxLon(),
             PARTICLE_BASE_LIFETIME + Math.random() * PARTICLE_BASE_LIFETIME,
           ),
         );
@@ -85,11 +85,11 @@ export default class ParticleRenderer extends React.Component<Props, State> {
         this.particles[i].lon >= this.props.vectorField.getMaxLon()
       ) {
         this.particles[i] = new Particle(
+          Math.random() * (this.props.vectorField.getMaxLon() - 1),
           Math.random() *
             (this.props.vectorField.getMaxLat() -
               this.props.vectorField.getMinLat()) +
             this.props.vectorField.getMinLat(),
-          Math.random() * (this.props.vectorField.getMaxLon() - 1),
           PARTICLE_BASE_LIFETIME + Math.random() * PARTICLE_BASE_LIFETIME,
         );
       }
@@ -148,8 +148,8 @@ export default class ParticleRenderer extends React.Component<Props, State> {
 }
 
 class Particle {
-  lat: number;
   lon: number;
+  lat: number;
   xTail: number[] = [];
   yTail: number[] = [];
   height = 1;
@@ -164,9 +164,9 @@ class Particle {
   alpha = 0.3;
   lifeTime: number;
   age = 0;
-  constructor(lat: number, lon: number, lifeTime: number) {
-    this.lat = lat;
+  constructor(lon: number, lat: number, lifeTime: number) {
     this.lon = lon;
+    this.lat = lat;
     this.lifeTime = lifeTime;
   }
 
@@ -186,8 +186,8 @@ class Particle {
       this.age += deltaT;
       this.yTail.push(this.lat);
       this.xTail.push(this.lon);
-      const u = vectorField.uField.getValue(this.lat, this.lon);
-      const v = vectorField.vField.getValue(this.lat, this.lon);
+      const u = vectorField.uField.getValue(this.lon, this.lat);
+      const v = vectorField.vField.getValue(this.lon, this.lat);
       this.lat = this.lat + v / 50;
       this.lon = this.lon + u / 50;
     }

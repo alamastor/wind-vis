@@ -1,17 +1,17 @@
 export default class DataField {
   _data: number[][];
-  _minLat: number;
-  _maxLat: number;
   _minLon: number;
   _maxLon: number;
+  _minLat: number;
+  _maxLat: number;
   resolution: number;
 
   constructor(
     data: number[][],
-    minLat: number,
-    maxLat: number,
     minLon: number,
     maxLon: number,
+    minLat: number,
+    maxLat: number,
     resolution: number,
   ) {
     const dataHeight = data[0].length;
@@ -24,12 +24,12 @@ export default class DataField {
     }
     [
       this._data,
-      this._minLat,
-      this._maxLat,
       this._minLon,
       this._maxLon,
+      this._minLat,
+      this._maxLat,
       this.resolution,
-    ] = [data, minLat, maxLat, minLon, maxLon, resolution];
+    ] = [data, minLon, maxLon, minLat, maxLat, resolution];
   }
 
   lonWrap(): boolean {
@@ -68,17 +68,17 @@ export default class DataField {
     return this._data[0].length;
   }
 
-  pointInBounds(lat: number, lon: number) {
+  pointInBounds(lon: number, lat: number) {
     return (
-      lat >= this.getMinLat() &&
-      lat <= this.getMaxLat() &&
       lon >= this.getMinLon() &&
-      lon <= this.getMaxLon()
+      lon <= this.getMaxLon() &&
+      lat >= this.getMinLat() &&
+      lat <= this.getMaxLat()
     );
   }
 
-  getValue(lat: number, lon: number) {
-    if (!this.pointInBounds(lat, lon)) {
+  getValue(lon: number, lat: number) {
+    if (!this.pointInBounds(lon, lat)) {
       throw new Error('point out of bounds');
     }
     const x =

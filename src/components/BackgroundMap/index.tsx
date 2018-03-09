@@ -8,8 +8,8 @@ const BackgroundMap = (props: {
   width: number;
   height: number;
   zoom: number;
-  centerLat: number;
   centerLon: number;
+  centerLat: number;
 }) => {
   let width: number;
   let height: number;

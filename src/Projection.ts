@@ -1,24 +1,24 @@
 import VectorField from './utils/fielddata/VectorField';
 
 export default class {
-  minLat: number;
-  maxLat: number;
   minLon: number;
   maxLon: number;
+  minLat: number;
+  maxLat: number;
   width: number;
   height: number;
   xOffset: number;
   yOffset: number;
   constructor(
-    minLat: number,
-    maxLat: number,
     minLon: number,
     maxLon: number,
+    minLat: number,
+    maxLat: number,
     width: number,
     height: number,
     zoom: number = 1,
-    midLat: number = 0,
     midLon: number = 40,
+    midLat: number = 0,
   ) {
     [this.minLat, this.maxLat, this.minLon, this.maxLon] = [
       minLat,

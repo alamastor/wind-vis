@@ -27,8 +27,8 @@ const mapStateToProps = (state: RootState) => ({
   displayVectors: state.controlPanel.displayVectors,
   paused: state.controlPanel.paused,
   zoomLevel: state.controlPanel.zoomLevel,
-  centerLat: state.mapVis.centerLat,
   centerLon: state.mapVis.centerLon,
+  centerLat: state.mapVis.centerLat,
   showParticleTails: state.controlPanel.showParticleTails,
   clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
   fieldData: state.fieldData,
@@ -59,9 +59,9 @@ interface Props {
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
   fieldData: FieldDataState;
-  setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
+  setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
-  setCenterPoint: (lat: number, lon: number) => Action;
+  setCenterPoint: (lon: number, lat: number) => Action;
   setZoomLevel: (zoomLevel: number) => Action;
   setCycle: (cycle: moment.Moment) => Action;
   addData: (tau: number, data: {u: number[][]; v: number[][]}) => Action;
@@ -145,19 +145,19 @@ class MapVis extends React.Component<Props, State> {
     ) {
       const currentData = this.props.fieldData.data[this.state.currentTau];
       const vectorField = new VectorField(
-        new DataField(currentData.u, -90, 90, 0, 359, 1),
-        new DataField(currentData.v, -90, 90, 0, 359, 1),
+        new DataField(currentData.u, 0, 359, -90, 90, 1),
+        new DataField(currentData.v, 0, 359, -90, 90, 1),
       );
       const projection = new Projection(
-        vectorField.getMinLat(),
-        vectorField.getMaxLat(),
         vectorField.getMinLon(),
         vectorField.getMaxLon(),
+        vectorField.getMinLat(),
+        vectorField.getMaxLat(),
         this.props.width,
         this.props.height,
         this.props.zoomLevel,
-        this.props.centerLat,
         this.props.centerLon,
+        this.props.centerLat,
       );
 
       return (
@@ -206,8 +206,8 @@ class MapVis extends React.Component<Props, State> {
             width={this.props.width}
             height={this.props.height}
             zoom={this.props.zoomLevel}
-            centerLat={this.props.centerLat}
             centerLon={this.props.centerLon}
+            centerLat={this.props.centerLat}
           />
           <div className={style({position: 'absolute', top: '0', left: '0'})}>
             {currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}

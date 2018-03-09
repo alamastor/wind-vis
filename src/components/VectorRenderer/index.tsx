@@ -51,10 +51,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
         lat = lat + 5
       ) {
         this.plotArrow(
-          lat,
           lon,
-          this.props.vectorField.uField.getValue(lat, lon),
-          this.props.vectorField.vField.getValue(lat, lon),
+          lat,
+          this.props.vectorField.uField.getValue(lon, lat),
+          this.props.vectorField.vField.getValue(lon, lat),
         );
       }
     }
@@ -93,7 +93,7 @@ export default class VectorRenderer extends React.Component<Props, State> {
     ctx.stroke();
   }
 
-  plotArrow(lat: number, lon: number, u: number, v: number) {
+  plotArrow(lon: number, lat: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
     ctx.translate(

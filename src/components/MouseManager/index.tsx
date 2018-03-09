@@ -10,10 +10,10 @@ interface Props {
   projection: Projection;
   width: number;
   height: number;
-  centerLat: number;
   centerLon: number;
+  centerLat: number;
   zoomLevel: number;
-  setCursorData: (lat: number, lon: number, u: number, v: number) => Action;
+  setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
   setZoomLevel: (zoomLevel: number) => Action;
@@ -24,8 +24,8 @@ export default class MouseManager extends React.Component<Props, State> {
   dragging: Boolean = false;
   dragPrevX: number = 0;
   dragPrevY: number = 0;
-  cursorLat: number | null = null;
   cursorLon: number | null = null;
+  cursorLat: number | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -42,29 +42,27 @@ export default class MouseManager extends React.Component<Props, State> {
       const lat = this.cursorLat;
       const lon = this.cursorLon;
       this.props.setCursorData(
-        lat,
         lon,
-        this.props.vectorField.uField.getValue(lat, lon),
-        this.props.vectorField.vField.getValue(lat, lon),
+        lat,
+        this.props.vectorField.uField.getValue(lon, lat),
+        this.props.vectorField.vField.getValue(lon, lat),
       );
     }
   }
 
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     if (!this.dragging) {
-      const lat = this.props.projection.transformY(
-        event.clientY - this.div.offsetTop,
-      );
-      const lon = this.props.projection.transformX(
-        event.clientX - this.div.offsetLeft,
-      );
-      if (this.props.vectorField.pointInBounds(lat, lon)) {
-        [this.cursorLat, this.cursorLon] = [lat, lon];
+      const x = event.clientX - this.div.offsetLeft;
+      const y = event.clientY - this.div.offsetTop;
+      const lon = this.props.projection.transformX(x);
+      const lat = this.props.projection.transformY(y);
+      if (this.props.vectorField.pointInBounds(lon, lat)) {
+        [this.cursorLon, this.cursorLat] = [lon, lat];
         this.props.setCursorData(
-          lat,
           lon,
-          this.props.vectorField.uField.getValue(lat, lon),
-          this.props.vectorField.vField.getValue(lat, lon),
+          lat,
+          this.props.vectorField.uField.getValue(lon, lat),
+          this.props.vectorField.vField.getValue(lon, lat),
         );
       } else {
         [this.cursorLat, this.cursorLon] = [null, null];
@@ -75,19 +73,18 @@ export default class MouseManager extends React.Component<Props, State> {
 
   onDrag(event: MouseEvent) {
     event.preventDefault();
-    this.props.setCenterPoint(
-      this.props.centerLat +
-        this.props.projection.scaleY(event.clientY - this.dragPrevY),
-      this.props.centerLon -
-        this.props.projection.scaleX(event.clientX - this.dragPrevX),
-    );
+    const deltaX = event.clientX - this.dragPrevX;
+    const deltaY = event.clientY - this.dragPrevY;
+    const lon = this.props.centerLon - this.props.projection.scaleX(deltaX);
+    const lat = this.props.centerLat + this.props.projection.scaleY(deltaY);
+    this.props.setCenterPoint(lon, lat);
     this.dragPrevX = event.clientX;
     this.dragPrevY = event.clientY;
   }
 
   onMouseOut(event: React.MouseEvent<HTMLDivElement>) {
     event.preventDefault();
-    [this.cursorLat, this.cursorLon] = [null, null];
+    [this.cursorLon, this.cursorLat] = [null, null];
     this.props.resetCursorData();
     this.dragging = false;
   }

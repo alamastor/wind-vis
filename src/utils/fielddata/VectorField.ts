@@ -33,7 +33,7 @@ export default class VectorField {
     return this.uField.getMaxLon();
   }
 
-  pointInBounds(lat: number, lon: number): boolean {
-    return this.uField.pointInBounds(lat, lon);
+  pointInBounds(lon: number, lat: number): boolean {
+    return this.uField.pointInBounds(lon, lat);
   }
 }

@@ -1,7 +1,5 @@
 const PIXELS_PER_DEGREE = 4;
 
-export type Degree = number;
-
-export function degreesToPixels(degrees: Degree): number {
+export function degreesToPixels(degrees: number): number {
   return degrees * PIXELS_PER_DEGREE;
 }
