@@ -121,6 +121,7 @@ export default class MouseManager extends React.Component<Props, State> {
           position: 'fixed',
           width: this.props.width,
           height: this.props.height,
+          cursor: this.dragging ? 'grabbing' : 'grab',
         }}
         onMouseMove={this.onMouseMove}
         onMouseOut={this.onMouseOut}

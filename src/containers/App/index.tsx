@@ -20,9 +20,10 @@ class App extends React.Component<Props, State> {
           display: 'grid',
           width: '100%',
           height: '100%',
-          gridTemplateRows: '1fr 10vh',
+          gridTemplateRows: '20vh 1fr 10vh',
           gridTemplateColumns: '1fr 300px',
           gridTemplateAreas: `".... control"
+                              ".... ......."
                               "info ......."`,
         })}>
         <MapVis width={window.innerWidth} height={window.innerHeight} />

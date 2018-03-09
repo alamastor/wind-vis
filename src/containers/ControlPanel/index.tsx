@@ -105,6 +105,9 @@ class ControlPanel extends React.Component<Props, {}> {
           display: 'flex',
           flexDirection: 'column',
           zIndex: 1,
+          padding: '10px',
+          cursor: 'auto',
+          backgroundColor: 'rgba(0, 0, 0, 0.1)',
         })}>
         <label>
           Display Particles:
