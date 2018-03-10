@@ -1,6 +1,7 @@
 import {Point, Coord} from '../Types';
 import * as screenProj from './Screen';
 import * as zoomProj from './Zoom';
+import mod from '../utils/mod';
 
 export interface State {
   screen: screenProj.Screen;
@@ -18,7 +19,10 @@ export function transformCoord(projState: State, coord: Coord): Point {
   const centerPoint = zoomProj.transformCoord({screen, zoomLevel}, centerCoord);
   const zoomTransformed = zoomProj.transformCoord({screen, zoomLevel}, coord);
   return {
-    x: zoomTransformed.x + (screen.width / 2 - centerPoint.x),
+    x: mod(
+      zoomTransformed.x + (screen.width / 2 - centerPoint.x),
+      screen.width * zoomLevel,
+    ),
     y: zoomTransformed.y + (screen.height / 2 - centerPoint.y),
   };
 }

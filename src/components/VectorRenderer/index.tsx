@@ -35,6 +35,7 @@ export default class VectorRenderer extends React.Component<Props, State> {
     const ctx = this.getCtx();
     ctx.clearRect(0, 0, this.props.width, this.props.height);
 
+    // Draw arrows
     ctx.beginPath();
     const color = 'rgb(140, 200, 300)';
     ctx.strokeStyle = color;
@@ -42,7 +43,7 @@ export default class VectorRenderer extends React.Component<Props, State> {
     ctx.globalAlpha = 0.3;
     for (
       let lon = this.props.vectorField.getMinLon();
-      lon <= this.props.vectorField.getMaxLon();
+      lon < this.props.vectorField.getMaxLon();
       lon = lon + 5
     ) {
       for (
@@ -60,9 +61,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
     }
     ctx.stroke();
 
+    // Add vertical gridlines
     for (
       let lon = this.props.vectorField.getMinLon();
-      lon <= this.props.vectorField.getMaxLon();
+      lon < this.props.vectorField.getMaxLon();
       lon = lon + 10
     ) {
       const start = transformCoord(this.props.projState, {lon, lat: 90});
@@ -71,16 +73,18 @@ export default class VectorRenderer extends React.Component<Props, State> {
       ctx.lineTo(end.x, end.y);
     }
 
+    // Add horizontal gridlines
     for (
       let lat = this.props.vectorField.getMinLat();
       lat <= this.props.vectorField.getMaxLat();
       lat = lat + 10
     ) {
-      const start = transformCoord(this.props.projState, {lon: 0, lat});
-      ctx.moveTo(start.x, start.y);
-      const end = transformCoord(this.props.projState, {lon: 360, lat});
-      ctx.lineTo(end.x, end.y);
+      const y = transformCoord(this.props.projState, {lon: 0, lat}).y;
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.props.width, y);
     }
+
+    // Draw gridlines
     ctx.strokeStyle = 'black';
     ctx.stroke();
   }
