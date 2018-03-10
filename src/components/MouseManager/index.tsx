@@ -3,11 +3,18 @@ import * as ReactDOM from 'react-dom';
 
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
-import Projection from '../../Projection';
+import {
+  State as ProjState,
+  transformCoord,
+  transformPoint,
+  scalePoint,
+  maxCenterLat,
+  minCenterLat,
+} from '../../Projection/Translate';
 
 interface Props {
   vectorField: VectorField;
-  projection: Projection;
+  projState: ProjState;
   width: number;
   height: number;
   centerLon: number;
@@ -54,15 +61,14 @@ export default class MouseManager extends React.Component<Props, State> {
     if (!this.dragging) {
       const x = event.clientX - this.div.offsetLeft;
       const y = event.clientY - this.div.offsetTop;
-      const lon = this.props.projection.transformX(x);
-      const lat = this.props.projection.transformY(y);
-      if (this.props.vectorField.pointInBounds(lon, lat)) {
-        [this.cursorLon, this.cursorLat] = [lon, lat];
+      const coord = transformPoint(this.props.projState, {x, y});
+      if (this.props.vectorField.pointInBounds(coord.lon, coord.lat)) {
+        [this.cursorLon, this.cursorLat] = [coord.lon, coord.lat];
         this.props.setCursorData(
-          lon,
-          lat,
-          this.props.vectorField.uField.getValue(lon, lat),
-          this.props.vectorField.vField.getValue(lon, lat),
+          coord.lon,
+          coord.lat,
+          this.props.vectorField.uField.getValue(coord.lon, coord.lat),
+          this.props.vectorField.vField.getValue(coord.lon, coord.lat),
         );
       } else {
         [this.cursorLat, this.cursorLon] = [null, null];
@@ -75,9 +81,20 @@ export default class MouseManager extends React.Component<Props, State> {
     event.preventDefault();
     const deltaX = event.clientX - this.dragPrevX;
     const deltaY = event.clientY - this.dragPrevY;
-    const lon = this.props.centerLon - this.props.projection.scaleX(deltaX);
-    const lat = this.props.centerLat + this.props.projection.scaleY(deltaY);
-    this.props.setCenterPoint(lon, lat);
+    const deltaCoord = scalePoint(this.props.projState, {
+      x: deltaX,
+      y: deltaY,
+    });
+    const lon = this.props.centerLon - deltaCoord.lon;
+    const lat = this.props.centerLat - deltaCoord.lat;
+    if (
+      lat >= minCenterLat(this.props.projState) &&
+      lat <= maxCenterLat(this.props.projState)
+    ) {
+      this.props.setCenterPoint(lon, lat);
+    } else {
+      this.props.setCenterPoint(lon, this.props.centerLat);
+    }
     this.dragPrevX = event.clientX;
     this.dragPrevY = event.clientY;
   }
@@ -107,7 +124,22 @@ export default class MouseManager extends React.Component<Props, State> {
 
   onWheel(event: React.WheelEvent<HTMLDivElement>) {
     event.preventDefault();
-    this.props.setZoomLevel(this.props.zoomLevel - event.deltaY / 10);
+    const newZoom = this.props.zoomLevel - event.deltaY / 10;
+    this.props.setZoomLevel(newZoom);
+    const nextZoomProjState = Object.assign({}, this.props.projState, {
+      zoom: newZoom,
+    });
+    if (this.props.centerLat < minCenterLat(nextZoomProjState)) {
+      this.props.setCenterPoint(
+        this.props.centerLon,
+        minCenterLat(nextZoomProjState),
+      );
+    } else if (this.props.centerLat > maxCenterLat(nextZoomProjState)) {
+      this.props.setCenterPoint(
+        this.props.centerLon,
+        maxCenterLat(nextZoomProjState),
+      );
+    }
   }
 
   render() {

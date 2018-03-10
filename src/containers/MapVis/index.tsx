@@ -20,7 +20,6 @@ import BackgroundMap from '../../components/BackgroundMap';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
-import Projection from '../../Projection';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
@@ -87,6 +86,20 @@ class MapVis extends React.Component<Props, State> {
     this.setNextTau();
   }
 
+  getProjState() {
+    return {
+      screen: {
+        width: this.props.width,
+        height: this.props.height,
+      },
+      zoomLevel: this.props.zoomLevel,
+      centerCoord: {
+        lon: this.props.centerLon,
+        lat: this.props.centerLat,
+      },
+    };
+  }
+
   fetchNextTau() {
     if (this.props.fieldData.cycle == null) {
       getCycle().then((cycle: moment.Moment) => {
@@ -148,17 +161,6 @@ class MapVis extends React.Component<Props, State> {
         new DataField(currentData.u, 0, 359, -90, 90, 1),
         new DataField(currentData.v, 0, 359, -90, 90, 1),
       );
-      const projection = new Projection(
-        vectorField.getMinLon(),
-        vectorField.getMaxLon(),
-        vectorField.getMinLat(),
-        vectorField.getMaxLat(),
-        this.props.width,
-        this.props.height,
-        this.props.zoomLevel,
-        this.props.centerLon,
-        this.props.centerLat,
-      );
 
       return (
         <div
@@ -173,7 +175,7 @@ class MapVis extends React.Component<Props, State> {
           {this.props.displayParticles ? (
             <ParticleRenderer
               vectorField={vectorField}
-              projection={projection}
+              projState={this.getProjState()}
               width={this.props.width}
               height={this.props.height}
               showParticleTails={this.props.showParticleTails}
@@ -184,14 +186,14 @@ class MapVis extends React.Component<Props, State> {
           {this.props.displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}
-              projection={projection}
+              projState={this.getProjState()}
               width={this.props.width}
               height={this.props.height}
             />
           ) : null}
           <MouseManager
             vectorField={vectorField}
-            projection={projection}
+            projState={this.getProjState()}
             width={this.props.width}
             height={this.props.height}
             centerLat={this.props.centerLat}

@@ -3,7 +3,11 @@ import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import Projection from '../../Projection';
+import {
+  State as ProjState,
+  transformCoord,
+  scaleCoord,
+} from '../../Projection/Translate';
 
 const PARTICLE_FADE_START = 2000;
 const PARTICLE_BASE_LIFETIME = 4000;
@@ -11,7 +15,7 @@ const MAX_PARTICLES = 3000;
 
 interface Props {
   vectorField: VectorField;
-  projection: Projection;
+  projState: ProjState;
   width: number;
   height: number;
   showParticleTails: boolean;
@@ -107,26 +111,28 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     let alpha = particle.alpha;
 
     this.getCtx().globalAlpha = alpha;
-    this.getCtx().fillRect(
-      this.props.projection.transformLon(particle.lon - particle.width / 2),
-      this.props.projection.transformLat(particle.lat + particle.height / 2),
-      this.props.projection.scaleLon(particle.width),
-      this.props.projection.scaleLat(particle.height),
-    );
+    const rectPoint = transformCoord(this.props.projState, {
+      lon: particle.lon - particle.width / 2,
+      lat: particle.lat + particle.height / 2,
+    });
+    const rectDim = scaleCoord(this.props.projState, {
+      lon: particle.width,
+      lat: particle.height,
+    });
+    this.getCtx().fillRect(rectPoint.x, rectPoint.y, rectDim.x, rectDim.y);
 
     if (this.props.showParticleTails) {
       this.getCtx().globalAlpha = Math.min(0.11, alpha);
       for (let i = 0; i < particle.xTail.length; i++) {
-        this.getCtx().fillRect(
-          this.props.projection.transformLon(
-            particle.xTail[i] - particle.width / 2,
-          ),
-          this.props.projection.transformLat(
-            particle.yTail[i] + particle.height / 2,
-          ),
-          this.props.projection.scaleLon(particle.width),
-          this.props.projection.scaleLat(particle.height),
-        );
+        const rectPoint = transformCoord(this.props.projState, {
+          lon: particle.xTail[i] - particle.width / 2,
+          lat: particle.yTail[i] + particle.height / 2,
+        });
+        const rectDim = scaleCoord(this.props.projState, {
+          lon: particle.width,
+          lat: particle.height,
+        });
+        this.getCtx().fillRect(rectPoint.x, rectPoint.y, rectDim.x, rectDim.y);
       }
     }
   }

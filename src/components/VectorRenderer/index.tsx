@@ -3,11 +3,11 @@ import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import Projection from '../../Projection';
+import {State as ProjState, transformCoord} from '../../Projection/Translate';
 
 interface Props {
   vectorField: VectorField;
-  projection: Projection;
+  projState: ProjState;
   width: number;
   height: number;
 }
@@ -65,14 +65,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
       lon <= this.props.vectorField.getMaxLon();
       lon = lon + 10
     ) {
-      ctx.moveTo(
-        this.props.projection.transformLon(lon),
-        this.props.projection.transformLat(this.props.vectorField.getMinLat()),
-      );
-      ctx.lineTo(
-        this.props.projection.transformLon(lon),
-        this.props.projection.transformLat(this.props.vectorField.getMaxLat()),
-      );
+      const start = transformCoord(this.props.projState, {lon, lat: 90});
+      ctx.moveTo(start.x, start.y);
+      const end = transformCoord(this.props.projState, {lon, lat: -90});
+      ctx.lineTo(end.x, end.y);
     }
 
     for (
@@ -80,14 +76,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
       lat <= this.props.vectorField.getMaxLat();
       lat = lat + 10
     ) {
-      ctx.moveTo(
-        this.props.projection.transformLon(this.props.vectorField.getMinLon()),
-        this.props.projection.transformLat(lat),
-      );
-      ctx.lineTo(
-        this.props.projection.transformLon(this.props.vectorField.getMaxLon()),
-        this.props.projection.transformLat(lat),
-      );
+      const start = transformCoord(this.props.projState, {lon: 0, lat});
+      ctx.moveTo(start.x, start.y);
+      const end = transformCoord(this.props.projState, {lon: 360, lat});
+      ctx.lineTo(end.x, end.y);
     }
     ctx.strokeStyle = 'black';
     ctx.stroke();
@@ -96,17 +88,16 @@ export default class VectorRenderer extends React.Component<Props, State> {
   plotArrow(lon: number, lat: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    ctx.translate(
-      this.props.projection.transformLon(lon),
-      this.props.projection.transformLat(lat),
-    );
+    const {x, y} = transformCoord(this.props.projState, {lon, lat});
+    ctx.translate(x, y);
     ctx.rotate(-Math.atan2(v, u));
+    const scaleFactor = Math.abs(
+      transformCoord(this.props.projState, {lon: 1, lat: 1}).x -
+        transformCoord(this.props.projState, {lon: 0, lat: 0}).x,
+    );
     drawArrow(
       ctx,
-      Math.sqrt(
-        this.props.projection.scaleLon(u) ** 2 +
-          this.props.projection.scaleLat(v) ** 2,
-      ) / 30,
+      Math.sqrt((u * scaleFactor) ** 2 + (v * scaleFactor) ** 2) / 30,
     );
     ctx.restore();
   }
