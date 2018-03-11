@@ -2,45 +2,46 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
+import {
+  State as ProjState,
+  transformCoord,
+  scaleCoord,
+} from '../../Projection/Translate';
+
 const Globe = require('../../img/globe-large.png');
 
-const BackgroundMap = (props: {
-  width: number;
-  height: number;
-  zoom: number;
-  centerLon: number;
-  centerLat: number;
-}) => {
-  let width: number;
-  let height: number;
-  if (props.width < props.height * 2) {
-    // width limited
-    width = props.zoom * props.width;
-    height = props.zoom * props.width / 2;
-  } else {
-    // height limited
-    width = props.zoom * props.height * 2;
-    height = props.zoom * props.height;
-  }
-  const midX = width * props.centerLon / 360; // Assume full globe map
-  const midY = height * (props.centerLat + 90) / 180; // Assume full globe map
-  const xOffset = width / 2 - midX + (props.width - width) / 2;
-  const yOffset = midY - height / 2 + (props.height - height) / 2;
+const BackgroundMap = (props: {projState: ProjState}) => {
+  const topLeft = transformCoord(props.projState, {lon: 0, lat: 90});
+  const bottomRight = transformCoord(props.projState, {lon: 360, lat: -90});
+  const dimensions = scaleCoord(props.projState, {lon: 361, lat: 180});
+  const width = Math.abs(dimensions.x);
+  const height = Math.abs(dimensions.y);
   return (
     <div
       id="map"
       className={style({
-        width: props.width,
-        height: props.height,
+        width: props.projState.screen.width,
+        height: props.projState.screen.height,
         overflow: 'hidden',
         display: 'block',
       })}>
       <img
         src={Globe}
         className={style({
-          position: 'relative',
-          top: yOffset,
-          left: xOffset,
+          position: 'absolute',
+          left: topLeft.x,
+          top: topLeft.y,
+          width: width,
+          height: height,
+          pointerEvents: 'none',
+        })}
+      />
+      <img
+        src={Globe}
+        className={style({
+          position: 'absolute',
+          left: topLeft.x - width,
+          top: topLeft.y,
           width: width,
           height: height,
           pointerEvents: 'none',

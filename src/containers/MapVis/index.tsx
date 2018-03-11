@@ -204,13 +204,7 @@ class MapVis extends React.Component<Props, State> {
             setCenterPoint={this.props.setCenterPoint}
             setZoomLevel={this.props.setZoomLevel}
           />
-          <BackgroundMap
-            width={this.props.width}
-            height={this.props.height}
-            zoom={this.props.zoomLevel}
-            centerLon={this.props.centerLon}
-            centerLat={this.props.centerLat}
-          />
+          <BackgroundMap projState={this.getProjState()} />
           <div className={style({position: 'absolute', top: '0', left: '0'})}>
             {currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}
           </div>
