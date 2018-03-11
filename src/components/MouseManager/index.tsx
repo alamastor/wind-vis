@@ -17,9 +17,6 @@ interface Props {
   projState: ProjState;
   width: number;
   height: number;
-  centerLon: number;
-  centerLat: number;
-  zoomLevel: number;
   setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lat: number, lon: number) => Action;
@@ -85,15 +82,15 @@ export default class MouseManager extends React.Component<Props, State> {
       x: deltaX,
       y: deltaY,
     });
-    const lon = this.props.centerLon - deltaCoord.lon;
-    const lat = this.props.centerLat - deltaCoord.lat;
+    const lon = this.props.projState.centerCoord.lon - deltaCoord.lon;
+    const lat = this.props.projState.centerCoord.lat - deltaCoord.lat;
     if (
       lat >= minCenterLat(this.props.projState) &&
       lat <= maxCenterLat(this.props.projState)
     ) {
       this.props.setCenterPoint(lon, lat);
     } else {
-      this.props.setCenterPoint(lon, this.props.centerLat);
+      this.props.setCenterPoint(lon, this.props.projState.centerCoord.lat);
     }
     this.dragPrevX = event.clientX;
     this.dragPrevY = event.clientY;
@@ -124,19 +121,23 @@ export default class MouseManager extends React.Component<Props, State> {
 
   onWheel(event: React.WheelEvent<HTMLDivElement>) {
     event.preventDefault();
-    const newZoom = this.props.zoomLevel - event.deltaY / 10;
+    const newZoom = this.props.projState.zoomLevel - event.deltaY / 10;
     this.props.setZoomLevel(newZoom);
     const nextZoomProjState = Object.assign({}, this.props.projState, {
       zoom: newZoom,
     });
-    if (this.props.centerLat < minCenterLat(nextZoomProjState)) {
+    if (
+      this.props.projState.centerCoord.lat < minCenterLat(nextZoomProjState)
+    ) {
       this.props.setCenterPoint(
-        this.props.centerLon,
+        this.props.projState.centerCoord.lon,
         minCenterLat(nextZoomProjState),
       );
-    } else if (this.props.centerLat > maxCenterLat(nextZoomProjState)) {
+    } else if (
+      this.props.projState.centerCoord.lat > maxCenterLat(nextZoomProjState)
+    ) {
       this.props.setCenterPoint(
-        this.props.centerLon,
+        this.props.projState.centerCoord.lon,
         maxCenterLat(nextZoomProjState),
       );
     }

@@ -196,9 +196,6 @@ class MapVis extends React.Component<Props, State> {
             projState={this.getProjState()}
             width={this.props.width}
             height={this.props.height}
-            centerLat={this.props.centerLat}
-            centerLon={this.props.centerLon}
-            zoomLevel={this.props.zoomLevel}
             setCursorData={this.props.setCursorData}
             resetCursorData={this.props.resetCursorData}
             setCenterPoint={this.props.setCenterPoint}
