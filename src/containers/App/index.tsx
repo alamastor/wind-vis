@@ -10,8 +10,31 @@ import CursorPositionInfo from '../CursorPositionInfo';
 const mapStateToProps = (state: RootState) => ({});
 
 interface Props {}
-interface State {}
+interface State {
+  width: number;
+  height: number;
+}
 class App extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+    this.onResize = this.onResize.bind(this);
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.onResize);
+  }
+
+  onResize() {
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  }
+
   render() {
     return (
       <div
@@ -20,13 +43,13 @@ class App extends React.Component<Props, State> {
           display: 'grid',
           width: '100%',
           height: '100%',
-          gridTemplateRows: '20vh 1fr 10vh',
-          gridTemplateColumns: '1fr 300px',
+          gridTemplateRows: 'auto 1fr 10vh',
+          gridTemplateColumns: '1fr auto',
           gridTemplateAreas: `".... control"
                               ".... ......."
                               "info ......."`,
         })}>
-        <MapVis width={window.innerWidth} height={window.innerHeight} />
+        <MapVis width={this.state.width} height={this.state.height} />
         <ControlPanel />
         <CursorPositionInfo />
       </div>
