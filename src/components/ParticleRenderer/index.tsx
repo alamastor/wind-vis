@@ -160,13 +160,11 @@ class Particle {
   yTail: number[] = [];
   height = 1;
   width = 1;
-  color = 'rgb(' +
-    Math.random() * 255 +
-    ',' +
-    Math.random() * 255 +
-    ',' +
-    Math.random() * 255 +
-    ')';
+  color = 'rgb(0, 0, 0)';
+  /*
+  color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() *
+    255})`;
+  */
   alpha = 0.3;
   lifeTime: number;
   age = 0;

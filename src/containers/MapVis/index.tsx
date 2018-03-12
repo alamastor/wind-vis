@@ -17,6 +17,7 @@ import ParticleRenderer from '../../components/ParticleRenderer';
 import VectorRenderer from '../../components/VectorRenderer';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
+import SpeedRenderer from '../../components/SpeedRenderer';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
@@ -24,6 +25,7 @@ import {setZoomLevel} from '../ControlPanel/actions';
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
   displayVectors: state.controlPanel.displayVectors,
+  displaySpeeds: true,
   paused: state.controlPanel.paused,
   zoomLevel: state.controlPanel.zoomLevel,
   centerLon: state.mapVis.centerLon,
@@ -54,6 +56,7 @@ interface Props {
   centerLon: number;
   displayParticles: boolean;
   displayVectors: boolean;
+  displaySpeeds: boolean;
   paused: boolean;
   showParticleTails: boolean;
   clearParticlesEachFrame: boolean;
@@ -181,6 +184,14 @@ class MapVis extends React.Component<Props, State> {
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
               resetPariclesOnInit={this.state.currentTau === 0}
+            />
+          ) : null}
+          {this.props.displaySpeeds ? (
+            <SpeedRenderer
+              vectorField={vectorField}
+              projState={this.getProjState()}
+              width={this.props.width}
+              height={this.props.height}
             />
           ) : null}
           {this.props.displayVectors ? (
