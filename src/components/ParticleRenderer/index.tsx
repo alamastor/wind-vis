@@ -4,12 +4,7 @@ import {style} from 'typestyle';
 
 import {Coord} from '../../Types';
 import VectorField from '../../utils/fielddata/VectorField';
-import {
-  State as ProjState,
-  transformCoord,
-  scaleCoord,
-  transformPoint,
-} from '../../Projection/Translate';
+import {ProjState} from '../../utils/Projection';
 import {loadShader} from '../../utils/gl';
 import mod from '../../utils/mod';
 
