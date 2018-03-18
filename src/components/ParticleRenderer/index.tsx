@@ -242,6 +242,10 @@ function getGLStateForParticles(gl: WebGLRenderingContext): GLState {
   const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
   gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
 
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.BLEND);
+  gl.depthMask(false);
+
   return {gl, shaderProgram, lonBuffer, latBuffer, colorBuffer};
 }
 
