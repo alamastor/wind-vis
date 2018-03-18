@@ -22,17 +22,32 @@ describe('fieldDataReducer', () => {
   test('it adds data correctly', () => {
     state = Object.assign({}, state, {
       data: {
-        0: {u: [[1, 2], [2, 3]], v: [[1, 2], [2, 6]]},
+        0: {
+          u: new Float32Array([1, 2, 2, 3]),
+          v: new Float32Array([1, 2, 2, 6]),
+        },
       },
     });
     const expected = Object.assign({}, initialState, {
       data: {
-        0: {u: [[1, 2], [2, 3]], v: [[1, 2], [2, 6]]},
-        3: {u: [[99, 2], [123, 3]], v: [[1, 2], [2, 6]]},
+        0: {
+          u: new Float32Array([1, 2, 2, 3]),
+          v: new Float32Array([1, 2, 2, 6]),
+        },
+        3: {
+          u: new Float32Array([99, 2, 123, 3]),
+          v: new Float32Array([1, 2, 2, 6]),
+        },
       },
     });
     expect(
-      reducer(state, addData(3, {u: [[99, 2], [123, 3]], v: [[1, 2], [2, 6]]})),
+      reducer(
+        state,
+        addData(3, {
+          u: new Float32Array([99, 2, 123, 3]),
+          v: new Float32Array([1, 2, 2, 6]),
+        }),
+      ),
     );
   });
 });

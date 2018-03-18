@@ -11,13 +11,22 @@ const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 export async function getData(
   cycle: moment.Moment,
   tau: number,
-): Promise<{u: number[][]; v: number[][]}> {
+): Promise<{u: Float32Array; v: Float32Array}> {
   const gfsFileName = `gfs_100_${cycle
     .tz('UTC')
     .format('YYYYMMDD_HHmmss')}_${tau.toString().padStart(3, '0')}.json`;
   const response = await axios.get(`${GFS_JSON_SERVER}/${gfsFileName}`);
   const gfsData = response.data.gfsData;
-  return {u: gfsData.uData, v: gfsData.vData};
+  // Convert JSON data to flat Float32Array
+  const uData = new Float32Array(360 * 181);
+  const vData = new Float32Array(360 * 181);
+  for (let x = 0; x < 360; x++) {
+    for (let y = 0; y < 181; y++) {
+      uData[181 * x + y] = gfsData.uData[x][y];
+      vData[181 * x + y] = gfsData.vData[x][y];
+    }
+  }
+  return {u: uData, v: vData};
 }
 
 export async function getCycle(): Promise<moment.Moment> {
