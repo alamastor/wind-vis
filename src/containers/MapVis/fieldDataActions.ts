@@ -10,7 +10,7 @@ export type Action =
   | {
       type: 'FIELD_DATA/ADD_DATA';
       tau: number;
-      data: {u: number[][]; v: number[][]};
+      data: {u: Float32Array; v: Float32Array};
     };
 
 export function setCycle(cycle: moment.Moment): RootAction {
@@ -22,7 +22,7 @@ export function setCycle(cycle: moment.Moment): RootAction {
 
 export function addData(
   tau: number,
-  data: {u: number[][]; v: number[][]},
+  data: {u: Float32Array; v: Float32Array},
 ): RootAction {
   return {
     type: 'FIELD_DATA/ADD_DATA',

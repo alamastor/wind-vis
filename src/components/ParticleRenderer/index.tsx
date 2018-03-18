@@ -10,7 +10,7 @@ import mod from '../../utils/mod';
 
 const PARTICLE_FADE_START = 2000;
 const PARTICLE_BASE_LIFETIME = 4000;
-const PARTICLE_COUNT = 50000;
+const PARTICLE_COUNT = 100000;
 
 export interface Particles {
   readonly length: number;

@@ -1,22 +1,25 @@
 export default class DataField {
-  _data: number[][];
+  _data: Float32Array;
   _minLon: number;
   _maxLon: number;
   _minLat: number;
   _maxLat: number;
+  _dataWidth: number;
+  _dataHeight: number;
   resolution: number;
 
   constructor(
-    data: number[][],
+    data: Float32Array,
     minLon: number,
     maxLon: number,
     minLat: number,
     maxLat: number,
     resolution: number,
   ) {
-    const dataHeight = data[0].length;
-    if (!data.every((row: number[]) => row.length === dataHeight)) {
-      throw new Error('data field is not rectangular');
+    this._dataWidth = maxLon - minLon + 1;
+    this._dataHeight = maxLat - minLat + 1;
+    if (data.length !== this._dataWidth * this._dataHeight) {
+      throw new Error('data field size does not match expected dimensions');
     }
     if (resolution !== 1) {
       // Currently only 1 degrees resolution supported
@@ -60,14 +63,6 @@ export default class DataField {
     }
   }
 
-  _getDataWidth() {
-    return this._data.length;
-  }
-
-  _getDataHeight() {
-    return this._data[0].length;
-  }
-
   pointInBounds(lon: number, lat: number) {
     return (
       lon >= this.getMinLon() &&
@@ -82,21 +77,29 @@ export default class DataField {
       throw new Error(`point {lon: ${lon}, lat: ${lat}} out of bounds`);
     }
     const x =
-      (this._getDataWidth() - 1) *
+      (this._dataWidth - 1) *
       (lon - this._minLon) /
       (this._maxLon - this._minLon);
     const y =
-      (this._getDataHeight() - 1) *
+      (this._dataHeight - 1) *
       (lat - this._minLat) /
       (this._maxLat - this._minLat);
     return this._interpolatePoint(x, y);
   }
 
   _interpolatePoint(x: number, y: number): number {
-    const ulPoint = this._data[this._wrapXVal(Math.floor(x))][Math.ceil(y)];
-    const urPoint = this._data[this._wrapXVal(Math.ceil(x))][Math.ceil(y)];
-    const lrPoint = this._data[this._wrapXVal(Math.ceil(x))][Math.floor(y)];
-    const llPoint = this._data[this._wrapXVal(Math.floor(x))][Math.floor(y)];
+    const ulPoint = this._data[
+      this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.ceil(y)
+    ];
+    const urPoint = this._data[
+      this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.ceil(y)
+    ];
+    const lrPoint = this._data[
+      this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.floor(y)
+    ];
+    const llPoint = this._data[
+      this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.floor(y)
+    ];
 
     const uPoint = this._linearInterp(x - Math.floor(x), ulPoint, urPoint);
     const lPoint = this._linearInterp(x - Math.floor(x), llPoint, lrPoint);
@@ -109,6 +112,6 @@ export default class DataField {
   }
 
   _wrapXVal(val: number): number {
-    return this.lonWrap() && val === this._getDataWidth() ? 0 : val;
+    return this.lonWrap() && val === this._dataWidth ? 0 : val;
   }
 }

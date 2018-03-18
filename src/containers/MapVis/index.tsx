@@ -66,7 +66,7 @@ interface Props {
   setCenterPoint: (lon: number, lat: number) => Action;
   setZoomLevel: (zoomLevel: number) => Action;
   setCycle: (cycle: moment.Moment) => Action;
-  addData: (tau: number, data: {u: number[][]; v: number[][]}) => Action;
+  addData: (tau: number, data: {u: Float32Array; v: Float32Array}) => Action;
 }
 interface State {
   currentTau: number;
@@ -113,7 +113,7 @@ class MapVis extends React.Component<Props, State> {
       const tau = this.tausToFetch.pop();
       const cyc = moment(this.props.fieldData.cycle);
       if (cyc != null && tau != null) {
-        getData(cyc, tau).then((data: {u: number[][]; v: number[][]}) => {
+        getData(cyc, tau).then((data: {u: Float32Array; v: Float32Array}) => {
           this.props.addData(tau, data);
           this.fetchNextTau();
         });
