@@ -36,4 +36,14 @@ export default class VectorField {
   pointInBounds(lon: number, lat: number): boolean {
     return this.uField.pointInBounds(lon, lat);
   }
+
+  speedData(): Float32Array {
+    const result = new Float32Array(this.uField.data.length);
+    for (let i = 0; i < result.length; i++) {
+      result[i] = Math.sqrt(
+        this.uField.data[i] ** 2 + this.vField.data[i] ** 2,
+      );
+    }
+    return result;
+  }
 }

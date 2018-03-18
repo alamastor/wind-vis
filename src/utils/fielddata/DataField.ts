@@ -1,5 +1,5 @@
 export default class DataField {
-  _data: Float32Array;
+  data: Float32Array;
   _minLon: number;
   _maxLon: number;
   _minLat: number;
@@ -26,7 +26,7 @@ export default class DataField {
       throw new Error('resolution must be 1 degree');
     }
     [
-      this._data,
+      this.data,
       this._minLon,
       this._maxLon,
       this._minLat,
@@ -88,16 +88,16 @@ export default class DataField {
   }
 
   _interpolatePoint(x: number, y: number): number {
-    const ulPoint = this._data[
+    const ulPoint = this.data[
       this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.ceil(y)
     ];
-    const urPoint = this._data[
+    const urPoint = this.data[
       this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.ceil(y)
     ];
-    const lrPoint = this._data[
+    const lrPoint = this.data[
       this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.floor(y)
     ];
-    const llPoint = this._data[
+    const llPoint = this.data[
       this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.floor(y)
     ];
 
