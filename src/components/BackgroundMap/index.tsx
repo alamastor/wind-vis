@@ -2,11 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
-import {
-  State as ProjState,
-  transformCoord,
-  scaleCoord,
-} from '../../Projection/Translate';
+import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
 
 const defaultGlobeImg = require(`../../img/globe-800w.png`);
 const srcSet = [200, 400, 800, 1600, 2400, 3600, 4800]

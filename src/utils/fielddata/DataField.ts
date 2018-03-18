@@ -79,7 +79,7 @@ export default class DataField {
 
   getValue(lon: number, lat: number) {
     if (!this.pointInBounds(lon, lat)) {
-      throw new Error('point out of bounds');
+      throw new Error(`point {lon: ${lon}, lat: ${lat}} out of bounds`);
     }
     const x =
       (this._getDataWidth() - 1) *

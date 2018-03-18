@@ -4,13 +4,13 @@ import * as ReactDOM from 'react-dom';
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
 import {
-  State as ProjState,
+  ProjState,
   transformCoord,
   transformPoint,
   scalePoint,
   maxCenterLat,
   minCenterLat,
-} from '../../Projection/Translate';
+} from '../../utils/Projection';
 
 interface Props {
   vectorField: VectorField;

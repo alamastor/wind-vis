@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import {State as ProjState, transformCoord} from '../../Projection/Translate';
+import {ProjState, transformCoord} from '../../utils/Projection';
 
 interface Props {
   vectorField: VectorField;
