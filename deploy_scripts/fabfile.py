@@ -5,7 +5,7 @@ REPO_URL = 'git@github.com:alamastor/wind-visr.git'
 
 
 def deploy():
-    source_dir = '/home/%s/wind-vis' % env.user
+    source_dir = f'~/sites/{env.host}'
     _get_latest_source(source_dir)
     _npm_update(source_dir)
     _npm_build(source_dir)
