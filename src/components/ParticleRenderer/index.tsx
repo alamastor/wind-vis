@@ -30,8 +30,8 @@ interface Props {
 }
 interface State {}
 export default class ParticleRenderer extends React.Component<Props, State> {
-  canvas: HTMLCanvasElement;
-  glState: GLState | null;
+  canvas!: HTMLCanvasElement;
+  glState: GLState | null = null;
   x = 10;
   y = 10;
   width = 20;

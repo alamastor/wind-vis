@@ -24,7 +24,7 @@ interface Props {
 }
 interface State {}
 export default class MouseManager extends React.Component<Props, State> {
-  div: HTMLDivElement;
+  div!: HTMLDivElement;
   dragging: Boolean = false;
   dragPrevX: number = 0;
   dragPrevY: number = 0;

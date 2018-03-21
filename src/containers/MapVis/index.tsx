@@ -75,7 +75,7 @@ class MapVis extends React.Component<Props, State> {
   readonly frameInterval = 500;
   lastUpdate = new Date();
   updateRemainingTime = 500;
-  timeoutId: number | null;
+  timeoutId: number | null = null;
   tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x);
   awaitingData = false;
 

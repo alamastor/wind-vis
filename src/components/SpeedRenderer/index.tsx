@@ -21,8 +21,8 @@ interface Props {
 }
 interface State {}
 export default class SpeedRenderer extends React.Component<Props, State> {
-  canvas: HTMLCanvasElement;
-  glState: GLState | null;
+  canvas!: HTMLCanvasElement;
+  glState: GLState | null = null;
 
   getGLState(): GLState {
     if (!this.glState) {

@@ -13,8 +13,8 @@ interface Props {
 }
 interface State {}
 export default class VectorRenderer extends React.Component<Props, State> {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D | null;
+  canvas!: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D | null = null;
 
   getCtx(): CanvasRenderingContext2D {
     if (!this.ctx) {
