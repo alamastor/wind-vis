@@ -1,4 +1,6 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
   entry: './src/index.tsx',
@@ -16,4 +18,11 @@ module.exports = {
       {enforce: 'pre', test: /\.(png|svg|jpg|gif)$/, loader: 'file-loader'},
     ],
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: 'heyo',
+      template: 'src/index.html',
+    }),
+    new CleanWebpackPlugin(['dist']),
+  ],
 };

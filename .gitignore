@@ -1,5 +1,4 @@
 *.swp
 node_modules
-dist/bundle.js
+dist
 __pycache__
-dist/*.png
