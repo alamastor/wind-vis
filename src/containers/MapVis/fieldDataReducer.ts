@@ -7,8 +7,8 @@ export interface State {
   readonly cycle: string | null;
   readonly data: {
     [propName: number]: {
-      u: Float32Array;
-      v: Float32Array;
+      u: Int8Array;
+      v: Int8Array;
     };
   };
 }

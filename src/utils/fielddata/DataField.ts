@@ -1,5 +1,5 @@
 export default class DataField {
-  data: Float32Array;
+  data: Int8Array;
   _minLon: number;
   _maxLon: number;
   _minLat: number;
@@ -9,7 +9,7 @@ export default class DataField {
   resolution: number;
 
   constructor(
-    data: Float32Array,
+    data: Int8Array,
     minLon: number,
     maxLon: number,
     minLat: number,
