@@ -175,6 +175,14 @@ class MapVis extends React.Component<Props, State> {
             flexDirection: 'column',
             justifyContent: 'flex-end',
           })}>
+          {this.props.displaySpeeds ? (
+            <SpeedRenderer
+              vectorField={vectorField}
+              projState={this.getProjState()}
+              width={this.props.width}
+              height={this.props.height}
+            />
+          ) : null}
           {this.props.displayParticles ? (
             <ParticleRenderer
               vectorField={vectorField}
@@ -184,14 +192,6 @@ class MapVis extends React.Component<Props, State> {
               showParticleTails={this.props.showParticleTails}
               clearParticlesEachFrame={this.props.clearParticlesEachFrame}
               resetPariclesOnInit={this.state.currentTau === 0}
-            />
-          ) : null}
-          {this.props.displaySpeeds ? (
-            <SpeedRenderer
-              vectorField={vectorField}
-              projState={this.getProjState()}
-              width={this.props.width}
-              height={this.props.height}
             />
           ) : null}
           {this.props.displayVectors ? (
