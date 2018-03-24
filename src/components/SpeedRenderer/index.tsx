@@ -10,7 +10,7 @@ import {loadShader} from '../../utils/gl';
 interface GLState {
   gl: WebGLRenderingContext;
   shaderProgram: WebGLProgram;
-  spdBuffer: WebGLBuffer;
+  tex: WebGLTexture;
 }
 
 interface Props {
@@ -23,6 +23,7 @@ interface State {}
 export default class SpeedRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: GLState | null = null;
+  maxSpeed = 0;
 
   getGLState(): GLState {
     if (!this.glState) {
@@ -45,7 +46,23 @@ export default class SpeedRenderer extends React.Component<Props, State> {
   }
 
   updateAndRender() {
-    drawPoints(this.getGLState(), this.props.vectorField.speedData());
+    const speedData = this.props.vectorField.speedData();
+    const maxSpeed = Math.max(...speedData);
+    if (maxSpeed > this.maxSpeed) {
+      this.maxSpeed = maxSpeed;
+    }
+    const transformedSpeedData = new Uint8Array(512 * 512);
+    // Transform speed data direction, make square power of two, and normalize
+    for (let x = 0; x < 512; x++) {
+      for (let y = 0; y < 512; y++) {
+        transformedSpeedData[512 * y + x] =
+          speedData[
+            181 * Math.floor(x * 360 / 512) + Math.floor(y * 181 / 512)
+          ] /
+          (this.maxSpeed / 255);
+      }
+    }
+    draw(this.getGLState(), transformedSpeedData);
   }
 
   render() {
@@ -66,31 +83,31 @@ export default class SpeedRenderer extends React.Component<Props, State> {
 
 function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
   const vertexShaderSource = `
-    attribute float spd;
-    attribute float lon;
-    attribute float lat;
+    attribute vec2 point;
+
     uniform float aspectRatio;
     uniform float zoomLevel;
     uniform vec2 midCoord;
 
-    varying float speed;
+    varying vec2 texCoord;
+
     void main() {
-      speed = spd;
-      vec2 offset = vec2(180, 0) - midCoord;
-      float newLon = mod(lon + offset.x, 360.0) - 180.0;
-      float newLat = lat + offset.y;
-      vec2 clipSpace = vec2(max(0.5, 1.0 / aspectRatio), max(2.0, aspectRatio)) *
-                      vec2(newLon, newLat) / vec2(90, 180);
-      vec2 zoomed = zoomLevel * clipSpace;
-      gl_PointSize = 4.719 * zoomLevel;
-      gl_Position = vec4(zoomed, 0, 1);
+      gl_Position = vec4(point, 0, 1);
+
+      texCoord = 0.5 + (midCoord - vec2(180, 0)) / vec2(360, 180) +
+                point * vec2(min(0.5, aspectRatio / 4.0),
+                             min(0.5, 1.0 / aspectRatio)) / zoomLevel;
     }
   `;
 
   const fragmentShaderSource = `
-    varying lowp float speed;
+    precision mediump float;
+
+    varying vec2 texCoord;
+    uniform sampler2D tex;
+
     void main() {
-      gl_FragColor = vec4((speed - 10.0)/50.0, 0.2, (10.0-speed)/10.0, 1) * 0.8;
+      gl_FragColor = vec4(texture2D(tex, texCoord).r, 0, 0, 1);
     }
   `;
 
@@ -116,34 +133,22 @@ function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
     throw new Error('shaderProgram is null');
   }
 
-  const spdLoc = gl.getAttribLocation(shaderProgram, 'spd');
-  const spdBuffer = gl.createBuffer() as WebGLBuffer;
-  gl.bindBuffer(gl.ARRAY_BUFFER, spdBuffer);
-  gl.enableVertexAttribArray(spdLoc);
-  gl.vertexAttribPointer(spdLoc, 1, gl.FLOAT, false, 0, 0);
+  // prettier-ignore
+  const points = new Float32Array([
+    -1, -1,
+    -1,  1,
+     1,  1,
+     1,  1,
+     1, -1,
+    -1, -1,
+  ]);
 
-  const lons = new Float32Array(360 * 181);
-  const lats = new Float32Array(360 * 181);
-  for (let x = 0; x < 360; x++) {
-    for (let y = 0; y < 181; y++) {
-      lons[x * 181 + y] = x;
-      lats[x * 181 + y] = y - 90;
-    }
-  }
-
-  const lonLoc = gl.getAttribLocation(shaderProgram, 'lon');
-  const lonBuffer = gl.createBuffer() as WebGLBuffer;
-  gl.bindBuffer(gl.ARRAY_BUFFER, lonBuffer);
-  gl.enableVertexAttribArray(lonLoc);
-  gl.vertexAttribPointer(lonLoc, 1, gl.FLOAT, false, 0, 0);
-  gl.bufferData(gl.ARRAY_BUFFER, lons, gl.STATIC_DRAW);
-
-  const latLoc = gl.getAttribLocation(shaderProgram, 'lat');
-  const latBuffer = gl.createBuffer() as WebGLBuffer;
-  gl.bindBuffer(gl.ARRAY_BUFFER, latBuffer);
-  gl.enableVertexAttribArray(latLoc);
-  gl.vertexAttribPointer(latLoc, 1, gl.FLOAT, false, 0, 0);
-  gl.bufferData(gl.ARRAY_BUFFER, lats, gl.STATIC_DRAW);
+  const pointLoc = gl.getAttribLocation(shaderProgram, 'point');
+  const pointBuffer = gl.createBuffer() as WebGLBuffer;
+  gl.bindBuffer(gl.ARRAY_BUFFER, pointBuffer);
+  gl.enableVertexAttribArray(pointLoc);
+  gl.vertexAttribPointer(pointLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
 
   const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
   gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
@@ -151,14 +156,13 @@ function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
   gl.depthMask(false);
-  return {gl, shaderProgram, spdBuffer};
-}
 
-function drawPoints(glState: GLState, spds: Float32Array) {
-  const {gl, spdBuffer} = glState;
-  gl.bindBuffer(gl.ARRAY_BUFFER, spdBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, spds, gl.DYNAMIC_DRAW);
-  gl.drawArrays(gl.POINTS, 0, spds.length);
+  const tex = gl.createTexture() as WebGLTexture;
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+
+  return {gl, shaderProgram, tex};
 }
 
 function setZoomLevel(glState: GLState, zoomLevel: number) {
@@ -171,4 +175,21 @@ function setCenterCoord(glState: GLState, centerCoord: Coord) {
   const {gl, shaderProgram} = glState;
   const midCoordLoc = gl.getUniformLocation(shaderProgram, 'midCoord');
   gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
+}
+
+function draw(glState: GLState, texData: Uint8Array) {
+  const {gl, tex} = glState;
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.LUMINANCE,
+    512,
+    512,
+    0,
+    gl.LUMINANCE,
+    gl.UNSIGNED_BYTE,
+    texData,
+  );
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
