@@ -22,7 +22,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'heyo',
+      title: 'Zephrly',
       template: 'src/index.html',
     }),
     new CleanWebpackPlugin(['dist']),
