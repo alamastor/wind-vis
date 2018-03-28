@@ -33,28 +33,6 @@ describe('controlPanelReducer', () => {
     ).toEqual(expectedResult);
   });
 
-  it('should set show particle tails', () => {
-    const expectedResult = Object.assign({}, state, {showParticleTails: false});
-    expect(
-      controlPanelReducer(undefined, {
-        type: 'CONTROL_PANEL_SHOW_PARTICLE_TAILS',
-        show: false,
-      }),
-    ).toEqual(expectedResult);
-  });
-
-  it('should set clear particles each frame', () => {
-    const expectedResult = Object.assign({}, state, {
-      clearParticlesEachFrame: true,
-    });
-    expect(
-      controlPanelReducer(undefined, {
-        type: 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME',
-        clear: true,
-      }),
-    ).toEqual(expectedResult);
-  });
-
   it('should set zoom level', () => {
     const expectedResult = Object.assign({}, state, {
       zoomLevel: 2,

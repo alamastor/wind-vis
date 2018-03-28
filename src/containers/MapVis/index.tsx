@@ -30,8 +30,6 @@ const mapStateToProps = (state: RootState) => ({
   zoomLevel: state.controlPanel.zoomLevel,
   centerLon: state.mapVis.centerLon,
   centerLat: state.mapVis.centerLat,
-  showParticleTails: state.controlPanel.showParticleTails,
-  clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
   fieldData: state.fieldData,
 });
 
@@ -58,8 +56,6 @@ interface Props {
   displayVectors: boolean;
   displaySpeeds: boolean;
   paused: boolean;
-  showParticleTails: boolean;
-  clearParticlesEachFrame: boolean;
   fieldData: FieldDataState;
   setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
@@ -189,8 +185,6 @@ class MapVis extends React.Component<Props, State> {
               projState={this.getProjState()}
               width={this.props.width}
               height={this.props.height}
-              showParticleTails={this.props.showParticleTails}
-              clearParticlesEachFrame={this.props.clearParticlesEachFrame}
               resetPariclesOnInit={this.state.currentTau === 0}
             />
           ) : null}

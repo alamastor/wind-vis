@@ -24,8 +24,6 @@ interface Props {
   projState: ProjState;
   width: number;
   height: number;
-  showParticleTails: boolean;
-  clearParticlesEachFrame: boolean;
   resetPariclesOnInit: boolean;
 }
 interface State {}

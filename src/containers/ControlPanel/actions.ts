@@ -13,14 +13,6 @@ export type Action =
       type: 'CONTROL_PANEL_TOGGLE_PAUSE';
     }
   | {
-      type: 'CONTROL_PANEL_SHOW_PARTICLE_TAILS';
-      show: boolean;
-    }
-  | {
-      type: 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME';
-      clear: boolean;
-    }
-  | {
       type: 'CONTROL_PANEL_SET_ZOOM_LEVEL';
       zoomLevel: number;
     };
@@ -41,20 +33,6 @@ export function setDisplayVectors(display: boolean): RootAction {
 
 export function togglePaused(): RootAction {
   return {type: 'CONTROL_PANEL_TOGGLE_PAUSE'};
-}
-
-export function setShowParticleTails(show: boolean): RootAction {
-  return {
-    type: 'CONTROL_PANEL_SHOW_PARTICLE_TAILS',
-    show,
-  };
-}
-
-export function setClearParticlesEachFrame(clear: boolean): RootAction {
-  return {
-    type: 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME',
-    clear,
-  };
 }
 
 export function setZoomLevel(zoomLevel: number): RootAction {

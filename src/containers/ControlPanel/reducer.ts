@@ -7,8 +7,6 @@ export interface ControlPanelState {
   readonly displayParticles: boolean;
   readonly displayVectors: boolean;
   readonly paused: boolean;
-  readonly showParticleTails: boolean;
-  readonly clearParticlesEachFrame: boolean;
   readonly zoomLevel: number;
 }
 export const initialState = {
@@ -38,16 +36,6 @@ export default function controlPanel(
     case 'CONTROL_PANEL_TOGGLE_PAUSE':
       return Object.assign({}, state, {
         paused: !state.paused,
-      });
-
-    case 'CONTROL_PANEL_SHOW_PARTICLE_TAILS':
-      return Object.assign({}, state, {
-        showParticleTails: action.show,
-      });
-
-    case 'CONTROL_PANEL_CLEAR_PARTICLES_EACH_FRAME':
-      return Object.assign({}, state, {
-        clearParticlesEachFrame: action.clear,
       });
 
     case 'CONTROL_PANEL_SET_ZOOM_LEVEL':

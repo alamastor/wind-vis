@@ -8,8 +8,6 @@ import {
   setDisplayParticles,
   setDisplayVectors,
   togglePaused,
-  setShowParticleTails,
-  setClearParticlesEachFrame,
   setZoomLevel,
 } from './actions';
 import {minZoomLevel, maxZoomLevel} from './reducer';
@@ -18,8 +16,6 @@ const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
   displayVectors: state.controlPanel.displayVectors,
   paused: state.controlPanel.paused,
-  showParticleTails: state.controlPanel.showParticleTails,
-  clearParticlesEachFrame: state.controlPanel.clearParticlesEachFrame,
   zoomLevel: state.controlPanel.zoomLevel,
 });
 
@@ -29,8 +25,6 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       setDisplayParticles,
       setDisplayVectors,
       togglePaused,
-      setShowParticleTails,
-      setClearParticlesEachFrame,
       setZoomLevel,
     },
     dispatch,
@@ -40,14 +34,10 @@ interface Props {
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
-  showParticleTails: boolean;
-  clearParticlesEachFrame: boolean;
   zoomLevel: number;
   setDisplayParticles: (display: boolean) => Action;
   setDisplayVectors: (display: boolean) => Action;
   togglePaused: () => Action;
-  setShowParticleTails: (show: boolean) => Action;
-  setClearParticlesEachFrame: (clear: boolean) => Action;
   setZoomLevel: (zoomLevel: number) => Action;
 }
 
@@ -61,12 +51,6 @@ class ControlPanel extends React.Component<Props, {}> {
       this,
     );
     this.handleTogglePaused = this.handleTogglePaused.bind(this);
-    this.handleShowParticleTailsChange = this.handleShowParticleTailsChange.bind(
-      this,
-    );
-    this.handleClearParticlesEachFrameChange = this.handleClearParticlesEachFrameChange.bind(
-      this,
-    );
     this.handleZoomLevelChange = this.handleZoomLevelChange.bind(this);
   }
 
@@ -81,16 +65,6 @@ class ControlPanel extends React.Component<Props, {}> {
   handleTogglePaused(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     this.props.togglePaused();
-  }
-
-  handleShowParticleTailsChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.props.setShowParticleTails(event.target.checked);
-  }
-
-  handleClearParticlesEachFrameChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
-    this.props.setClearParticlesEachFrame(event.target.checked);
   }
 
   handleZoomLevelChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -125,24 +99,6 @@ class ControlPanel extends React.Component<Props, {}> {
             type="checkbox"
             checked={this.props.displayVectors}
             onChange={this.handleDisplayVectorsChange}
-          />
-        </label>
-        <label>
-          Show Particle Tails:
-          <input
-            name="showParticleTails"
-            type="checkbox"
-            checked={this.props.showParticleTails}
-            onChange={this.handleShowParticleTailsChange}
-          />
-        </label>
-        <label>
-          Clear Particles Each Frame:
-          <input
-            name="clearParticlesEachFrame"
-            type="checkbox"
-            checked={this.props.clearParticlesEachFrame}
-            onChange={this.handleClearParticlesEachFrameChange}
           />
         </label>
         <label>
