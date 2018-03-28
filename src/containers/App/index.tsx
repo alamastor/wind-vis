@@ -43,11 +43,11 @@ class App extends React.Component<Props, State> {
           display: 'grid',
           width: '100%',
           height: '100%',
-          gridTemplateRows: 'auto 1fr 10vh',
-          gridTemplateColumns: '1fr auto',
-          gridTemplateAreas: `".... control"
-                              ".... ......."
-                              "info ......."`,
+          gridTemplateRows: 'auto 1fr auto',
+          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateAreas: `".... . control"
+                              ".... . ......."
+                              "info . ......."`,
         })}>
         <MapVis width={this.state.width} height={this.state.height} />
         <ControlPanel />

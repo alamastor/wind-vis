@@ -70,13 +70,16 @@ class CursorPositionInfo extends React.Component<Props, State> {
         id="cursor-position-info"
         className={style({
           gridArea: '3 / 1',
+          zIndex: 1,
+          color: 'white',
+          padding: '10px',
         })}>
         <div>
           {this.latString()} {this.lonString()}
         </div>
         <div>
           {this.windDirString()
-            ? `${this.windDirString()} / ${this.windSpeedString()} m/s`
+            ? `${this.windDirString()}° / ${this.windSpeedString()} m/s`
             : ''}
         </div>
       </div>
