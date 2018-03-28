@@ -207,8 +207,15 @@ class MapVis extends React.Component<Props, State> {
             setZoomLevel={this.props.setZoomLevel}
           />
           <BackgroundMap projState={this.getProjState()} />
-          <div className={style({position: 'absolute', top: '0', left: '0'})}>
-            {currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}
+          <div
+            className={style({
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              color: 'white',
+              padding: '10px',
+            })}>
+            {currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}
           </div>
         </div>
       );
@@ -219,9 +226,10 @@ class MapVis extends React.Component<Props, State> {
           className={style({
             width: this.props.width,
             height: this.props.height,
+            padding: '10px',
           })}>
           <div className={style({})}>
-            <div>{currentDataDt.tz('UTC').format('HHZ DD/MM/YYYY')}</div>
+            <div>{currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}</div>
             <div>Fetching Data</div>
           </div>
         </div>
@@ -233,6 +241,7 @@ class MapVis extends React.Component<Props, State> {
           className={style({
             width: this.props.width,
             height: this.props.height,
+            padding: '10px',
           })}>
           <div>Fetching Data</div>
         </div>
