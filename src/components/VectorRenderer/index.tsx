@@ -4,6 +4,7 @@ import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState, transformCoord} from '../../utils/Projection';
+import mod from '../../utils/mod';
 
 interface Props {
   vectorField: VectorField;
@@ -34,38 +35,30 @@ export default class VectorRenderer extends React.Component<Props, State> {
   renderOnCanvas() {
     const ctx = this.getCtx();
     ctx.clearRect(0, 0, this.props.width, this.props.height);
-
-    // Draw arrows
     ctx.strokeStyle = 'lightblue';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.globalAlpha = 0.2;
-    for (
-      let lon = this.props.vectorField.getMinLon();
-      lon < this.props.vectorField.getMaxLon();
-      lon = lon + 5
-    ) {
-      for (
-        let lat = this.props.vectorField.getMinLat();
-        lat <= this.props.vectorField.getMaxLat();
-        lat = lat + 5
-      ) {
+
+    const leftmostLon =
+      Math.floor((this.props.projState.centerCoord.lon - 180) / 10) * 10;
+    const rightmostLon = leftmostLon + 370;
+
+    // Draw arrows
+    for (let lon = leftmostLon; lon < rightmostLon; lon = lon + 5) {
+      for (let lat = -90; lat <= 90; lat = lat + 5) {
         this.plotArrow(
           lon,
           lat,
-          this.props.vectorField.uField.getValue(lon, lat),
-          this.props.vectorField.vField.getValue(lon, lat),
+          this.props.vectorField.uField.getValue(mod(lon, 360), lat),
+          this.props.vectorField.vField.getValue(mod(lon, 360), lat),
         );
       }
     }
     ctx.stroke();
 
     // Add vertical gridlines
-    for (
-      let lon = this.props.vectorField.getMinLon();
-      lon < this.props.vectorField.getMaxLon();
-      lon = lon + 10
-    ) {
+    for (let lon = leftmostLon; lon < rightmostLon; lon = lon + 10) {
       const start = transformCoord(this.props.projState, {lon, lat: 90});
       ctx.moveTo(start.x, start.y);
       const end = transformCoord(this.props.projState, {lon, lat: -90});
@@ -90,7 +83,7 @@ export default class VectorRenderer extends React.Component<Props, State> {
   plotArrow(lon: number, lat: number, u: number, v: number) {
     const ctx = this.getCtx();
     ctx.save();
-    const {x, y} = transformCoord(this.props.projState, {lon, lat});
+    let {x, y} = transformCoord(this.props.projState, {lon, lat});
     ctx.translate(x, y);
     ctx.rotate(-Math.atan2(v, u));
     const scaleFactor = Math.abs(
