@@ -10,7 +10,7 @@ import mod from '../../utils/mod';
 
 const PARTICLE_FADE_START = 2000;
 const PARTICLE_BASE_LIFETIME = 4000;
-const PARTICLE_COUNT = 100000;
+const PARTICLE_COUNT = 50000;
 
 export interface Particles {
   readonly length: number;
@@ -187,7 +187,7 @@ function getGLStateForParticles(gl: WebGLRenderingContext): GLState {
       vec2 clipSpace = vec2(max(0.5, 1.0 / aspectRatio), max(2.0, aspectRatio)) *
                       vec2(newLon, newLat) / vec2(90, 180);
       vec2 zoomed = zoomLevel * clipSpace;
-      gl_PointSize = 3.0;
+      gl_PointSize = 3.0 * zoomLevel;
       gl_Position = vec4(zoomed, 0, 1);
     }
   `;
