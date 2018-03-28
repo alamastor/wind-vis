@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
 import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
+import mod from '../../utils/mod';
 
 const defaultGlobeImg = require(`../../img/globe-800w.png`);
 const srcSet = [200, 400, 800, 1600, 2400, 3600, 4800]
@@ -34,7 +35,7 @@ const BackgroundMap = (props: {projState: ProjState}) => {
         sizes={`${Math.round(width)}px`}
         className={style({
           position: 'absolute',
-          left: topLeft.x,
+          left: mod(topLeft.x, width),
           top: topLeft.y,
           width: width,
           height: height,
@@ -47,7 +48,7 @@ const BackgroundMap = (props: {projState: ProjState}) => {
         sizes={`${Math.round(width)}px`}
         className={style({
           position: 'absolute',
-          left: topLeft.x - width,
+          left: mod(topLeft.x, width) - width,
           top: topLeft.y,
           width: width,
           height: height,
