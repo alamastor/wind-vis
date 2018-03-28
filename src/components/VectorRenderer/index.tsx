@@ -36,11 +36,10 @@ export default class VectorRenderer extends React.Component<Props, State> {
     ctx.clearRect(0, 0, this.props.width, this.props.height);
 
     // Draw arrows
+    ctx.strokeStyle = 'lightblue';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    const color = 'rgb(140, 200, 300)';
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 0.2;
     for (
       let lon = this.props.vectorField.getMinLon();
       lon < this.props.vectorField.getMaxLon();
@@ -85,7 +84,6 @@ export default class VectorRenderer extends React.Component<Props, State> {
     }
 
     // Draw gridlines
-    ctx.strokeStyle = 'black';
     ctx.stroke();
   }
 
