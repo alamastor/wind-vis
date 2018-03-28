@@ -81,7 +81,7 @@ class ControlPanel extends React.Component<Props, {}> {
           zIndex: 1,
           padding: '10px',
           cursor: 'auto',
-          backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          color: 'white',
         })}>
         <label>
           Display Particles:
@@ -114,7 +114,7 @@ class ControlPanel extends React.Component<Props, {}> {
           />
         </label>
         <button
-          className={style({width: '150px'})}
+          className={style({width: '100%'})}
           onClick={this.handleTogglePaused}>
           {this.props.paused ? 'Resume' : 'Pause'}
         </button>
