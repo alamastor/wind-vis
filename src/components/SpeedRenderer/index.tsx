@@ -59,7 +59,7 @@ export default class SpeedRenderer extends React.Component<Props, State> {
           speedData[
             181 * Math.floor(x * 360 / 512) + Math.floor(y * 181 / 512)
           ] /
-          (this.maxSpeed / 256);
+          (this.maxSpeed / 255);
       }
     }
     draw(this.getGLState(), transformedSpeedData);
