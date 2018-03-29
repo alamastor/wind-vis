@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --watch",
     "build": "webpack --config webpack.prod.js",
-    "start": "webpack-dev-server --open --config webpack.dev.js"
+    "start": "webpack-dev-server --open --config webpack.dev.js",
+    "start-ext": "webpack-dev-server --open --config webpack.dev.js --host 0.0.0.0"
   },
   "keywords": [],
   "author": "Alistair McKelvie",
