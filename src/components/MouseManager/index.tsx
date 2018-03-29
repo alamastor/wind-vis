@@ -30,6 +30,7 @@ export default class MouseManager extends React.Component<Props, State> {
   dragPrevY: number = 0;
   cursorLon: number | null = null;
   cursorLat: number | null = null;
+  prevPinchZoomDist = 0;
 
   constructor(props: Props) {
     super(props);
@@ -39,6 +40,9 @@ export default class MouseManager extends React.Component<Props, State> {
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onDrag = this.onDrag.bind(this);
     this.onWheel = this.onWheel.bind(this);
+    this.onTouchStart = this.onTouchStart.bind(this);
+    this.onTouchMove = this.onTouchMove.bind(this);
+    this.onTouchEndOrCancel = this.onTouchEndOrCancel.bind(this);
   }
 
   componentDidUpdate() {
@@ -55,6 +59,7 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
     if (!this.dragging) {
       const x = event.clientX - this.div.offsetLeft;
       const y = event.clientY - this.div.offsetTop;
@@ -75,7 +80,6 @@ export default class MouseManager extends React.Component<Props, State> {
   }
 
   onDrag(event: MouseEvent) {
-    event.preventDefault();
     const deltaX = event.clientX - this.dragPrevX;
     const deltaY = event.clientY - this.dragPrevY;
     const deltaCoord = scalePoint(this.props.projState, {
@@ -123,8 +127,85 @@ export default class MouseManager extends React.Component<Props, State> {
     event.preventDefault();
     const newZoom = this.props.projState.zoomLevel - event.deltaY / 10;
     this.props.setZoomLevel(newZoom);
+    this.preventZoomOffMap(newZoom);
+  }
+
+  onTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (event.touches.length == 1) {
+      const touch = event.touches[0];
+      const x = touch.clientX - this.div.offsetLeft;
+      const y = touch.clientY - this.div.offsetTop;
+      this.dragPrevX = touch.clientX;
+      this.dragPrevY = touch.clientY;
+      const coord = transformPoint(this.props.projState, {x, y});
+      if (this.props.vectorField.pointInBounds(coord.lon, coord.lat)) {
+        [this.cursorLon, this.cursorLat] = [coord.lon, coord.lat];
+        this.props.setCursorData(
+          coord.lon,
+          coord.lat,
+          this.props.vectorField.uField.getValue(coord.lon, coord.lat),
+          this.props.vectorField.vField.getValue(coord.lon, coord.lat),
+        );
+      }
+    } else {
+      const t1 = event.touches[0];
+      const t2 = event.touches[1];
+      this.prevPinchZoomDist = Math.sqrt(
+        Math.pow(t1.clientX - t2.clientX, 2) +
+          Math.pow(t1.clientY - t2.clientY, 2),
+      );
+    }
+  }
+
+  onTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (event.touches.length == 1) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - this.dragPrevX;
+      const deltaY = touch.clientY - this.dragPrevY;
+      const deltaCoord = scalePoint(this.props.projState, {
+        x: deltaX,
+        y: deltaY,
+      });
+      const lon = this.props.projState.centerCoord.lon - deltaCoord.lon;
+      const lat = this.props.projState.centerCoord.lat - deltaCoord.lat;
+      if (
+        lat >= minCenterLat(this.props.projState) &&
+        lat <= maxCenterLat(this.props.projState)
+      ) {
+        this.props.setCenterPoint(lon, lat);
+      } else {
+        this.props.setCenterPoint(lon, this.props.projState.centerCoord.lat);
+      }
+      this.dragPrevX = touch.clientX;
+      this.dragPrevY = touch.clientY;
+    } else {
+      // TODO: Add proper handling like in mousewheel to prevent zooming out of bounds
+      const t1 = event.touches[0];
+      const t2 = event.touches[1];
+      const pinchZoomDist = Math.sqrt(
+        Math.pow(t1.clientX - t2.clientX, 2) +
+          Math.pow(t1.clientY - t2.clientY, 2),
+      );
+      const newZoom =
+        this.props.projState.zoomLevel *
+        (pinchZoomDist / this.prevPinchZoomDist);
+      this.props.setZoomLevel(newZoom);
+      this.preventZoomOffMap(newZoom);
+      this.prevPinchZoomDist = pinchZoomDist;
+    }
+  }
+
+  onTouchEndOrCancel(event: React.TouchEvent<HTMLDivElement>) {
+    event.preventDefault();
+    [this.cursorLat, this.cursorLon] = [null, null];
+    this.props.resetCursorData();
+  }
+
+  preventZoomOffMap(zoomLevel: number) {
     const nextZoomProjState = Object.assign({}, this.props.projState, {
-      zoom: newZoom,
+      zoom: zoomLevel,
     });
     if (
       this.props.projState.centerCoord.lat < minCenterLat(nextZoomProjState)
@@ -160,6 +241,10 @@ export default class MouseManager extends React.Component<Props, State> {
         onMouseOut={this.onMouseOut}
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
+        onTouchStart={this.onTouchStart}
+        onTouchMove={this.onTouchMove}
+        onTouchEnd={this.onTouchEndOrCancel}
+        onTouchCancel={this.onTouchEndOrCancel}
       />
     );
   }
