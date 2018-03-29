@@ -34,12 +34,14 @@ export default class SpeedRenderer extends React.Component<Props, State> {
   }
 
   componentDidMount() {
+    setViewport(this.getGLState());
     setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
     setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
     window.requestAnimationFrame(this.updateAndRender.bind(this));
   }
 
   componentDidUpdate() {
+    setViewport(this.getGLState());
     setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
     setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
     window.requestAnimationFrame(this.updateAndRender.bind(this));
@@ -159,9 +161,6 @@ function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
   gl.vertexAttribPointer(pointLoc, 2, gl.FLOAT, false, 0, 0);
   gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
 
-  const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
-  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
-
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
   gl.depthMask(false);
@@ -172,6 +171,13 @@ function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
 
   return {gl, shaderProgram, tex};
+}
+
+function setViewport(glState: GLState) {
+  const {gl, shaderProgram} = glState;
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
+  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
 }
 
 function setZoomLevel(glState: GLState, zoomLevel: number) {

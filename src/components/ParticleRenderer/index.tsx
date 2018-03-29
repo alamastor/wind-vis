@@ -55,6 +55,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     for (let i = 0; i < this.colors.length; i++) {
       this.colors[i] = Math.random();
     }
+    setViewport(this.getGLState());
     initColors(this.getGLState(), this.colors);
     setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
     setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
@@ -62,6 +63,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
+    setViewport(this.getGLState());
     if (
       this.props.resetPariclesOnInit &&
       this.props.vectorField !== prevProps.vectorField
@@ -237,14 +239,18 @@ function getGLStateForParticles(gl: WebGLRenderingContext): GLState {
   gl.enableVertexAttribArray(colorLoc);
   gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
 
-  const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
-  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
-
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
   gl.depthMask(false);
 
   return {gl, shaderProgram, lonBuffer, latBuffer, colorBuffer};
+}
+
+function setViewport(glState: GLState) {
+  const {gl, shaderProgram} = glState;
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  const aspectRatioLoc = gl.getUniformLocation(shaderProgram, 'aspectRatio');
+  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
 }
 
 function initColors(glState: GLState, colors: Float32Array) {
