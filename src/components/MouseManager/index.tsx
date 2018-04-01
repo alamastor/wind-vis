@@ -11,6 +11,7 @@ import {
   maxCenterLat,
   minCenterLat,
 } from '../../utils/Projection';
+import mod from '../../utils/mod';
 
 interface Props {
   vectorField: VectorField;
@@ -64,6 +65,7 @@ export default class MouseManager extends React.Component<Props, State> {
       const x = event.clientX - this.div.offsetLeft;
       const y = event.clientY - this.div.offsetTop;
       const coord = transformPoint(this.props.projState, {x, y});
+      coord.lon = mod(coord.lon, 360);
       if (this.props.vectorField.pointInBounds(coord.lon, coord.lat)) {
         [this.cursorLon, this.cursorLat] = [coord.lon, coord.lat];
         this.props.setCursorData(
