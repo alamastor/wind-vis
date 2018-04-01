@@ -26,9 +26,7 @@ import Spinner from '../../components/Spinner';
 const VectorRenderer = Loadable({
   loader: () =>
     import(/* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'),
-  loading: () => {
-    return <div>loading</div>;
-  },
+  loading: () => <Spinner color="white" />,
 });
 
 const mapStateToProps = (state: RootState) => ({
