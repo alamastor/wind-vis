@@ -48,6 +48,7 @@ class App extends React.Component<Props, State> {
           gridTemplateAreas: `".... . ......."
                               ".... . ......."
                               "info . control"`,
+          backgroundColor: '#624a72',
         })}>
         <MapVis width={this.state.width} height={this.state.height} />
         <ControlPanel />

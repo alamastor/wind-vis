@@ -21,6 +21,8 @@ import SpeedRenderer from '../../components/SpeedRenderer';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
+import Spinner from '../../components/Spinner';
+
 const VectorRenderer = Loadable({
   loader: () =>
     import(/* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'),
@@ -226,33 +228,8 @@ class MapVis extends React.Component<Props, State> {
           </div>
         </div>
       );
-    } else if (currentDataDt != null) {
-      return (
-        <div
-          id="spinner"
-          className={style({
-            width: this.props.width,
-            height: this.props.height,
-            padding: '10px',
-          })}>
-          <div className={style({})}>
-            <div>{currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}</div>
-            <div>Fetching Data</div>
-          </div>
-        </div>
-      );
     } else {
-      return (
-        <div
-          id="spinner"
-          className={style({
-            width: this.props.width,
-            height: this.props.height,
-            padding: '10px',
-          })}>
-          <div>Fetching Data</div>
-        </div>
-      );
+      return <Spinner color="white" />;
     }
   }
 }
