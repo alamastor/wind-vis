@@ -9,7 +9,8 @@
     "start": "webpack-dev-server --open --config webpack.dev.js",
     "start-ext": "webpack-dev-server --open --config webpack.dev.js --host 0.0.0.0",
     "profile": "webpack --config webpack.prod.js --profile --json > stats.json",
-    "stats": "webpack-bundle-analyzer stats.json"
+    "stats": "webpack-bundle-analyzer stats.json",
+    "debug": "webpack --config webpack.prod.js --progress --color --display-error-details"
   },
   "keywords": [],
   "author": "Alistair McKelvie",
@@ -29,6 +30,7 @@
     "html-webpack-plugin": "^3.0.7",
     "jest": "^22.3.0",
     "npm": "^5.7.1",
+    "raw-loader": "^0.5.1",
     "source-map-loader": "^0.2.3",
     "style-loader": "^0.20.3",
     "ts-jest": "^22.0.4",

@@ -6,6 +6,8 @@ import {Coord} from '../../Types';
 import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
 import {loadShader} from '../../utils/gl';
+import vertexShaderSource from './vertexshader.glsl';
+import fragmentShaderSource from './fragmentshader.glsl';
 
 interface GLState {
   gl: WebGLRenderingContext;
@@ -84,44 +86,6 @@ export default class SpeedRenderer extends React.Component<Props, State> {
 }
 
 function getGLStateForSpeeds(gl: WebGLRenderingContext): GLState {
-  const vertexShaderSource = `
-    attribute vec2 point;
-
-    uniform float aspectRatio;
-    uniform float zoomLevel;
-    uniform vec2 midCoord;
-
-    varying vec2 texCoord;
-
-    void main() {
-      gl_Position = vec4(point, 0, 1);
-
-      texCoord = 0.5 + (midCoord - vec2(180, 0)) / vec2(360, 180) +
-                point * vec2(min(0.5, aspectRatio / 4.0),
-                             min(0.5, 1.0 / aspectRatio)) / zoomLevel;
-    }
-  `;
-
-  const fragmentShaderSource = `
-    precision mediump float;
-
-    varying vec2 texCoord;
-    uniform sampler2D tex;
-
-    vec3 viridis(in float i) {
-      // Convert i (intensity 0-1) to Matplotlib Viridis colormap.
-      return vec3(
-        0.279996085294 - 0.1349846921598316 * i + 2.139562241779562 * pow(i, 2.0) - 14.618561485877892 * pow(i, 3.0) + 25.097783408548356 * pow(i, 4.0) - 11.772588644921733 * pow(i, 5.0),
-        0.0010336091072 + 1.609681944005644 * i - 1.8935162112806887 * pow(i, 2.0) + 2.687992417906457 * pow(i, 3.0) - 1.6835417416062761 * pow(i, 4.0) + 0.17873836015256522 * pow(i, 5.0),
-        0.305866611269 + 2.5680305844367317 * i - 11.850371601508543 * pow(i, 2.0) + 28.67243222734909 * pow(i, 3.0) - 33.35689847617539 * pow(i, 4.0) + 13.762053354579717 * pow(i, 5.0)
-      );
-    }
-
-    void main() {
-      gl_FragColor = vec4(viridis(texture2D(tex, texCoord).r), 1);
-    }
-  `;
-
   const shaderProgram = gl.createProgram();
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = loadShader(
