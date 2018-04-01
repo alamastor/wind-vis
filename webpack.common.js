@@ -41,7 +41,6 @@ module.exports = {
       title: 'Zephrly',
       template: 'src/index.html',
     }),
-    new CleanWebpackPlugin(['dist']),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
   ],
   optimization: {
