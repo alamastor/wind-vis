@@ -73,6 +73,7 @@ class CursorPositionInfo extends React.Component<Props, State> {
           zIndex: 1,
           color: 'white',
           padding: '10px',
+          marginTop: 'auto',
         })}>
         <div>
           {this.latString()} {this.lonString()}

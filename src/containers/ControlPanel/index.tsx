@@ -82,6 +82,7 @@ class ControlPanel extends React.Component<Props, {}> {
           padding: '10px',
           cursor: 'auto',
           color: 'white',
+          margin: 0,
         })}>
         <label>
           Display Particles:
