@@ -7,6 +7,8 @@ import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState} from '../../utils/Projection';
 import {loadShader} from '../../utils/gl';
 import mod from '../../utils/mod';
+import vertexShaderSource from './vertexshader.glsl';
+import fragmentShaderSource from './fragmentshader.glsl';
 
 const PARTICLE_FADE_START = 2000;
 const PARTICLE_BASE_LIFETIME = 4000;
@@ -169,36 +171,6 @@ interface GLState {
 }
 
 function getGLStateForParticles(gl: WebGLRenderingContext): GLState {
-  const vertexShaderSource = `
-    attribute float lon;
-    attribute float lat;
-    attribute vec3 color;
-    uniform float aspectRatio;
-    uniform float zoomLevel;
-    uniform vec2 midCoord;
-
-    varying lowp vec3 shColor;
-
-    void main() {
-      shColor = color;
-      vec2 offset = vec2(180, 0) - midCoord;
-      float newLon = mod(lon + offset.x, 360.0) - 180.0;
-      float newLat = lat + offset.y;
-      vec2 clipSpace = vec2(max(0.5, 1.0 / aspectRatio), max(2.0, aspectRatio)) *
-                      vec2(newLon, newLat) / vec2(90, 180);
-      vec2 zoomed = zoomLevel * clipSpace;
-      gl_PointSize = 3.0 * zoomLevel;
-      gl_Position = vec4(zoomed, 0, 1);
-    }
-  `;
-
-  const fragmentShaderSource = `
-    varying lowp vec3 shColor;
-    void main() {
-      gl_FragColor = vec4(shColor, 1) * 0.5;
-    }
-  `;
-
   const shaderProgram = gl.createProgram();
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = loadShader(

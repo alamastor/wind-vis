@@ -13,7 +13,17 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json', '.png', '.svg', '.jpg', '.gif'],
+    extensions: [
+      '.ts',
+      '.tsx',
+      '.js',
+      '.json',
+      '.png',
+      '.svg',
+      '.jpg',
+      '.gif',
+      '.glsl',
+    ],
   },
   module: {
     rules: [
@@ -36,7 +46,14 @@ module.exports = {
       },
       {
         test: /\.css$/,
+        exclude: '/node_modules/',
         use: ['style-loader', 'css-loader'],
+      },
+      {
+        enforce: 'pre',
+        exclude: '/node_modules/',
+        test: /\.glsl$/,
+        use: 'raw-loader',
       },
     ],
   },
