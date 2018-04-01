@@ -3,6 +3,7 @@ import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';
 import * as moment from 'moment';
+import * as Loadable from 'react-loadable';
 
 import {getCycle, getData} from '../../utils/fielddata';
 import VectorField from '../../utils/fielddata/VectorField';
@@ -14,13 +15,19 @@ import {
 } from './fieldDataReducer';
 import {RootState, RootAction as Action} from '../../reducers';
 import ParticleRenderer from '../../components/ParticleRenderer';
-import VectorRenderer from '../../components/VectorRenderer';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
 import SpeedRenderer from '../../components/SpeedRenderer';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
+const VectorRenderer = Loadable({
+  loader: () =>
+    import(/* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'),
+  loading: () => {
+    return <div>loading</div>;
+  },
+});
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.controlPanel.displayParticles,
