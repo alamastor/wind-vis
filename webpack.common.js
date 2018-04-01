@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
@@ -20,7 +21,7 @@ module.exports = {
       {
         test: /\.tsx?$/,
         exclude: '/node_modules/',
-        loader: 'awesome-typescript-loader',
+        loader: 'ts-loader',
       },
       {
         enforce: 'pre',
@@ -42,6 +43,7 @@ module.exports = {
       template: 'src/index.html',
     }),
     new CleanWebpackPlugin(['dist']),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
   ],
   optimization: {
     splitChunks: {
