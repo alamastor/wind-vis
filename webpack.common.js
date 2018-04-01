@@ -5,9 +5,11 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 module.exports = {
   entry: {
     app: './src/index.tsx',
+    //vectorRenderer: './src/components/VectorRenderer/index.tsx',
   },
   output: {
     filename: '[name].bundle.js',
+    chunkFilename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
   resolve: {
@@ -15,9 +17,23 @@ module.exports = {
   },
   module: {
     rules: [
-      {test: /\.tsx?$/, loader: 'awesome-typescript-loader'},
-      {enforce: 'pre', test: /\.js$/, loader: 'source-map-loader'},
-      {enforce: 'pre', test: /\.(png|svg|jpg|gif)$/, loader: 'file-loader'},
+      {
+        test: /\.tsx?$/,
+        exclude: '/node_modules/',
+        loader: 'awesome-typescript-loader',
+      },
+      {
+        enforce: 'pre',
+        test: /\.js$/,
+        exclude: '/node_modules/',
+        loader: 'source-map-loader',
+      },
+      {
+        enforce: 'pre',
+        exclude: '/node_modules/',
+        test: /\.(png|svg|jpg|gif)$/,
+        loader: 'file-loader',
+      },
     ],
   },
   plugins: [
