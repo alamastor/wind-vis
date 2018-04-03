@@ -39,6 +39,7 @@ const mapStateToProps = (state: RootState) => ({
   centerLon: state.mapVis.centerLon,
   centerLat: state.mapVis.centerLat,
   fieldData: state.fieldData,
+  frameRate: state.app.frameRate,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -65,6 +66,7 @@ interface Props {
   displaySpeeds: boolean;
   paused: boolean;
   fieldData: FieldDataState;
+  frameRate: number;
   setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lon: number, lat: number) => Action;
@@ -194,6 +196,7 @@ class MapVis extends React.Component<Props, State> {
               width={this.props.width}
               height={this.props.height}
               resetPariclesOnInit={this.state.currentTau === 0}
+              frameRate={this.props.frameRate}
             />
           ) : null}
           {this.props.displayVectors ? (

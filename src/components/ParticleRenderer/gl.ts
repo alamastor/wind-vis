@@ -2,6 +2,7 @@ import {Coord} from '../../Types';
 import {loadShader} from '../../utils/gl';
 import vertexShaderSource from './vertexshader.glsl';
 import fragmentShaderSource from './fragmentshader.glsl';
+import {Particles} from './Particles';
 
 export interface GLState {
   gl: WebGLRenderingContext;
@@ -9,13 +10,6 @@ export interface GLState {
   lonBuffer: WebGLBuffer;
   latBuffer: WebGLBuffer;
   colorBuffer: WebGLBuffer;
-}
-
-export interface Particles {
-  readonly length: number;
-  readonly lon: Float32Array;
-  readonly lat: Float32Array;
-  readonly age: Float32Array;
 }
 
 export function getGLStateForParticles(gl: WebGLRenderingContext): GLState {
