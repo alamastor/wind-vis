@@ -2,6 +2,10 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
+const INIT_PARTICLE_COUNT = 50000;
+const MAX_PARTICLE_COUNT = 1000000;
+const MIN_PARTICLE_COUNT = 1000;
+
 import {ProjState} from '../../utils/Projection';
 import VectorField from '../../utils/fielddata/VectorField';
 import {
@@ -15,10 +19,10 @@ import {
 } from './gl';
 import {
   PARTICLE_LIFETIME,
-  MAX_PARTICLE_COUNT,
-  MIN_PARTICLE_COUNT,
   Particles,
   initParticles,
+  refreshParticles,
+  updateParticleCount,
   updateParticles,
 } from './Particles';
 import debugPrint from '../../utils/debugPrint';
@@ -39,7 +43,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   y = 10;
   width = 20;
   height = 20;
-  particles: Particles = initParticles(MAX_PARTICLE_COUNT, PARTICLE_LIFETIME);
+  particles: Particles = initParticles(INIT_PARTICLE_COUNT);
   colors = new Float32Array(MAX_PARTICLE_COUNT * 3);
   prevParticleUpdateDt = 0;
 
@@ -68,7 +72,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       this.props.resetPariclesOnInit &&
       this.props.vectorField !== prevProps.vectorField
     ) {
-      this.particles = initParticles(MAX_PARTICLE_COUNT, PARTICLE_LIFETIME);
+      this.particles = refreshParticles(this.particles);
     }
 
     if (prevProps.projState.zoomLevel != this.props.projState.zoomLevel) {
@@ -92,28 +96,28 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       ) {
         const newParticleCount = Math.max(
           MIN_PARTICLE_COUNT,
-          this.particles.length / 2,
+          this.particles.length * 0.25,
         );
         debugPrint(
-          `frame rate is ${
-            this.props.frameRate
-          }fps, halfing particle count to ${newParticleCount}`,
+          `frame rate is ${Math.round(
+            this.props.frameRate,
+          )} fps, decreasing particle count to ${newParticleCount}`,
         );
-        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+        this.particles = updateParticleCount(this.particles, newParticleCount);
       } else if (
         this.props.frameRate > 50 &&
         this.particles.length < MAX_PARTICLE_COUNT
       ) {
         const newParticleCount = Math.min(
           MAX_PARTICLE_COUNT,
-          this.particles.length * 2,
+          this.particles.length * 1.25,
         );
         debugPrint(
-          `frame rate is ${
-            this.props.frameRate
-          }fps, doubling particle count to ${newParticleCount}`,
+          `frame rate is ${Math.round(
+            this.props.frameRate,
+          )} fps, increasing particle count to ${newParticleCount}`,
         );
-        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+        this.particles = updateParticleCount(this.particles, newParticleCount);
       }
       this.prevParticleUpdateDt = now;
     }

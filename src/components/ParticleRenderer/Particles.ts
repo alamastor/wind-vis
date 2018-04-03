@@ -3,8 +3,6 @@ import {ProjState} from '../../utils/Projection';
 import VectorField from '../../utils/fielddata/VectorField';
 
 export const PARTICLE_LIFETIME = 4000;
-export const MAX_PARTICLE_COUNT = 100000;
-export const MIN_PARTICLE_COUNT = 1000;
 
 export interface Particles {
   readonly length: number;
@@ -13,7 +11,7 @@ export interface Particles {
   readonly age: Float32Array;
 }
 
-export function initParticles(count: number, lifetime: number): Particles {
+export function initParticles(count: number): Particles {
   const result = {
     length: count,
     lon: new Float32Array(count),
@@ -21,7 +19,33 @@ export function initParticles(count: number, lifetime: number): Particles {
     age: new Float32Array(count),
   };
   for (let i = 0; i < count; i++) {
-    result.age[i] = Math.random() * lifetime;
+    result.age[i] = Math.random() * PARTICLE_LIFETIME;
+  }
+  return result;
+}
+
+export function refreshParticles(particles: Particles): Particles {
+  for (let i = 0; i < particles.length; i++) {
+    particles.lon[i] = 0;
+    particles.lat[i] = 0;
+    particles.age[i] = Math.random() * PARTICLE_LIFETIME;
+  }
+  return particles;
+}
+
+export function updateParticleCount(
+  particles: Particles,
+  count: number,
+): Particles {
+  const result = initParticles(count);
+  let i = 0;
+  for (; i < particles.length && i < result.length; i++) {
+    result.lon[i] = particles.lon[i];
+    result.lat[i] = particles.lat[i];
+    result.age[i] = particles.age[i];
+  }
+  for (; i < result.length; i++) {
+    result.age[i] = Math.random() * PARTICLE_LIFETIME;
   }
   return result;
 }
