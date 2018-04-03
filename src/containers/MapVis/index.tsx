@@ -39,6 +39,7 @@ const mapStateToProps = (state: RootState) => ({
   centerLon: state.mapVis.centerLon,
   centerLat: state.mapVis.centerLat,
   fieldData: state.fieldData,
+  frameRate: state.app.frameRate,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -65,6 +66,7 @@ interface Props {
   displaySpeeds: boolean;
   paused: boolean;
   fieldData: FieldDataState;
+  frameRate: number;
   setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
   resetCursorData: () => Action;
   setCenterPoint: (lon: number, lat: number) => Action;
@@ -91,6 +93,53 @@ class MapVis extends React.Component<Props, State> {
   componentDidMount() {
     this.fetchNextTau();
     this.setNextTau();
+  }
+
+  shouldComponentUpdate(nextProps: Props, nextState: State) {
+    return (
+      this.propsChanged(nextProps, ['frameRate']) ||
+      this.stateChanged(nextState)
+    );
+  }
+
+  /*
+   * Check if any props changed, ignoring any props in the
+   * ignore array. Used by shouldComponentUpdate to avoid
+   * updates for some prop changes.
+   */
+  propsChanged(nextProps: Props, ignore?: string[]) {
+    let key: keyof Props;
+    for (key in nextProps) {
+      if (nextProps.hasOwnProperty(key)) {
+        if (
+          (ignore == null || ignore.indexOf(key) === -1) &&
+          nextProps[key] !== this.props[key]
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /*
+   * Check if any state changed, ignoring any state in the
+   * ignore array. Used by shouldComponentUpdate to avoid
+   * updates for some state changes.
+   */
+  stateChanged(nextState: State, ignore?: string[]) {
+    let key: keyof State;
+    for (key in nextState) {
+      if (nextState.hasOwnProperty(key)) {
+        if (
+          (ignore == null || ignore.indexOf(key) === -1) &&
+          nextState[key] !== this.state[key]
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   getProjState() {
@@ -194,6 +243,7 @@ class MapVis extends React.Component<Props, State> {
               width={this.props.width}
               height={this.props.height}
               resetPariclesOnInit={this.state.currentTau === 0}
+              frameRate={this.props.frameRate}
             />
           ) : null}
           {this.props.displayVectors ? (

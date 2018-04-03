@@ -2,12 +2,10 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
-import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState} from '../../utils/Projection';
-import mod from '../../utils/mod';
+import VectorField from '../../utils/fielddata/VectorField';
 import {
   GLState,
-  Particles,
   drawParticles,
   getGLStateForParticles,
   initColors,
@@ -15,10 +13,14 @@ import {
   setViewport,
   setZoomLevel,
 } from './gl';
-
-const PARTICLE_FADE_START = 2000;
-const PARTICLE_BASE_LIFETIME = 4000;
-const PARTICLE_COUNT = 50000;
+import {
+  PARTICLE_LIFETIME,
+  MAX_PARTICLE_COUNT,
+  MIN_PARTICLE_COUNT,
+  Particles,
+  initParticles,
+  updateParticles,
+} from './Particles';
 
 interface Props {
   vectorField: VectorField;
@@ -26,6 +28,7 @@ interface Props {
   width: number;
   height: number;
   resetPariclesOnInit: boolean;
+  frameRate: number;
 }
 interface State {}
 export default class ParticleRenderer extends React.Component<Props, State> {
@@ -35,13 +38,9 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   y = 10;
   width = 20;
   height = 20;
-  particles: Particles = {
-    length: PARTICLE_COUNT,
-    lon: new Float32Array(PARTICLE_COUNT),
-    lat: new Float32Array(PARTICLE_COUNT),
-    age: new Float32Array(PARTICLE_COUNT),
-  };
-  colors = new Float32Array(PARTICLE_COUNT * 3);
+  particles: Particles = initParticles(MAX_PARTICLE_COUNT, PARTICLE_LIFETIME);
+  colors = new Float32Array(MAX_PARTICLE_COUNT * 3);
+  prevParticleUpdateDt = 0;
 
   getGLState(): GLState {
     if (!this.glState) {
@@ -52,7 +51,6 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.initParticles();
     for (let i = 0; i < this.colors.length; i++) {
       this.colors[i] = Math.random();
     }
@@ -69,7 +67,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       this.props.resetPariclesOnInit &&
       this.props.vectorField !== prevProps.vectorField
     ) {
-      this.initParticles();
+      this.particles = initParticles(MAX_PARTICLE_COUNT, PARTICLE_LIFETIME);
     }
 
     if (prevProps.projState.zoomLevel != this.props.projState.zoomLevel) {
@@ -79,13 +77,34 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     if (prevProps.projState.centerCoord != this.props.projState.centerCoord) {
       setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
     }
+
+    this.updateParticleCount();
   }
 
-  initParticles() {
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      this.particles.lon[i] = 0;
-      this.particles.lat[i] = 0;
-      this.particles.age[i] = Math.random() * PARTICLE_BASE_LIFETIME;
+  updateParticleCount() {
+    const now = Date.now();
+    // Only update framerate every 5 seconds
+    if (now - this.prevParticleUpdateDt > 5000) {
+      if (
+        this.props.frameRate < 30 &&
+        this.particles.length > MIN_PARTICLE_COUNT
+      ) {
+        const newParticleCount = Math.max(
+          MIN_PARTICLE_COUNT,
+          this.particles.length / 2,
+        );
+        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+      } else if (
+        this.props.frameRate > 50 &&
+        this.particles.length < MAX_PARTICLE_COUNT
+      ) {
+        const newParticleCount = Math.min(
+          MAX_PARTICLE_COUNT,
+          this.particles.length * 2,
+        );
+        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+      }
+      this.prevParticleUpdateDt = now;
     }
   }
 
@@ -99,12 +118,7 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     }
 
     drawParticles(this.getGLState(), this.particles);
-    updateParticles(
-      this.props.projState,
-      this.particles,
-      this.props.vectorField,
-      deltaT,
-    );
+    updateParticles(this.particles, this.props.vectorField, deltaT);
 
     window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));
   }
@@ -124,40 +138,5 @@ export default class ParticleRenderer extends React.Component<Props, State> {
         }}
       />
     );
-  }
-}
-
-function updateParticles(
-  projState: ProjState,
-  particles: Particles,
-  vectorField: VectorField,
-  deltaT: number,
-) {
-  for (let i = 0; i < particles.length; i++) {
-    const lon = particles.lon[i];
-    const lat = particles.lat[i];
-    const age = particles.age[i] + deltaT;
-    if (age < PARTICLE_BASE_LIFETIME) {
-      if (lat >= -90 && lat <= 90) {
-        const u = vectorField.uField.getValue(lon, lat);
-        const v = vectorField.vField.getValue(lon, lat);
-        particles.lon[i] = mod(lon + u * deltaT / 1000, 360);
-        particles.lat[i] = lat + v * deltaT / 1000;
-      } else if (lat < -90) {
-        const u = vectorField.uField.getValue(lon, -90);
-        const v = vectorField.vField.getValue(lon, -90);
-        particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
-        particles.lat[i] = -90 - lat - v * deltaT / 1000;
-      } else if (lat > 90) {
-        const u = vectorField.uField.getValue(lon, 90);
-        const v = vectorField.vField.getValue(lon, 90);
-        particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
-        particles.lat[i] = 90 - lat - v * deltaT / 1000;
-      }
-    } else {
-      particles.lon[i] = Math.random() * 360;
-      particles.lat[i] = Math.random() * 180 - 90;
-    }
-    particles.age[i] = age % PARTICLE_BASE_LIFETIME;
   }
 }

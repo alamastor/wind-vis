@@ -1,20 +1,33 @@
 import * as React from 'react';
 import {Dispatch, connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
 import {style} from 'typestyle';
 
-import {RootState} from '../../reducers';
+import {RootState, RootAction as Action} from '../../reducers';
 import ControlPanel from '../ControlPanel';
 import MapVis from '../MapVis';
 import CursorPositionInfo from '../CursorPositionInfo';
+import {setFrameRate} from './actions';
 
 const mapStateToProps = (state: RootState) => ({});
+const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
+  bindActionCreators(
+    {
+      setFrameRate,
+    },
+    dispatch,
+  );
 
-interface Props {}
+interface Props {
+  setFrameRate: (frameRate: number) => Action;
+}
 interface State {
   width: number;
   height: number;
 }
 class App extends React.Component<Props, State> {
+  prevFrameTimestamp: number | null = null;
+  frameLengths: number[] = [...Array(180)].map(() => 0);
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -26,6 +39,7 @@ class App extends React.Component<Props, State> {
 
   componentDidMount() {
     window.addEventListener('resize', this.onResize);
+    requestAnimationFrame(this.updateFrameRate.bind(this));
   }
 
   onResize() {
@@ -33,6 +47,21 @@ class App extends React.Component<Props, State> {
       width: window.innerWidth,
       height: window.innerHeight,
     });
+  }
+
+  updateFrameRate(timestamp: number) {
+    if (this.prevFrameTimestamp != null) {
+      const frameLength = timestamp - this.prevFrameTimestamp;
+      this.frameLengths.shift();
+      this.frameLengths.push(frameLength);
+      const meanFrameLength =
+        this.frameLengths.reduce((len, cum) => len + cum, 0) /
+        this.frameLengths.length;
+      const meanFrameRate = 1000 / frameLength;
+      this.props.setFrameRate(meanFrameRate);
+    }
+    this.prevFrameTimestamp = timestamp;
+    requestAnimationFrame(this.updateFrameRate.bind(this));
   }
 
   render() {
@@ -58,4 +87,4 @@ class App extends React.Component<Props, State> {
   }
 }
 
-export default connect(mapStateToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);
