@@ -85,28 +85,24 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     const now = Date.now();
     // Only update framerate every 5 seconds
     if (now - this.prevParticleUpdateDt > 5000) {
-      if (this.props.frameRate < 30) {
+      if (
+        this.props.frameRate < 30 &&
+        this.particles.length > MIN_PARTICLE_COUNT
+      ) {
         const newParticleCount = Math.max(
           MIN_PARTICLE_COUNT,
           this.particles.length / 2,
         );
-        console.log(
-          `frame rate is ${
-            this.props.frameRate
-          }, halving particle count to ${newParticleCount}`,
-        );
-        //this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
-      } else if (this.props.frameRate > 50) {
+        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+      } else if (
+        this.props.frameRate > 50 &&
+        this.particles.length < MAX_PARTICLE_COUNT
+      ) {
         const newParticleCount = Math.min(
           MAX_PARTICLE_COUNT,
           this.particles.length * 2,
         );
-        console.log(
-          `frame rate is ${
-            this.props.frameRate
-          },  doubling particle count to ${newParticleCount}`,
-        );
-        //this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
+        this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
       }
       this.prevParticleUpdateDt = now;
     }

@@ -3,7 +3,7 @@ import {ProjState} from '../../utils/Projection';
 import VectorField from '../../utils/fielddata/VectorField';
 
 export const PARTICLE_LIFETIME = 4000;
-export const MAX_PARTICLE_COUNT = 50000;
+export const MAX_PARTICLE_COUNT = 100000;
 export const MIN_PARTICLE_COUNT = 1000;
 
 export interface Particles {
