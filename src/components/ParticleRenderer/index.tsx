@@ -21,6 +21,7 @@ import {
   initParticles,
   updateParticles,
 } from './Particles';
+import debugPrint from '../../utils/debugPrint';
 
 interface Props {
   vectorField: VectorField;
@@ -93,6 +94,11 @@ export default class ParticleRenderer extends React.Component<Props, State> {
           MIN_PARTICLE_COUNT,
           this.particles.length / 2,
         );
+        debugPrint(
+          `frame rate is ${
+            this.props.frameRate
+          }fps, halfing particle count to ${newParticleCount}`,
+        );
         this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
       } else if (
         this.props.frameRate > 50 &&
@@ -101,6 +107,11 @@ export default class ParticleRenderer extends React.Component<Props, State> {
         const newParticleCount = Math.min(
           MAX_PARTICLE_COUNT,
           this.particles.length * 2,
+        );
+        debugPrint(
+          `frame rate is ${
+            this.props.frameRate
+          }fps, doubling particle count to ${newParticleCount}`,
         );
         this.particles = initParticles(newParticleCount, PARTICLE_LIFETIME);
       }
