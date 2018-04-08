@@ -77,6 +77,7 @@ class ControlPanel extends React.Component<Props, {}> {
         className={style({
           gridArea: 'control',
           display: 'flex',
+          position: 'relative',
           flexDirection: 'column',
           zIndex: 1,
           padding: '10px',
