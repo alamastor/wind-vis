@@ -47,43 +47,41 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   colors = new Float32Array(MAX_PARTICLE_COUNT * 3);
   prevParticleUpdateDt = 0;
 
-  getGLState(): GLState {
-    if (!this.glState) {
-      const gl = this.canvas.getContext('webgl') as WebGLRenderingContext;
-      this.glState = getGLStateForParticles(gl);
-    }
-    return this.glState;
-  }
-
   componentDidMount() {
-    for (let i = 0; i < this.colors.length; i++) {
-      this.colors[i] = Math.random();
+    const gl = this.canvas.getContext('webgl');
+    if (gl != null) {
+      this.glState = getGLStateForParticles(gl);
+      for (let i = 0; i < this.colors.length; i++) {
+        this.colors[i] = Math.random();
+      }
+      setViewport(this.glState);
+      initColors(this.glState, this.colors);
+      setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      setCenterCoord(this.glState, this.props.projState.centerCoord);
+      window.requestAnimationFrame(this.updateAndRender.bind(this));
     }
-    setViewport(this.getGLState());
-    initColors(this.getGLState(), this.colors);
-    setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
-    setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
-    window.requestAnimationFrame(this.updateAndRender.bind(this));
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    setViewport(this.getGLState());
-    if (
-      this.props.resetPariclesOnInit &&
-      this.props.vectorField !== prevProps.vectorField
-    ) {
-      this.particles = refreshParticles(this.particles);
-    }
+    if (this.glState != null) {
+      setViewport(this.glState);
+      if (
+        this.props.resetPariclesOnInit &&
+        this.props.vectorField !== prevProps.vectorField
+      ) {
+        this.particles = refreshParticles(this.particles);
+      }
 
-    if (prevProps.projState.zoomLevel != this.props.projState.zoomLevel) {
-      setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
-    }
+      if (prevProps.projState.zoomLevel != this.props.projState.zoomLevel) {
+        setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      }
 
-    if (prevProps.projState.centerCoord != this.props.projState.centerCoord) {
-      setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
-    }
+      if (prevProps.projState.centerCoord != this.props.projState.centerCoord) {
+        setCenterCoord(this.glState, this.props.projState.centerCoord);
+      }
 
-    this.updateParticleCount();
+      this.updateParticleCount();
+    }
   }
 
   updateParticleCount() {
@@ -132,7 +130,9 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       timestamp = prevTime;
     }
 
-    drawParticles(this.getGLState(), this.particles);
+    if (this.glState != null) {
+      drawParticles(this.glState, this.particles);
+    }
     updateParticles(this.particles, this.props.vectorField, deltaT);
 
     window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));

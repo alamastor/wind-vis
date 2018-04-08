@@ -25,26 +25,24 @@ export default class SpeedRenderer extends React.Component<Props, State> {
   glState: GLState | null = null;
   maxSpeed = 0;
 
-  getGLState(): GLState {
-    if (!this.glState) {
-      const gl = this.canvas.getContext('webgl') as WebGLRenderingContext;
-      this.glState = getGLStateForSpeeds(gl);
-    }
-    return this.glState;
-  }
-
   componentDidMount() {
-    setViewport(this.getGLState());
-    setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
-    setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
-    window.requestAnimationFrame(this.updateAndRender.bind(this));
+    const gl = this.canvas.getContext('webgl');
+    if (gl != null) {
+      this.glState = getGLStateForSpeeds(gl);
+      setViewport(this.glState);
+      setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      setCenterCoord(this.glState, this.props.projState.centerCoord);
+      window.requestAnimationFrame(this.updateAndRender.bind(this));
+    }
   }
 
   componentDidUpdate() {
-    setViewport(this.getGLState());
-    setZoomLevel(this.getGLState(), this.props.projState.zoomLevel);
-    setCenterCoord(this.getGLState(), this.props.projState.centerCoord);
-    window.requestAnimationFrame(this.updateAndRender.bind(this));
+    if (this.glState != null) {
+      setViewport(this.glState);
+      setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      setCenterCoord(this.glState, this.props.projState.centerCoord);
+      window.requestAnimationFrame(this.updateAndRender.bind(this));
+    }
   }
 
   updateAndRender() {
@@ -64,7 +62,9 @@ export default class SpeedRenderer extends React.Component<Props, State> {
           (this.maxSpeed / 255);
       }
     }
-    draw(this.getGLState(), transformedSpeedData);
+    if (this.glState != null) {
+      draw(this.glState, transformedSpeedData);
+    }
   }
 
   render() {
