@@ -3,13 +3,16 @@ import {Dispatch, connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {style} from 'typestyle';
 
+import AppError from '../../components/AppError';
 import {RootState, RootAction as Action} from '../../reducers';
 import ControlPanel from '../ControlPanel';
 import MapVis from '../MapVis';
 import CursorPositionInfo from '../CursorPositionInfo';
 import {setFrameRate} from './actions';
 
-const mapStateToProps = (state: RootState) => ({});
+const mapStateToProps = (state: RootState) => ({
+  glUnavailable: state.app.glUnavailable,
+});
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
   bindActionCreators(
     {
@@ -19,6 +22,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
   );
 
 interface Props {
+  glUnavailable: boolean;
   setFrameRate: (frameRate: number) => Action;
 }
 interface State {
@@ -65,20 +69,25 @@ class App extends React.Component<Props, State> {
   }
 
   render() {
-    return (
-      <div
-        id="app"
-        className={style({
-          display: 'grid',
-          width: '100%',
-          height: '100%',
-          gridTemplateRows: 'auto 1fr auto',
-          gridTemplateColumns: 'auto 1fr auto',
-          gridTemplateAreas: `".... . ......."
+    const className = style({
+      display: 'grid',
+      width: '100%',
+      height: '100%',
+      gridTemplateRows: 'auto 1fr auto',
+      gridTemplateColumns: 'auto 1fr auto',
+      gridTemplateAreas: `".... . ......."
                               ".... . ......."
                               "info . control"`,
-          backgroundColor: '#624a72',
-        })}>
+      backgroundColor: '#624a72',
+    });
+    return this.props.glUnavailable ? (
+      <div id="app" className={className}>
+        <AppError>
+          Not available in this browser, please try another one!
+        </AppError>
+      </div>
+    ) : (
+      <div id="app" className={className}>
         <MapVis width={this.state.width} height={this.state.height} />
         <ControlPanel />
         <CursorPositionInfo />

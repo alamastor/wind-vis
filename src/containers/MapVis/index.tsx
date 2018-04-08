@@ -22,6 +22,7 @@ import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
 import Spinner from '../../components/Spinner';
+import {setGlUnavailable} from '../App/actions';
 
 const VectorRenderer = Loadable({
   loader: () =>
@@ -51,6 +52,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       setZoomLevel,
       setCycle,
       addData,
+      setGlUnavailable,
     },
     dispatch,
   );
@@ -73,6 +75,7 @@ interface Props {
   setZoomLevel: (zoomLevel: number) => Action;
   setCycle: (cycle: moment.Moment) => Action;
   addData: (tau: number, data: {u: Float32Array; v: Float32Array}) => Action;
+  setGlUnavailable: () => Action;
 }
 interface State {
   currentTau: number;
@@ -234,6 +237,7 @@ class MapVis extends React.Component<Props, State> {
               projState={this.getProjState()}
               width={this.props.width}
               height={this.props.height}
+              setGlUnavailable={this.props.setGlUnavailable}
             />
           ) : null}
           {this.props.displayParticles ? (
@@ -244,6 +248,7 @@ class MapVis extends React.Component<Props, State> {
               height={this.props.height}
               resetPariclesOnInit={this.state.currentTau === 0}
               frameRate={this.props.frameRate}
+              setGlUnavailable={this.props.setGlUnavailable}
             />
           ) : null}
           {this.props.displayVectors ? (

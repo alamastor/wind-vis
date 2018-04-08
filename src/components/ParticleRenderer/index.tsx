@@ -26,6 +26,7 @@ import {
   updateParticles,
 } from './Particles';
 import debugPrint from '../../utils/debugPrint';
+import {RootAction as Action} from '../../reducers';
 
 interface Props {
   vectorField: VectorField;
@@ -34,6 +35,7 @@ interface Props {
   height: number;
   resetPariclesOnInit: boolean;
   frameRate: number;
+  setGlUnavailable: () => Action;
 }
 interface State {}
 export default class ParticleRenderer extends React.Component<Props, State> {
@@ -48,7 +50,9 @@ export default class ParticleRenderer extends React.Component<Props, State> {
   prevParticleUpdateDt = 0;
 
   componentDidMount() {
-    const gl = this.canvas.getContext('webgl');
+    let gl =
+      this.canvas.getContext('webgl') ||
+      this.canvas.getContext('experimental-webgl');
     if (gl != null) {
       this.glState = getGLStateForParticles(gl);
       for (let i = 0; i < this.colors.length; i++) {
@@ -59,6 +63,8 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       setZoomLevel(this.glState, this.props.projState.zoomLevel);
       setCenterCoord(this.glState, this.props.projState.centerCoord);
       window.requestAnimationFrame(this.updateAndRender.bind(this));
+    } else {
+      this.props.setGlUnavailable();
     }
   }
 

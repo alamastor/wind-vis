@@ -12,12 +12,14 @@ import {
   setViewport,
   setZoomLevel,
 } from './gl';
+import {RootAction as Action} from '../../reducers';
 
 interface Props {
   vectorField: VectorField;
   projState: ProjState;
   width: number;
   height: number;
+  setGlUnavailable: () => Action;
 }
 interface State {}
 export default class SpeedRenderer extends React.Component<Props, State> {
@@ -26,13 +28,17 @@ export default class SpeedRenderer extends React.Component<Props, State> {
   maxSpeed = 0;
 
   componentDidMount() {
-    const gl = this.canvas.getContext('webgl');
+    const gl =
+      this.canvas.getContext('webgl') ||
+      this.canvas.getContext('experimental-webgl');
     if (gl != null) {
       this.glState = getGLStateForSpeeds(gl);
       setViewport(this.glState);
       setZoomLevel(this.glState, this.props.projState.zoomLevel);
       setCenterCoord(this.glState, this.props.projState.centerCoord);
       window.requestAnimationFrame(this.updateAndRender.bind(this));
+    } else {
+      this.props.setGlUnavailable();
     }
   }
 
