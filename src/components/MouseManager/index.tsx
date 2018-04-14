@@ -127,7 +127,19 @@ export default class MouseManager extends React.Component<Props, State> {
 
   onWheel(event: React.WheelEvent<HTMLDivElement>) {
     event.preventDefault();
-    const newZoom = this.props.projState.zoomLevel - event.deltaY / 10;
+    let deltaFactor;
+    switch (event.deltaMode) {
+      case 0: // DOM_DELTA_PIXEL
+        deltaFactor = 0.01;
+        break;
+      case 1: // DOM_DELTA_LINE
+        deltaFactor = 0.1;
+        break;
+      default:
+        // DOM_DELTA_PAGE
+        deltaFactor = 1;
+    }
+    const newZoom = this.props.projState.zoomLevel - event.deltaY * deltaFactor;
     this.props.setZoomLevel(newZoom);
     this.preventZoomOffMap(newZoom);
   }
