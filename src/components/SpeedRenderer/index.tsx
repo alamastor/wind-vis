@@ -17,6 +17,7 @@ import {RootAction as Action} from '../../reducers';
 interface Props {
   vectorField: VectorField;
   projState: ProjState;
+  maxSpeed: number;
   width: number;
   height: number;
   setGlUnavailable: () => Action;
@@ -25,7 +26,6 @@ interface State {}
 export default class SpeedRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: GLState | null = null;
-  maxSpeed = 0;
 
   componentDidMount() {
     const gl =
@@ -53,10 +53,6 @@ export default class SpeedRenderer extends React.Component<Props, State> {
 
   updateAndRender() {
     const speedData = this.props.vectorField.speedData();
-    const maxSpeed = Math.max(...speedData);
-    if (maxSpeed > this.maxSpeed) {
-      this.maxSpeed = maxSpeed;
-    }
     const transformedSpeedData = new Uint8Array(512 * 512);
     // Transform speed data direction, make square power of two, and normalize
     for (let x = 0; x < 512; x++) {
@@ -65,7 +61,7 @@ export default class SpeedRenderer extends React.Component<Props, State> {
           speedData[
             181 * Math.floor(x * 360 / 512) + Math.floor(y * 181 / 512)
           ] /
-          (this.maxSpeed / 255);
+          (this.props.maxSpeed / 255);
       }
     }
     if (this.glState != null) {

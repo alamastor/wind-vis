@@ -5,7 +5,7 @@ import {style} from 'typestyle';
 import * as moment from 'moment';
 import * as Loadable from 'react-loadable';
 
-import {getCycle, getData} from '../../utils/fielddata';
+import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
 import VectorField from '../../utils/fielddata/VectorField';
 import DataField from '../../utils/fielddata/DataField';
 import {
@@ -79,6 +79,7 @@ interface Props {
 }
 interface State {
   currentTau: number;
+  maxWindSpeed: number | null;
 }
 class MapVis extends React.Component<Props, State> {
   readonly frameInterval = 500;
@@ -90,12 +91,28 @@ class MapVis extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = {currentTau: 0};
+    this.state = {currentTau: 0, maxWindSpeed: null};
   }
 
   componentDidMount() {
     this.fetchNextTau();
     this.setNextTau();
+    this.setMaxWindSpeed();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.paused && !prevProps.paused) {
+      if (this.timeoutId != null) {
+        clearTimeout(this.timeoutId);
+        this.timeoutId = null;
+      }
+      this.updateRemainingTime =
+        this.frameInterval - (Date.now() - this.lastUpdate.getTime());
+    } else if (!this.props.paused && prevProps.paused) {
+      setTimeout(this.setNextTau.bind(this), this.updateRemainingTime);
+    } else if (this.awaitingData) {
+      this.setNextTau();
+    }
   }
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
@@ -177,21 +194,6 @@ class MapVis extends React.Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.paused && !prevProps.paused) {
-      if (this.timeoutId != null) {
-        clearTimeout(this.timeoutId);
-        this.timeoutId = null;
-      }
-      this.updateRemainingTime =
-        this.frameInterval - (Date.now() - this.lastUpdate.getTime());
-    } else if (!this.props.paused && prevProps.paused) {
-      setTimeout(this.setNextTau.bind(this), this.updateRemainingTime);
-    } else if (this.awaitingData) {
-      this.setNextTau();
-    }
-  }
-
   setNextTau() {
     if (!this.props.paused) {
       const nextTau = (this.state.currentTau + 3) % 180;
@@ -209,11 +211,18 @@ class MapVis extends React.Component<Props, State> {
     }
   }
 
+  setMaxWindSpeed() {
+    getMaxWindSpeed().then((maxWindSpeed: number) => {
+      this.setState({maxWindSpeed});
+    });
+  }
+
   render() {
     const currentDataDt = tauToDt(this.props.fieldData, this.state.currentTau);
     if (
       currentDataDt != null &&
-      tauAvailable(this.props.fieldData, this.state.currentTau)
+      tauAvailable(this.props.fieldData, this.state.currentTau) &&
+      this.state.maxWindSpeed != null
     ) {
       const currentData = this.props.fieldData.data[this.state.currentTau];
       const vectorField = new VectorField(
@@ -235,6 +244,7 @@ class MapVis extends React.Component<Props, State> {
             <SpeedRenderer
               vectorField={vectorField}
               projState={this.getProjState()}
+              maxSpeed={this.state.maxWindSpeed}
               width={this.props.width}
               height={this.props.height}
               setGlUnavailable={this.props.setGlUnavailable}

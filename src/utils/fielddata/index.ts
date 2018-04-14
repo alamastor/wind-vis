@@ -33,3 +33,8 @@ export async function getCycle(): Promise<moment.Moment> {
   const response = await axios.get(GFS_JSON_SERVER + '/cycle.json');
   return moment.tz(response.data.cycle, 'YYYYMMDD_HHmmss', 'UTC');
 }
+
+export async function getMaxWindSpeed(): Promise<number> {
+  const response = await axios.get(GFS_JSON_SERVER + '/cycle.json');
+  return response.data.maxWindSpeed;
+}
