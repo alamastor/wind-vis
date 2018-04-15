@@ -11,7 +11,7 @@ import App from './containers/App';
 
 if (navigator.userAgent.indexOf('Trident') !== -1) {
   document.write(
-    'Sorry, not available in Internet Explorer, please try another browser.',
+    'Sorry, not available in Internet Explorer. Please try another browser.',
   );
 } else {
   ReactDOM.render(
