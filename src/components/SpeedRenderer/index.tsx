@@ -13,6 +13,7 @@ import {
   setZoomLevel,
 } from './gl';
 import {RootAction as Action} from '../../reducers';
+const DataTransformer = require('worker-loader!./DataTransformer');
 
 interface Props {
   vectorField: VectorField;
@@ -26,6 +27,18 @@ interface State {}
 export default class SpeedRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: GLState | null = null;
+  dataTransformer = new DataTransformer();
+
+  constructor(props: Props) {
+    super(props);
+    this.dataTransformer.onmessage = (message: {
+      data: {transformedSpeedData: Uint8Array};
+    }) => {
+      if (this.glState != null) {
+        draw(this.glState, message.data.transformedSpeedData);
+      }
+    };
+  }
 
   componentDidMount() {
     const gl =
@@ -42,31 +55,22 @@ export default class SpeedRenderer extends React.Component<Props, State> {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     if (this.glState != null) {
       setViewport(this.glState);
       setZoomLevel(this.glState, this.props.projState.zoomLevel);
       setCenterCoord(this.glState, this.props.projState.centerCoord);
-      window.requestAnimationFrame(this.updateAndRender.bind(this));
+      if (prevProps.vectorField !== this.props.vectorField) {
+        window.requestAnimationFrame(this.updateAndRender.bind(this));
+      }
     }
   }
 
   updateAndRender() {
-    const speedData = this.props.vectorField.speedData();
-    const transformedSpeedData = new Uint8Array(512 * 512);
-    // Transform speed data direction, make square power of two, and normalize
-    for (let x = 0; x < 512; x++) {
-      for (let y = 0; y < 512; y++) {
-        transformedSpeedData[512 * y + x] =
-          speedData[
-            181 * Math.floor(x * 360 / 512) + Math.floor(y * 181 / 512)
-          ] /
-          (this.props.maxSpeed / 255);
-      }
-    }
-    if (this.glState != null) {
-      draw(this.glState, transformedSpeedData);
-    }
+    this.dataTransformer.postMessage({
+      speedData: this.props.vectorField.speedData(),
+      maxSpeed: this.props.maxSpeed,
+    });
   }
 
   render() {

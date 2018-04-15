@@ -5,7 +5,6 @@ const webpack = require('webpack');
 module.exports = {
   entry: {
     app: './src/index.tsx',
-    //vectorRenderer: './src/components/VectorRenderer/index.tsx',
   },
   output: {
     filename: '[name].bundle.js',
@@ -54,6 +53,10 @@ module.exports = {
         exclude: '/node_modules/',
         test: /\.glsl$/,
         use: 'raw-loader',
+      },
+      {
+        test: /\.worker\.js$/,
+        use: {loader: 'worker-loader'},
       },
     ],
   },
