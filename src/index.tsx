@@ -9,9 +9,15 @@ export const store = createStore(reducers);
 
 import App from './containers/App';
 
-ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById('root'),
-);
+if (navigator.userAgent.indexOf('Trident') !== -1) {
+  document.write(
+    'Sorry, not available in Internet Explorer, please try another browser.',
+  );
+} else {
+  ReactDOM.render(
+    <Provider store={store}>
+      <App />
+    </Provider>,
+    document.getElementById('root'),
+  );
+}
