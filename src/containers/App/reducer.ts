@@ -1,8 +1,8 @@
 import {RootAction} from '../../reducers';
 
 export interface State {
-  frameRate: number;
-  glUnavailable: boolean;
+  frameRate: number; // Recorded current frame rate of app. Time lagged.
+  glUnavailable: boolean; // WebGL unavailable in this browser?
 }
 
 export const initialState = {

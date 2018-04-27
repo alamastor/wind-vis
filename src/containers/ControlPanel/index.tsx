@@ -1,3 +1,6 @@
+/*
+ * App level options panel.
+ */
 import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';

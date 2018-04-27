@@ -10,6 +10,8 @@ import MapVis from '../MapVis';
 import CursorPositionInfo from '../CursorPositionInfo';
 import {setFrameRate} from './actions';
 
+const FRAME_LENGTH_BUFFER_COUNT = 180;
+
 const mapStateToProps = (state: RootState) => ({
   glUnavailable: state.app.glUnavailable,
 });
@@ -31,7 +33,9 @@ interface State {
 }
 class App extends React.Component<Props, State> {
   prevFrameTimestamp: number | null = null;
-  frameLengths: number[] = [...Array(180)].map(() => 0);
+  frameLengths: number[] = [...Array(FRAME_LENGTH_BUFFER_COUNT)].map(
+    () => 16.67,
+  );
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -53,6 +57,11 @@ class App extends React.Component<Props, State> {
     });
   }
 
+  /*
+   * Estimate and report current frame rate of app. Called with
+   * requestAnimationFrame. Uses average frame length over
+   * FRAME_LENGTH_BUFFER_COUNT.
+   */
   updateFrameRate(timestamp: number) {
     if (this.prevFrameTimestamp != null) {
       const frameLength = timestamp - this.prevFrameTimestamp;

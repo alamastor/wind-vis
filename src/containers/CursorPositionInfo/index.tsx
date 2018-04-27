@@ -1,3 +1,6 @@
+/*
+ * Component displaying information for current cursor position on map.
+*/
 import * as React from 'react';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';

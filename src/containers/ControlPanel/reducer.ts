@@ -4,10 +4,10 @@ export const minZoomLevel = 1;
 export const maxZoomLevel = 15;
 
 export interface ControlPanelState {
-  readonly displayParticles: boolean;
-  readonly displayVectors: boolean;
-  readonly paused: boolean;
-  readonly zoomLevel: number;
+  readonly displayParticles: boolean; // Show particles component?
+  readonly displayVectors: boolean; // Show vectors component?
+  readonly paused: boolean; // Time stepping is paused?
+  readonly zoomLevel: number; // Zoom factor of map. TODO: Consider moving to MapVis.
 }
 export const initialState = {
   displayParticles: true,

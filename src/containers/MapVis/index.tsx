@@ -1,3 +1,6 @@
+/*
+ * Component containing various visualisations of data on world map.
+ */
 import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
@@ -23,6 +26,8 @@ import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
 import Spinner from '../../components/Spinner';
 import {setGlUnavailable} from '../App/actions';
+
+const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
 
 const VectorRenderer = Loadable({
   loader: () =>
@@ -78,16 +83,15 @@ interface Props {
   setGlUnavailable: () => Action;
 }
 interface State {
-  currentTau: number;
-  maxWindSpeed: number | null;
+  currentTau: number; // Tau value currently being displayed
+  maxWindSpeed: number | null; // Max wind speed over all taus
 }
 class MapVis extends React.Component<Props, State> {
-  readonly frameInterval = 500;
-  lastUpdate = new Date();
-  updateRemainingTime = 500;
-  timeoutId: number | null = null;
-  tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x);
-  awaitingData = false;
+  prevStepTime = new Date(); // time of previous tau step
+  stepRemainingTime = TAU_STEP_INTERVAL; // time remaining before stepping to next tau
+  setNextTauSetTimeoutId: number | null = null; // Id for setTimeout called with setNextTau
+  tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x); // Queue of times fetch data for
+  awaitingData = false; // Trying to set current tau but that data is not yet available?
 
   constructor(props: Props) {
     super(props);
@@ -102,20 +106,16 @@ class MapVis extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     if (this.props.paused && !prevProps.paused) {
-      if (this.timeoutId != null) {
-        clearTimeout(this.timeoutId);
-        this.timeoutId = null;
-      }
-      this.updateRemainingTime =
-        this.frameInterval - (Date.now() - this.lastUpdate.getTime());
+      this.pause();
     } else if (!this.props.paused && prevProps.paused) {
-      setTimeout(this.setNextTau.bind(this), this.updateRemainingTime);
+      this.unPause();
     } else if (this.awaitingData) {
       this.setNextTau();
     }
   }
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
+    // For perf reasons don't update when frame rate changes
     return (
       this.propsChanged(nextProps, ['frameRate']) ||
       this.stateChanged(nextState)
@@ -162,6 +162,22 @@ class MapVis extends React.Component<Props, State> {
     return false;
   }
 
+  pause() {
+    if (this.setNextTauSetTimeoutId != null) {
+      clearTimeout(this.setNextTauSetTimeoutId);
+      this.setNextTauSetTimeoutId = null;
+    }
+    this.stepRemainingTime =
+      TAU_STEP_INTERVAL - (Date.now() - this.prevStepTime.getTime());
+  }
+
+  unPause() {
+    this.setNextTauSetTimeoutId = setTimeout(
+      this.setNextTau.bind(this),
+      this.stepRemainingTime,
+    );
+  }
+
   getProjState() {
     return {
       screen: {
@@ -176,33 +192,45 @@ class MapVis extends React.Component<Props, State> {
     };
   }
 
+  /*
+   * Async fetch next data in this.tausToFetch, the call self again until
+   * out of data to fetch.
+   */
   fetchNextTau() {
     if (this.props.fieldData.cycle == null) {
+      // Need to know model cycle to fetch tau, get it and try again.
       getCycle().then((cycle: moment.Moment) => {
         this.props.setCycle(cycle);
         this.fetchNextTau();
       });
     } else {
-      const tau = this.tausToFetch.pop();
       const cyc = moment(this.props.fieldData.cycle);
-      if (cyc != null && tau != null) {
-        getData(cyc, tau).then((data: {u: Float32Array; v: Float32Array}) => {
-          this.props.addData(tau, data);
-          this.fetchNextTau();
-        });
+      if (cyc != null) {
+        const tau = this.tausToFetch.pop();
+        if (tau != null) {
+          getData(cyc, tau).then((data: {u: Float32Array; v: Float32Array}) => {
+            this.props.addData(tau, data);
+            this.fetchNextTau();
+          });
+        }
+      } else {
+        throw new Error('Invalid cycle value: ' + this.props.fieldData.cycle);
       }
     }
   }
 
+  /*
+   * Step to the next tau value and setup callback for subsequent step.
+   */
   setNextTau() {
     if (!this.props.paused) {
       const nextTau = (this.state.currentTau + 3) % 180;
       if (tauAvailable(this.props.fieldData, nextTau)) {
-        this.lastUpdate = new Date();
+        this.prevStepTime = new Date();
         this.setState({currentTau: nextTau});
-        this.timeoutId = setTimeout(
+        this.setNextTauSetTimeoutId = setTimeout(
           this.setNextTau.bind(this),
-          this.frameInterval,
+          TAU_STEP_INTERVAL,
         );
         this.awaitingData = false;
       } else {

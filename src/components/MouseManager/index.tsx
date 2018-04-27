@@ -46,10 +46,11 @@ export default class MouseManager extends React.Component<Props, State> {
     this.onTouchEndOrCancel = this.onTouchEndOrCancel.bind(this);
   }
 
+  /*
   componentDidUpdate() {
     if (this.cursorLat != null && this.cursorLon != null) {
-      const lat = this.cursorLat;
       const lon = this.cursorLon;
+      const lat = this.cursorLat;
       this.props.setCursorData(
         lon,
         lat,
@@ -58,6 +59,7 @@ export default class MouseManager extends React.Component<Props, State> {
       );
     }
   }
+  */
 
   onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     event.preventDefault();
