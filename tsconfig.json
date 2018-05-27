@@ -1,18 +1,16 @@
 {
-    "compilerOptions": {
-        "allowSyntheticDefaultImports": true,
-        "outDir": "./dist/",
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "target": "es5",
-        "jsx": "react",
-        "strict": true,
-        "downlevelIteration": true,
-        "lib": ["ES2017", "DOM", "webworker"]
-    },
-    "include": [
-        "./src/**/*"
-    ]
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "outDir": "./dist/",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es5",
+    "jsx": "react",
+    "strict": true,
+    "downlevelIteration": true,
+    "lib": ["es2017", "dom", "webworker"]
+  },
+  "include": ["./src/**/*"]
 }
