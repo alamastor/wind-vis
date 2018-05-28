@@ -68,9 +68,39 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     }
   }
 
+  shouldcomponentupdate(nextProps: Props, nextState: State) {
+    // for perf reasons only update for some props
+    return this.propsChanged(nextProps, ['vectorField', 'projState']);
+  }
+
+  /*
+   * check if any props changed, ignoring any props in the
+   * ignore array. used by shouldcomponentupdate to avoid
+   * updates for some prop changes.
+   */
+  propsChanged(nextProps: Props, ignore?: string[]) {
+    let key: keyof Props;
+    for (key in nextProps) {
+      if (nextProps.hasOwnProperty(key)) {
+        if (
+          (ignore == null || ignore.indexOf(key) === -1) &&
+          nextProps[key] !== this.props[key]
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   componentDidUpdate(prevProps: Props, prevState: State) {
     if (this.glState != null) {
-      setViewport(this.glState);
+      if (
+        prevProps.width !== this.props.width ||
+        prevProps.height !== this.props.width
+      ) {
+        setViewport(this.glState);
+      }
       if (
         this.props.resetPariclesOnInit &&
         this.props.vectorField !== prevProps.vectorField
@@ -78,52 +108,44 @@ export default class ParticleRenderer extends React.Component<Props, State> {
         this.particles = refreshParticles(this.particles);
       }
 
-      if (prevProps.projState.zoomLevel != this.props.projState.zoomLevel) {
-        setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      const now = Date.now();
+      // Only check framerate every 5 seconds
+      if (now - this.prevParticleUpdateDt > 5000) {
+        this.updateParticleCount();
+        this.prevParticleUpdateDt = now;
       }
-
-      if (prevProps.projState.centerCoord != this.props.projState.centerCoord) {
-        setCenterCoord(this.glState, this.props.projState.centerCoord);
-      }
-
-      this.updateParticleCount();
     }
   }
 
   updateParticleCount() {
-    const now = Date.now();
-    // Only update framerate every 5 seconds
-    if (now - this.prevParticleUpdateDt > 5000) {
-      if (
-        this.props.frameRate < 30 &&
-        this.particles.length > MIN_PARTICLE_COUNT
-      ) {
-        const newParticleCount = Math.max(
-          MIN_PARTICLE_COUNT,
-          this.particles.length * 0.25,
-        );
-        debugPrint(
-          `frame rate is ${Math.round(
-            this.props.frameRate,
-          )} fps, decreasing particle count to ${newParticleCount}`,
-        );
-        this.particles = updateParticleCount(this.particles, newParticleCount);
-      } else if (
-        this.props.frameRate > 50 &&
-        this.particles.length < MAX_PARTICLE_COUNT
-      ) {
-        const newParticleCount = Math.min(
-          MAX_PARTICLE_COUNT,
-          this.particles.length * 1.25,
-        );
-        debugPrint(
-          `frame rate is ${Math.round(
-            this.props.frameRate,
-          )} fps, increasing particle count to ${newParticleCount}`,
-        );
-        this.particles = updateParticleCount(this.particles, newParticleCount);
-      }
-      this.prevParticleUpdateDt = now;
+    if (
+      this.props.frameRate < 30 &&
+      this.particles.length > MIN_PARTICLE_COUNT
+    ) {
+      const newParticleCount = Math.max(
+        MIN_PARTICLE_COUNT,
+        this.particles.length * 0.25,
+      );
+      debugPrint(
+        `frame rate is ${Math.round(
+          this.props.frameRate,
+        )} fps, decreasing particle count to ${newParticleCount}`,
+      );
+      this.particles = updateParticleCount(this.particles, newParticleCount);
+    } else if (
+      this.props.frameRate > 50 &&
+      this.particles.length < MAX_PARTICLE_COUNT
+    ) {
+      const newParticleCount = Math.min(
+        MAX_PARTICLE_COUNT,
+        this.particles.length * 1.25,
+      );
+      debugPrint(
+        `frame rate is ${Math.round(
+          this.props.frameRate,
+        )} fps, increasing particle count to ${newParticleCount}`,
+      );
+      this.particles = updateParticleCount(this.particles, newParticleCount);
     }
   }
 
@@ -137,6 +159,8 @@ export default class ParticleRenderer extends React.Component<Props, State> {
     }
 
     if (this.glState != null) {
+      setCenterCoord(this.glState, this.props.projState.centerCoord);
+      setZoomLevel(this.glState, this.props.projState.zoomLevel);
       drawParticles(this.glState, this.particles);
     }
     updateParticles(this.particles, this.props.vectorField, deltaT);
