@@ -17,10 +17,9 @@ import {
   tauAvailable,
 } from './fieldDataReducer';
 import {RootState, RootAction as Action} from '../../reducers';
-import ParticleRenderer from '../../components/ParticleRenderer';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
-import SpeedRenderer from '../../components/SpeedRenderer';
+import WindRenderer from '../../components/WindRenderer';
 import {setCursorData, resetCursorData, setCenterPoint} from './actions';
 import {setCycle, addData} from './fieldDataActions';
 import {setZoomLevel} from '../ControlPanel/actions';
@@ -267,18 +266,21 @@ class MapVis extends React.Component<Props, State> {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-          })}>
+          })}
+        >
           {this.props.displaySpeeds ? (
-            <SpeedRenderer
+            <WindRenderer
               vectorField={vectorField}
               projState={this.getProjState()}
               maxSpeed={this.state.maxWindSpeed}
               width={this.props.width}
               height={this.props.height}
+              resetPariclesOnInit={this.state.currentTau === 0}
+              frameRate={this.props.frameRate}
               setGlUnavailable={this.props.setGlUnavailable}
             />
           ) : null}
-          {this.props.displayParticles ? (
+          {/*this.props.displayParticles ? (
             <ParticleRenderer
               vectorField={vectorField}
               projState={this.getProjState()}
@@ -288,7 +290,7 @@ class MapVis extends React.Component<Props, State> {
               frameRate={this.props.frameRate}
               setGlUnavailable={this.props.setGlUnavailable}
             />
-          ) : null}
+          ) : null*/}
           {this.props.displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}
@@ -315,7 +317,8 @@ class MapVis extends React.Component<Props, State> {
               left: '0',
               color: 'white',
               padding: '10px',
-            })}>
+            })}
+          >
             {currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}
           </div>
         </div>

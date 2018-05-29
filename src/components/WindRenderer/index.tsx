@@ -2,21 +2,26 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {style} from 'typestyle';
 
-const INIT_PARTICLE_COUNT = 50000;
-const MAX_PARTICLE_COUNT = 1000000;
-const MIN_PARTICLE_COUNT = 1000;
-
-import {ProjState} from '../../utils/Projection';
 import VectorField from '../../utils/fielddata/VectorField';
+import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
 import {
-  GLState,
-  drawParticles,
-  getGLStateForParticles,
-  initColors,
+  SpeedGLState,
+  draw,
+  updateWindTex,
+  getGLStateForSpeeds,
   setCenterCoord,
   setViewport,
   setZoomLevel,
-} from './gl';
+} from './speedGL';
+import {
+  ParticleGLState,
+  drawParticles,
+  getGLStateForParticles,
+  initColors as initParticleColors,
+  setCenterCoord as setParticleCenterCoord,
+  setViewport as setParticleViewport,
+  setZoomLevel as setParticleZoomLevel,
+} from './particleGL';
 import {
   PARTICLE_LIFETIME,
   Particles,
@@ -25,12 +30,19 @@ import {
   updateParticleCount,
   updateParticles,
 } from './Particles';
-import debugPrint from '../../utils/debugPrint';
 import {RootAction as Action} from '../../reducers';
+import debugPrint from '../../utils/debugPrint';
+import {transformData} from './transformData';
+const DataTransformer = require('worker-loader!./DataTransformerWorker');
+
+const INIT_PARTICLE_COUNT = 50000;
+const MAX_PARTICLE_COUNT = 1000000;
+const MIN_PARTICLE_COUNT = 1000;
 
 interface Props {
   vectorField: VectorField;
   projState: ProjState;
+  maxSpeed: number;
   width: number;
   height: number;
   resetPariclesOnInit: boolean;
@@ -38,68 +50,78 @@ interface Props {
   setGlUnavailable: () => Action;
 }
 interface State {}
-export default class ParticleRenderer extends React.Component<Props, State> {
+export default class SpeedRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
-  glState: GLState | null = null;
-  x = 10;
-  y = 10;
-  width = 20;
-  height = 20;
+  gl: WebGLRenderingContext | null = null;
+  speedGLState: SpeedGLState | null = null;
+  particleGLState: ParticleGLState | null = null;
+  dataTransformer = new DataTransformer();
   particles: Particles = initParticles(INIT_PARTICLE_COUNT);
   colors = new Float32Array(MAX_PARTICLE_COUNT * 3);
   prevParticleUpdateDt = 0;
 
+  constructor(props: Props) {
+    super(props);
+    this.dataTransformer.onmessage = (message: {
+      data: {transformedSpeedData: Uint8Array};
+    }) => {
+      if (this.gl != null && this.speedGLState != null) {
+        updateWindTex(
+          this.gl,
+          this.speedGLState,
+          message.data.transformedSpeedData,
+        );
+      }
+    };
+  }
+
   componentDidMount() {
-    let gl =
+    const gl =
       this.canvas.getContext('webgl') ||
       this.canvas.getContext('experimental-webgl');
     if (gl != null) {
-      this.glState = getGLStateForParticles(gl);
+      this.gl = gl;
+      this.speedGLState = getGLStateForSpeeds(gl);
+      this.particleGLState = getGLStateForParticles(gl);
       for (let i = 0; i < this.colors.length; i++) {
         this.colors[i] = Math.random();
       }
-      setViewport(this.glState);
-      initColors(this.glState, this.colors);
-      setZoomLevel(this.glState, this.props.projState.zoomLevel);
-      setCenterCoord(this.glState, this.props.projState.centerCoord);
+      setViewport(gl, this.speedGLState);
+      setZoomLevel(gl, this.speedGLState, this.props.projState.zoomLevel);
+      setCenterCoord(gl, this.speedGLState, this.props.projState.centerCoord);
+      initParticleColors(gl, this.particleGLState, this.colors);
+      updateWindTex(
+        this.gl,
+        this.speedGLState,
+        transformData(this.props.vectorField.speedData(), this.props.maxSpeed),
+      );
       window.requestAnimationFrame(this.updateAndRender.bind(this));
     } else {
       this.props.setGlUnavailable();
     }
   }
 
-  shouldcomponentupdate(nextProps: Props, nextState: State) {
-    // for perf reasons only update for some props
-    return this.propsChanged(nextProps, ['vectorField', 'projState']);
-  }
-
-  /*
-   * check if any props changed, ignoring any props in the
-   * ignore array. used by shouldcomponentupdate to avoid
-   * updates for some prop changes.
-   */
-  propsChanged(nextProps: Props, ignore?: string[]) {
-    let key: keyof Props;
-    for (key in nextProps) {
-      if (nextProps.hasOwnProperty(key)) {
-        if (
-          (ignore == null || ignore.indexOf(key) === -1) &&
-          nextProps[key] !== this.props[key]
-        ) {
-          return true;
-        }
+  componentDidUpdate(prevProps: Props) {
+    if (this.gl != null && this.speedGLState != null) {
+      setViewport(this.gl, this.speedGLState);
+      setZoomLevel(this.gl, this.speedGLState, this.props.projState.zoomLevel);
+      setCenterCoord(
+        this.gl,
+        this.speedGLState,
+        this.props.projState.centerCoord,
+      );
+      if (prevProps.vectorField !== this.props.vectorField) {
+        this.dataTransformer.postMessage({
+          speedData: this.props.vectorField.speedData(),
+          maxSpeed: this.props.maxSpeed,
+        });
       }
-    }
-    return false;
-  }
 
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    if (this.glState != null) {
       if (
         prevProps.width !== this.props.width ||
         prevProps.height !== this.props.width
       ) {
-        setViewport(this.glState);
+        setViewport(this.gl, this.speedGLState);
       }
       if (
         this.props.resetPariclesOnInit &&
@@ -158,10 +180,22 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       timestamp = prevTime;
     }
 
-    if (this.glState != null) {
-      setCenterCoord(this.glState, this.props.projState.centerCoord);
-      setZoomLevel(this.glState, this.props.projState.zoomLevel);
-      drawParticles(this.glState, this.particles);
+    if (this.gl != null && this.speedGLState && this.particleGLState != null) {
+      draw(
+        this.gl,
+        this.speedGLState,
+        this.props.projState.centerCoord,
+        this.props.projState.zoomLevel,
+      );
+      //setCenterCoord(this.glState, this.props.projState.centerCoord);
+      //setZoomLevel(this.glState, this.props.projState.zoomLevel);
+      drawParticles(
+        this.gl,
+        this.particleGLState,
+        this.particles,
+        this.props.projState.centerCoord,
+        this.props.projState.zoomLevel,
+      );
     }
     updateParticles(this.particles, this.props.vectorField, deltaT);
 
@@ -173,8 +207,6 @@ export default class ParticleRenderer extends React.Component<Props, State> {
       <canvas
         className={style({
           position: 'fixed',
-          top: 0,
-          left: 0,
         })}
         width={this.props.width}
         height={this.props.height}
