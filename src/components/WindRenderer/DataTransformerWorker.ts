@@ -1,11 +1,9 @@
-import {transformData} from './transformData';
+import {transformDataForGPU} from './transformData';
 const ctx: Worker = self as any;
 
 ctx.addEventListener('message', message => {
   ctx.postMessage({
-    transformedSpeedData: transformData(
-      message.data.speedData,
-      message.data.maxSpeed,
-    ),
+    uData: transformDataForGPU(message.data.uData, message.data.maxValue),
+    vData: transformDataForGPU(message.data.vData, message.data.maxValue),
   });
 });

@@ -1,7 +1,9 @@
 precision mediump float;
 
 varying vec2 texCoord;
-uniform sampler2D tex;
+uniform sampler2D uTexture;
+uniform sampler2D vTexture;
+uniform float maxWind;
 
 vec3 viridis(in float i) {
   // Convert i (intensity 0-1) to Matplotlib Viridis colormap.
@@ -13,5 +15,9 @@ vec3 viridis(in float i) {
 }
 
 void main() {
-  gl_FragColor = vec4(viridis(texture2D(tex, texCoord).r), 1);
+  float restoredU = (texture2D(uTexture, texCoord).r / 0.5 - 1.0);
+  float restoredV = (texture2D(vTexture, texCoord).r / 0.5 - 1.0);
+  float speed = sqrt(pow(restoredU, 2.0) + pow(restoredV, 2.0));
+  // float speed = texture2D(uData, texCoord).r;
+  gl_FragColor = vec4(viridis(speed), 1);
 }

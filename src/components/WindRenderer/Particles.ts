@@ -63,18 +63,18 @@ export function updateParticles(
       if (lat >= -90 && lat <= 90) {
         const u = vectorField.uField.getValue(lon, lat);
         const v = vectorField.vField.getValue(lon, lat);
-        particles.lon[i] = mod(lon + u * deltaT / 1000, 360);
-        particles.lat[i] = lat + v * deltaT / 1000;
+        //particles.lon[i] = mod(lon + u * deltaT / 1000, 360);
+        //particles.lat[i] = lat + v * deltaT / 1000;
       } else if (lat < -90) {
         const u = vectorField.uField.getValue(lon, -90);
         const v = vectorField.vField.getValue(lon, -90);
-        particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
-        particles.lat[i] = -90 - lat - v * deltaT / 1000;
+        //particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
+        //particles.lat[i] = -90 - lat - v * deltaT / 1000;
       } else if (lat > 90) {
         const u = vectorField.uField.getValue(lon, 90);
         const v = vectorField.vField.getValue(lon, 90);
-        particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
-        particles.lat[i] = 90 - lat - v * deltaT / 1000;
+        //particles.lon[i] = mod(180 + lon + u * deltaT / 1000, 360);
+        //particles.lat[i] = 90 - lat - v * deltaT / 1000;
       }
     } else {
       particles.lon[i] = Math.random() * 360;
