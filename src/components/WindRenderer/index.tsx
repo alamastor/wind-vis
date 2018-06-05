@@ -39,7 +39,7 @@ interface Props {
   setGlUnavailable: () => Action;
 }
 interface State {}
-export default class SpeedRenderer extends React.Component<Props, State> {
+export default class WindRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: glState | null = null;
   dataTransformer = new DataTransformer();
@@ -152,19 +152,17 @@ export default class SpeedRenderer extends React.Component<Props, State> {
     }
 
     if (this.glState != null) {
-      /*
       drawSpeeds(
         this.glState,
         this.props.projState.centerCoord,
         this.props.projState.zoomLevel,
       );
-      */
       drawParticles(
         this.glState,
         this.props.projState.centerCoord,
         this.props.projState.zoomLevel,
       );
-      updateParticles(this.glState);
+      updateParticles(this.glState, deltaT);
     }
 
     window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));

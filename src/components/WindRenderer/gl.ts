@@ -23,16 +23,25 @@ export interface glState {
     drawState: {
       shaderProgram: WebGLProgram;
       positionTextureLoc: WebGLUniformLocation;
-      particleCountLoc: WebGLUniformLocation;
+      vertexLoc: number;
+      aspectRatioLoc: WebGLUniformLocation;
+      midCoordLoc: WebGLUniformLocation;
+      zoomLevelLoc: WebGLUniformLocation;
+      positionTextureWidthLoc: WebGLUniformLocation;
+      positionTextureHeightLoc: WebGLUniformLocation;
     };
     updateState: {
       shaderProgram: WebGLProgram;
       frameBuffer: WebGLFramebuffer;
       positionTextureBackbufferTexture: WebGLTexture;
       frameBufferVertexBuffer: WebGLBuffer;
-      frameBufferVertexBufferLoc: number;
-      viewportLoc: WebGLUniformLocation;
-      particleCountLoc: WebGLUniformLocation;
+      frameBufferVertexLoc: number;
+      positionTextureLoc: WebGLUniformLocation;
+      deltaTLoc: WebGLUniformLocation;
+      uTextureLoc: WebGLUniformLocation;
+      vTextureLoc: WebGLUniformLocation;
+      positionTextureWidthLoc: WebGLUniformLocation;
+      positionTextureHeightLoc: WebGLUniformLocation;
     };
     vertexBuffer: WebGLBuffer;
     particleCount: number;
@@ -44,7 +53,7 @@ export interface glState {
 
 export function getGLState(gl: WebGLRenderingContext): glState {
   const speedState = getSpeedProgramState(gl);
-  const particleState = getParticleProgramState(gl, 3);
+  const particleState = getParticleProgramState(gl, 5000000);
 
   const uTexture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, uTexture);
@@ -135,19 +144,28 @@ function getParticleProgramState(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
-  let positions = encodeCoordToRGBA({lon: 0, lat: -90});
-  positions = positions.concat(encodeCoordToRGBA({lon: 180, lat: 0}));
-  positions = positions.concat(encodeCoordToRGBA({lon: 359.9, lat: 90}));
+
+  const {width, height} = particleCountToTextureDimensions(particleCount);
+  const positions = new Uint8Array(width * height * 4);
+  for (let i = 0; i < particleCount; i++) {
+    const lon = Math.random() * 359.9;
+    const lat = Math.random() * 180 - 90;
+    const encoded = encodeCoordToRGBA({lon, lat});
+    positions[i * 4] = encoded[0];
+    positions[i * 4 + 1] = encoded[1];
+    positions[i * 4 + 2] = encoded[2];
+    positions[i * 4 + 3] = encoded[3];
+  }
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
     gl.RGBA,
-    particleCount,
-    1,
+    width,
+    height,
     0,
     gl.RGBA,
     gl.UNSIGNED_BYTE,
-    new Uint8Array(positions),
+    positions,
   );
   return {
     drawState,
@@ -173,16 +191,33 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
     shaderProgram,
     'positionTexture',
   );
-  const particleCountLoc = getUniformLocationSafe(
+  const aspectRatioLoc = getUniformLocationSafe(
     gl,
     shaderProgram,
-    'particleCount',
+    'aspectRatio',
   );
+  const midCoordLoc = getUniformLocationSafe(gl, shaderProgram, 'midCoord');
+  const zoomLevelLoc = getUniformLocationSafe(gl, shaderProgram, 'zoomLevel');
+  const positionTextureWidthLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'positionTextureWidth',
+  );
+  const positionTextureHeightLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'positionTextureHeight',
+  );
+
   return {
     shaderProgram,
     vertexLoc,
     positionTextureLoc,
-    particleCountLoc,
+    aspectRatioLoc,
+    midCoordLoc,
+    zoomLevelLoc,
+    positionTextureWidthLoc,
+    positionTextureHeightLoc,
   };
 }
 
@@ -204,20 +239,18 @@ function getParticleUpdateProgramState(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.bindTexture(gl.TEXTURE_2D, positionTextureBackbufferTexture);
-  let positions = encodeCoordToRGBA({lon: 0, lat: 90});
-  positions = positions.concat(encodeCoordToRGBA({lon: 180, lat: -50}));
-  positions = positions.concat(encodeCoordToRGBA({lon: 200, lat: 90}));
+  const {width, height} = particleCountToTextureDimensions(particleCount);
   // prettier-ignore
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
     gl.RGBA,
-    particleCount,
-    1,
+    width,
+    height,
     0,
     gl.RGBA,
     gl.UNSIGNED_BYTE,
-    new Uint8Array(positions),
+    new Uint8Array(width * height * 4),
   );
   // Create frame buffer
   const frameBuffer = gl.createFramebuffer();
@@ -248,24 +281,38 @@ function getParticleUpdateProgramState(
   ]), gl.STATIC_DRAW);
 
   // Get locations
-  const frameBufferVertexBufferLoc = gl.getAttribLocation(
-    shaderProgram,
-    'vertex',
-  );
-  const viewportLoc = getUniformLocationSafe(gl, shaderProgram, 'viewport');
-  const particleCountLoc = getUniformLocationSafe(
+  const frameBufferVertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
+  const positionTextureLoc = getUniformLocationSafe(
     gl,
     shaderProgram,
-    'particleCount',
+    'positionTexture',
   );
+  const deltaTLoc = getUniformLocationSafe(gl, shaderProgram, 'deltaT');
+  const uTextureLoc = getUniformLocationSafe(gl, shaderProgram, 'uTexture');
+  const vTextureLoc = getUniformLocationSafe(gl, shaderProgram, 'vTexture');
+  const positionTextureWidthLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'positionTextureWidth',
+  );
+  const positionTextureHeightLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'positionTextureHeight',
+  );
+
   return {
     shaderProgram,
     frameBuffer,
     positionTextureBackbufferTexture,
     frameBufferVertexBuffer,
-    frameBufferVertexBufferLoc,
-    viewportLoc,
-    particleCountLoc,
+    frameBufferVertexLoc,
+    positionTextureLoc,
+    deltaTLoc,
+    uTextureLoc,
+    vTextureLoc,
+    positionTextureWidthLoc,
+    positionTextureHeightLoc,
   };
 }
 
@@ -368,10 +415,19 @@ export function drawParticles(
   const {
     gl,
     particleState: {
-      drawState: {shaderProgram, positionTextureLoc, particleCountLoc},
+      drawState: {
+        shaderProgram,
+        positionTextureLoc,
+        vertexLoc,
+        aspectRatioLoc,
+        midCoordLoc,
+        zoomLevelLoc,
+        positionTextureWidthLoc,
+        positionTextureHeightLoc,
+      },
       particleCount,
-      vertexBuffer,
       positionTexture,
+      vertexBuffer,
     },
   } = glState;
 
@@ -387,7 +443,17 @@ export function drawParticles(
   gl.useProgram(shaderProgram);
 
   // Set uniforms
-  gl.uniform1i(particleCountLoc, particleCount);
+  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
+  gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
+  gl.uniform1f(zoomLevelLoc, zoomLevel);
+  const {width, height} = particleCountToTextureDimensions(particleCount);
+  gl.uniform1f(positionTextureWidthLoc, width);
+  gl.uniform1f(positionTextureHeightLoc, height);
+
+  // Bind vertices
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.vertexAttribPointer(vertexLoc, 1, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexLoc);
 
   // Bind position texture
   gl.uniform1i(positionTextureLoc, 0);
@@ -402,7 +468,7 @@ export function drawParticles(
   gl.depthMask(true);
 }
 
-export function updateParticles(glState: glState) {
+export function updateParticles(glState: glState, deltaT: number) {
   const {
     gl,
     particleState: {
@@ -410,45 +476,80 @@ export function updateParticles(glState: glState) {
         shaderProgram,
         frameBuffer,
         frameBufferVertexBuffer,
-        frameBufferVertexBufferLoc,
+        frameBufferVertexLoc,
         positionTextureBackbufferTexture,
-        viewportLoc,
+        positionTextureLoc,
+        positionTextureWidthLoc,
+        positionTextureHeightLoc,
+        deltaTLoc,
+        uTextureLoc,
+        vTextureLoc,
       },
       positionTexture,
       particleCount,
       vertexBuffer,
     },
+    uTexture,
+    vTexture,
   } = glState;
   // Use framebuffer
-  //gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
   // Set viewport
-  // gl.viewport(0, 0, particleCount, 1);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  const {width, height} = particleCountToTextureDimensions(particleCount);
+  gl.viewport(0, 0, width, height);
 
   // Use program
   gl.useProgram(shaderProgram);
 
-  gl.uniform2f(viewportLoc, gl.canvas.width, gl.canvas.height);
-  gl.uniform1f(viewportLoc, particleCount);
+  // Set uniforms
+  gl.uniform1f(deltaTLoc, deltaT);
+  gl.uniform1f(positionTextureWidthLoc, width);
+  gl.uniform1f(positionTextureHeightLoc, height);
+
+  // Bind position texture
+  gl.uniform1i(positionTextureLoc, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, positionTexture);
+
+  // Bind wind uv textures
+  gl.uniform1i(uTextureLoc, 1);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, uTexture);
+  gl.uniform1i(vTextureLoc, 2);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, vTexture);
 
   // Bind vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, frameBufferVertexBuffer);
-  gl.vertexAttribPointer(frameBufferVertexBufferLoc, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(frameBufferVertexBufferLoc);
+  gl.vertexAttribPointer(frameBufferVertexLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(frameBufferVertexLoc);
 
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
-  gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, particleCount, 1, 0);
+  gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, width, height, 0);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
 function encodeCoordToRGBA(coord: Coord): number[] {
-  return [
-    Math.floor(100 * coord.lon / 255),
-    (100 * coord.lon) % 255,
-    Math.floor(100 * (90 + coord.lat) / 255),
-    (100 * (90 + coord.lat)) % 255,
-  ];
+  // Encode lons to from range 0-360 to 0x0-0x10000
+  const encodedLon = coord.lon * 0x10000 / 360;
+  // Encode lats to from range -90-90 to 0x0-0x10000
+  const encodedLat = (coord.lat + 90.0) * 0xffff / 180;
+
+  // Get upper and lower bytes from encoded values and conver to 0-1 range in vec4
+  const lonUByte = Math.floor(encodedLon / 0x100);
+  const lonLByte = ((encodedLon / 0x100) % 1) * 0x100;
+  const latUByte = Math.floor(encodedLat / 0x100);
+  const latLByte = ((encodedLat / 0x100) % 1) * 0x100;
+  return [lonUByte, lonLByte, latUByte, latLByte];
+}
+
+function particleCountToTextureDimensions(particleCount: number) {
+  const size = Math.ceil(Math.sqrt(particleCount));
+  return {
+    width: size,
+    height: size,
+  };
 }
