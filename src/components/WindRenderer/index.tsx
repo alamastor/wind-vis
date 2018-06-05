@@ -12,21 +12,11 @@ import {
   updateWindTex,
   getGLState,
 } from './gl';
-import {
-  PARTICLE_LIFETIME,
-  Particles,
-  initParticles,
-  refreshParticles,
-  updateParticleCount,
-} from './Particles';
 import {RootAction as Action} from '../../reducers';
-import debugPrint from '../../utils/debugPrint';
 import {transformDataForGPU} from './transformData';
 const DataTransformer = require('worker-loader!./DataTransformerWorker');
 
-const INIT_PARTICLE_COUNT = 50000;
-const MAX_PARTICLE_COUNT = 1000000;
-const MIN_PARTICLE_COUNT = 1000;
+const PARTICLE_COUNT = 50000;
 
 interface Props {
   vectorField: VectorField;
@@ -43,9 +33,6 @@ export default class WindRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: glState | null = null;
   dataTransformer = new DataTransformer();
-  particles: Particles = initParticles(INIT_PARTICLE_COUNT);
-  colors = new Float32Array(MAX_PARTICLE_COUNT * 3);
-  prevParticleUpdateDt = 0;
 
   constructor(props: Props) {
     super(props);
@@ -63,10 +50,7 @@ export default class WindRenderer extends React.Component<Props, State> {
       this.canvas.getContext('webgl') ||
       this.canvas.getContext('experimental-webgl');
     if (gl != null) {
-      this.glState = getGLState(gl);
-      for (let i = 0; i < this.colors.length; i++) {
-        this.colors[i] = Math.random();
-      }
+      this.glState = getGLState(gl, PARTICLE_COUNT);
       updateWindTex(
         this.glState,
         transformDataForGPU(
@@ -85,60 +69,15 @@ export default class WindRenderer extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.glState != null) {
-      if (prevProps.vectorField !== this.props.vectorField) {
-        this.dataTransformer.postMessage({
-          uData: this.props.vectorField.uField.data,
-          vData: this.props.vectorField.vField.data,
-          maxValue: this.props.maxSpeed,
-        });
-      }
-
-      if (
-        this.props.resetPariclesOnInit &&
-        this.props.vectorField !== prevProps.vectorField
-      ) {
-        this.particles = refreshParticles(this.particles);
-      }
-
-      const now = Date.now();
-      // Only check framerate every 5 seconds
-      if (now - this.prevParticleUpdateDt > 5000) {
-        this.updateParticleCount();
-        this.prevParticleUpdateDt = now;
-      }
-    }
-  }
-
-  updateParticleCount() {
     if (
-      this.props.frameRate < 30 &&
-      this.particles.length > MIN_PARTICLE_COUNT
+      prevProps.vectorField !== this.props.vectorField &&
+      this.glState != null
     ) {
-      const newParticleCount = Math.max(
-        MIN_PARTICLE_COUNT,
-        this.particles.length * 0.25,
-      );
-      debugPrint(
-        `frame rate is ${Math.round(
-          this.props.frameRate,
-        )} fps, decreasing particle count to ${newParticleCount}`,
-      );
-      this.particles = updateParticleCount(this.particles, newParticleCount);
-    } else if (
-      this.props.frameRate > 50 &&
-      this.particles.length < MAX_PARTICLE_COUNT
-    ) {
-      const newParticleCount = Math.min(
-        MAX_PARTICLE_COUNT,
-        this.particles.length * 1.25,
-      );
-      debugPrint(
-        `frame rate is ${Math.round(
-          this.props.frameRate,
-        )} fps, increasing particle count to ${newParticleCount}`,
-      );
-      this.particles = updateParticleCount(this.particles, newParticleCount);
+      this.dataTransformer.postMessage({
+        uData: this.props.vectorField.uField.data,
+        vData: this.props.vectorField.vField.data,
+        maxValue: this.props.maxSpeed,
+      });
     }
   }
 

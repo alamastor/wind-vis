@@ -51,9 +51,12 @@ export interface glState {
   vTexture: WebGLTexture;
 }
 
-export function getGLState(gl: WebGLRenderingContext): glState {
+export function getGLState(
+  gl: WebGLRenderingContext,
+  particleCount: number,
+): glState {
   const speedState = getSpeedProgramState(gl);
-  const particleState = getParticleProgramState(gl, 5000000);
+  const particleState = getParticleProgramState(gl, particleCount);
 
   const uTexture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, uTexture);
