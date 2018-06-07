@@ -26,9 +26,10 @@ void main() {
   gl_Position = vec4(zoomed, 0, 1);
 }
 
+/**
+ * Decode an RGBA value back into a lat lon vec2.
+ */
 vec2 decodeLonLat(in vec4 rgba) {
-  // Decode an RGBA value back into a lat lon vec2
-
   // Convert RGBA back to 2 byte values
   vec4 bytes = rgba * float(0xff);
   float encodedLon = bytes.x * float(0x100) + bytes.y;

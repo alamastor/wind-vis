@@ -31,10 +31,10 @@ void main() {
   gl_FragColor = encodeLonLat(vec2(lon, lat));
 }
 
-
+/**
+ * Encode a lon lat vec2 into an RGBA vec4 for storage in a texture.
+ */
 vec4 encodeLonLat(in vec2 lonLat) {
-  // Encode a lon lat vec2 into an RGBA vec4 for storage in a texture.
-
   // Encode lons to from range 0-360 to 0x0-0x10000
   float encodedLon = lonLat.x * float(0x10000 / 360);
   // Encode lats to from range -90-90 to 0x0-0xffff
@@ -48,9 +48,10 @@ vec4 encodeLonLat(in vec2 lonLat) {
   return vec4(lonUByte, lonLByte, latUByte, latLByte) / float(0xff);
 }
 
+/**
+ * Decode an RGBA value back into a lat lon vec2.
+ */
 vec2 decodeLonLat(in vec4 rgba) {
-  // Decode an RGBA value back into a lat lon vec2
-
   // Convert RGBA back to 2 byte values
   vec4 bytes = rgba * float(0xff);
   float encodedLon = bytes.x * float(0x100) + bytes.y;
