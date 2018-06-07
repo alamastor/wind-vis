@@ -24,7 +24,7 @@ interface Props {
   maxSpeed: number;
   width: number;
   height: number;
-  resetPariclesOnInit: boolean;
+  resetParticlesOnInit: boolean;
   frameRate: number;
   setGlUnavailable: () => Action;
 }
@@ -33,6 +33,7 @@ export default class WindRenderer extends React.Component<Props, State> {
   canvas!: HTMLCanvasElement;
   glState: glState | null = null;
   dataTransformer = new DataTransformer();
+  resetParticles: boolean = false;
 
   constructor(props: Props) {
     super(props);
@@ -78,6 +79,9 @@ export default class WindRenderer extends React.Component<Props, State> {
         vData: this.props.vectorField.vField.data,
         maxValue: this.props.maxSpeed,
       });
+      if (this.props.resetParticlesOnInit) {
+        this.resetParticles = true;
+      }
     }
   }
 
@@ -101,7 +105,8 @@ export default class WindRenderer extends React.Component<Props, State> {
         this.props.projState.centerCoord,
         this.props.projState.zoomLevel,
       );
-      updateParticles(this.glState, deltaT);
+      updateParticles(this.glState, deltaT, this.resetParticles);
+      this.resetParticles = false;
     }
 
     window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));

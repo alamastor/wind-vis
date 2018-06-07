@@ -2,32 +2,45 @@ precision mediump float;
 
 uniform float deltaT;
 uniform sampler2D positionTexture;
+uniform vec2 positionTextureDimensions;
 uniform sampler2D uTexture;
 uniform sampler2D vTexture;
-uniform float positionTextureWidth;
-uniform float positionTextureHeight;
+uniform bool resetPositions;
 
 vec4 encodeLonLat(in mediump vec2 lonLat);
 vec2 decodeLonLat(in vec4 rgba);
+float random (vec2 st);
 
 void main() {
-  vec4 positionTextureVal = texture2D(positionTexture,
-                                      vec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)) /
-                                      vec2(positionTextureWidth - 1.0, positionTextureHeight - 1.0));
+  float lon;
+  float lat;
 
-  vec2 lonLat = decodeLonLat(positionTextureVal);
-  float lon = lonLat.x;
-  float lat = lonLat.y;
+  if (resetPositions) {
+    lon = random(gl_FragCoord.xy * deltaT) * 359.99;
+    lat = random(gl_FragCoord.yx * deltaT) * 180.0 - 90.0;
+  } else {
+    // Read and decode lon and lat from position texture coord
+    vec2 positionTextureCoord = floor(gl_FragCoord.xy) / (positionTextureDimensions - 1.0);
+    vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
+    lon = lonLat.x;
+    lat = lonLat.y;
 
-  vec2 uvTextureCoord = vec2(lon / 359.5, (lat + 90.0) / 180.0);
-  float u = texture2D(uTexture, uvTextureCoord).x;
-  float v = texture2D(vTexture, uvTextureCoord).x;
-  float restoredU = u / 0.5 - 1.0;
-  float restoredV = v / 0.5 - 1.0;
+  }
+    // Read u and v from their respective textures
+    // TODO: Check these lookup coords. Are these the correct texture dimensions?
+    vec2 uvTextureCoord = vec2(lon / 359.5, (lat + 90.0) / 180.0);
+    float u = texture2D(uTexture, uvTextureCoord).x;
+    float v = texture2D(vTexture, uvTextureCoord).x;
+    float restoredU = u / 0.5 - 1.0;
+    float restoredV = v / 0.5 - 1.0;
 
-  lon = mod(lon + deltaT * restoredU / 30.0, 360.0);
-  lat = mod(lat + 90.0 + deltaT * restoredV / 30.0, 180.0) - 90.0;
-
+    // Update lat and lon with u, v and deltaT.
+    // NOTE: u and v are on range -1-1, not actually wind speeds. Speeds near
+    // the poles will be greater than at equator due to projection.
+    // TODO: lats are wrapping north-south, fix this!
+    lon = mod(lon + deltaT * restoredU / 30.0, 360.0);
+    lat = mod(lat + 90.0 + deltaT * restoredV / 30.0, 180.0) - 90.0;
+  // Encode position back to RGBA
   gl_FragColor = encodeLonLat(vec2(lon, lat));
 }
 
@@ -62,4 +75,12 @@ vec2 decodeLonLat(in vec4 rgba) {
   float lat = encodedLat / float(0xffff / 180) - 90.0;
 
   return vec2(lon, lat);
+}
+
+/**
+ * Random float 0-1
+ * From https://thebookofshaders.com/10/
+ */
+float random(vec2 st) {
+  return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
 }

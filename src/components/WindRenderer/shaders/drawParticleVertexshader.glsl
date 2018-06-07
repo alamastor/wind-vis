@@ -1,4 +1,4 @@
-attribute float vertex;
+attribute vec2 positionTextureCoord;
 uniform sampler2D positionTexture;
 uniform float aspectRatio;
 uniform float zoomLevel;
@@ -9,13 +9,7 @@ uniform float positionTextureHeight;
 vec2 decodeLonLat(in vec4 rgba);
 
 void main() {
-  vec2 positionTextureCoord = vec2(mod(vertex, positionTextureWidth),
-                                   floor(vertex / positionTextureWidth));
-  vec4 positionTextureVal = texture2D(positionTexture,
-                                      positionTextureCoord / vec2(positionTextureWidth - 1.0,
-                                                                  positionTextureHeight - 1.0));
-
-  vec2 lonLat = decodeLonLat(positionTextureVal);
+  vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
   vec2 offset = vec2(180, 0) - midCoord;
   float offsetLon = mod(lonLat.x + offset.x, 360.0) - 180.0;
   float offsetLat = lonLat.y + offset.y;
