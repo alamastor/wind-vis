@@ -28,6 +28,7 @@ import {setGlUnavailable} from '../App/actions';
 
 const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
 
+// Async load the Vector renderer, as by default it's not displayed
 const VectorRenderer = Loadable({
   loader: () =>
     import(/* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'),
@@ -91,6 +92,8 @@ class MapVis extends React.Component<Props, State> {
   setNextTauSetTimeoutId: number | null = null; // Id for setTimeout called with setNextTau
   tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x); // Queue of times fetch data for
   awaitingData = false; // Trying to set current tau but that data is not yet available?
+  // When currentTau is set to zero this is set true and all particle will be renewed
+  refreshParticlesNextRender = true;
 
   constructor(props: Props) {
     super(props);
@@ -103,7 +106,7 @@ class MapVis extends React.Component<Props, State> {
     this.setMaxWindSpeed();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (this.props.paused && !prevProps.paused) {
       this.pause();
     } else if (!this.props.paused && prevProps.paused) {
@@ -227,6 +230,10 @@ class MapVis extends React.Component<Props, State> {
       if (tauAvailable(this.props.fieldData, nextTau)) {
         this.prevStepTime = new Date();
         this.setState({currentTau: nextTau});
+        if (nextTau === 0) {
+          // currentTau was just set to zero, particle should be refreshed
+          this.refreshParticlesNextRender = true;
+        }
         this.setNextTauSetTimeoutId = setTimeout(
           this.setNextTau.bind(this),
           TAU_STEP_INTERVAL,
@@ -257,6 +264,8 @@ class MapVis extends React.Component<Props, State> {
         new DataField(currentData.v, 0, 359, -90, 90, 1),
       );
 
+      const refreshParticles = this.refreshParticlesNextRender;
+      this.refreshParticlesNextRender = false;
       return (
         <div
           id="map-vis"
@@ -275,7 +284,7 @@ class MapVis extends React.Component<Props, State> {
               maxSpeed={this.state.maxWindSpeed}
               width={this.props.width}
               height={this.props.height}
-              resetParticlesOnInit={this.state.currentTau === 0}
+              resetParticlesOnInit={refreshParticles}
               frameRate={this.props.frameRate}
               setGlUnavailable={this.props.setGlUnavailable}
             />
