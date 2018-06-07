@@ -37,9 +37,17 @@ void main() {
     // Update lat and lon with u, v and deltaT.
     // NOTE: u and v are on range -1-1, not actually wind speeds. Speeds near
     // the poles will be greater than at equator due to projection.
-    // TODO: lats are wrapping north-south, fix this!
-    lon = mod(lon + deltaT * restoredU / 30.0, 360.0);
-    lat = mod(lat + 90.0 + deltaT * restoredV / 30.0, 180.0) - 90.0;
+    lon = lon + deltaT * restoredU / 30.0;
+    lat = lat + deltaT * restoredV / 30.0;
+    // Wrap lats to 180˚ around the globe
+    if (lat > 90.0) {
+      lat = 180.0 - lat;
+      lon = lon + 180.0;
+    } else if (lat < -90.0) {
+      lat = -180.0 - lat;
+      lon = lon + 180.0;
+    }
+    lon = mod(lon, 360.0);
   }
 
   // Encode position back to RGBA
