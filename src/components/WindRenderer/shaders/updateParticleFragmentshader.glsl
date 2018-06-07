@@ -1,8 +1,8 @@
 precision mediump float;
 
 uniform float deltaT;
-uniform sampler2D positionTexture;
 uniform vec2 positionTextureDimensions;
+uniform sampler2D positionTexture;
 uniform sampler2D uTexture;
 uniform sampler2D vTexture;
 uniform bool resetPositions;
@@ -15,7 +15,8 @@ void main() {
   float lon;
   float lat;
 
-  if (resetPositions) {
+  if (resetPositions || random(gl_FragCoord.xy / deltaT) > 0.997) {
+    // Reset particle if resetting all or randomy to main spread
     lon = random(gl_FragCoord.xy * deltaT) * 359.99;
     lat = random(gl_FragCoord.yx * deltaT) * 180.0 - 90.0;
   } else {
@@ -25,7 +26,6 @@ void main() {
     lon = lonLat.x;
     lat = lonLat.y;
 
-  }
     // Read u and v from their respective textures
     // TODO: Check these lookup coords. Are these the correct texture dimensions?
     vec2 uvTextureCoord = vec2(lon / 359.5, (lat + 90.0) / 180.0);
@@ -40,6 +40,8 @@ void main() {
     // TODO: lats are wrapping north-south, fix this!
     lon = mod(lon + deltaT * restoredU / 30.0, 360.0);
     lat = mod(lat + 90.0 + deltaT * restoredV / 30.0, 180.0) - 90.0;
+  }
+
   // Encode position back to RGBA
   gl_FragColor = encodeLonLat(vec2(lon, lat));
 }

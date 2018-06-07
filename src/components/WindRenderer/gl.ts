@@ -31,7 +31,6 @@ export interface glState {
     updateState: {
       shaderProgram: WebGLProgram;
       frameBuffer: WebGLFramebuffer;
-      positionTextureBackbufferTexture: WebGLTexture;
       frameBufferVertexBuffer: WebGLBuffer;
       frameBufferVertexLoc: number;
       positionTextureLoc: WebGLUniformLocation;
@@ -255,12 +254,12 @@ function getParticleUpdateProgramState(
   );
 
   // Create texture for framebuffer
-  const positionTextureBackbufferTexture = gl.createTexture() as WebGLTexture;
-  gl.bindTexture(gl.TEXTURE_2D, positionTextureBackbufferTexture);
+  const frameBufferTexture = gl.createTexture() as WebGLTexture;
+  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.bindTexture(gl.TEXTURE_2D, positionTextureBackbufferTexture);
+  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
     particleCount,
   );
@@ -286,7 +285,7 @@ function getParticleUpdateProgramState(
     gl.FRAMEBUFFER,
     gl.COLOR_ATTACHMENT0,
     gl.TEXTURE_2D,
-    positionTextureBackbufferTexture,
+    frameBufferTexture,
     0,
   );
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -328,7 +327,6 @@ function getParticleUpdateProgramState(
   return {
     shaderProgram,
     frameBuffer,
-    positionTextureBackbufferTexture,
     frameBufferVertexBuffer,
     frameBufferVertexLoc,
     positionTextureLoc,
@@ -500,7 +498,6 @@ export function updateParticles(
         frameBuffer,
         frameBufferVertexBuffer,
         frameBufferVertexLoc,
-        positionTextureBackbufferTexture,
         positionTextureLoc,
         positionTextureDimensionsLoc,
         deltaTLoc,
