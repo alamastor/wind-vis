@@ -275,7 +275,7 @@ class MapVis extends React.Component<Props, State> {
               maxSpeed={this.state.maxWindSpeed}
               width={this.props.width}
               height={this.props.height}
-              resetPariclesOnInit={this.state.currentTau === 0}
+              resetParticlesOnInit={this.state.currentTau === 0}
               frameRate={this.props.frameRate}
               setGlUnavailable={this.props.setGlUnavailable}
             />
@@ -329,4 +329,7 @@ class MapVis extends React.Component<Props, State> {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(MapVis);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(MapVis);
