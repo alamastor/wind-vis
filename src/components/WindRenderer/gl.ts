@@ -4,6 +4,8 @@ import speedVertexShaderSource from './shaders/speedVertexshader.glsl';
 import speedFragmentShaderSource from './shaders/speedFragmentshader.glsl';
 import drawParticleVertexShaderSource from './shaders/drawParticleVertexshader.glsl';
 import drawParticleFragmentShaderSource from './shaders/drawParticleFragmentshader.glsl';
+import drawParticleTextureVertexShaderSource from './shaders/drawParticleTextureVertexshader.glsl';
+import drawParticleTextureFragmentShaderSource from './shaders/drawParticleTextureFragmentshader.glsl';
 import updateParticleVertexShaderSource from './shaders/updateParticleVertexshader.glsl';
 import updateParticleFragmentShaderSource from './shaders/updateParticleFragmentshader.glsl';
 
@@ -21,12 +23,23 @@ export interface glState {
   };
   particleState: {
     drawState: {
-      shaderProgram: WebGLProgram;
-      positionTextureLoc: WebGLUniformLocation;
-      positionTextureCoordLoc: number;
-      aspectRatioLoc: WebGLUniformLocation;
-      midCoordLoc: WebGLUniformLocation;
-      zoomLevelLoc: WebGLUniformLocation;
+      frameBuffer: WebGLFramebuffer;
+      frameBufferTexture: WebGLTexture;
+      drawParticlesToFrameBufferState: {
+        shaderProgram: WebGLProgram;
+        positionTextureLoc: WebGLUniformLocation;
+        positionTextureCoordLoc: number;
+        aspectRatioLoc: WebGLUniformLocation;
+        midCoordLoc: WebGLUniformLocation;
+        zoomLevelLoc: WebGLUniformLocation;
+      };
+      drawFrameBufferState: {
+        shaderProgram: WebGLProgram;
+        vertexBuffer: WebGLBuffer;
+        vertexLoc: number;
+        particleTextureLoc: WebGLUniformLocation;
+        particleTextureDimensionsLoc: WebGLUniformLocation;
+      };
     };
     updateState: {
       shaderProgram: WebGLProgram;
@@ -203,6 +216,56 @@ function getParticleProgramState(
  * textures, and locations.
  */
 function getParticleDrawProgramState(gl: WebGLRenderingContext) {
+  const drawParticlesToFrameBufferState = getDrawParticlesToFrameBufferProgramState(
+    gl,
+  );
+  const drawFrameBufferState = getDrawFrameBufferProgramState(gl);
+
+  // Create texture for frame buffer
+  const frameBufferTexture = gl.createTexture() as WebGLTexture;
+  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.canvas.width,
+    gl.canvas.height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
+  );
+
+  // Create frame buffer
+  const frameBuffer = gl.createFramebuffer();
+  if (frameBuffer == null) {
+    throw new Error('failed to create frameBuffer');
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    frameBufferTexture,
+    0,
+  );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  return {
+    frameBuffer,
+    frameBufferTexture,
+    drawParticlesToFrameBufferState,
+    drawFrameBufferState,
+  };
+}
+
+function getDrawParticlesToFrameBufferProgramState(gl: WebGLRenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -238,6 +301,48 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
   };
 }
 
+function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
+  // Create program
+  const shaderProgram = createProgramWithShaders(
+    gl,
+    drawParticleTextureVertexShaderSource,
+    drawParticleTextureFragmentShaderSource,
+  );
+
+  // Set up vertices
+  const vertexBuffer = gl.createBuffer() as WebGLBuffer;
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  // prettier-ignore
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,
+    -1,  1,
+     1,  1,
+     1,  1,
+     1, -1,
+    -1, -1,
+  ]), gl.STATIC_DRAW);
+
+  // Get locations
+  const vertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
+  const particleTextureLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'particleTexture',
+  );
+  const particleTextureDimensionsLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'particleTextureDimensions',
+  );
+  return {
+    shaderProgram,
+    vertexBuffer,
+    vertexLoc,
+    particleTextureLoc,
+    particleTextureDimensionsLoc,
+  };
+}
+
 /**
  * Initialize GL for particle updating, and return programs, buffers,
  * textures, and locations.
@@ -253,7 +358,7 @@ function getParticleUpdateProgramState(
     updateParticleFragmentShaderSource,
   );
 
-  // Create texture for framebuffer
+  // Create texture for frame buffer
   const frameBufferTexture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -263,7 +368,6 @@ function getParticleUpdateProgramState(
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
     particleCount,
   );
-  // prettier-ignore
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
@@ -434,22 +538,35 @@ export function drawParticles(
   centerCoord: Coord,
   zoomLevel: number,
 ) {
+  drawParticlesToFrameBuffer(glState, centerCoord, zoomLevel);
+  //drawFrameBuffer(glState);
+}
+function drawParticlesToFrameBuffer(
+  glState: glState,
+  centerCoord: Coord,
+  zoomLevel: number,
+) {
   const {
     gl,
     particleState: {
       drawState: {
-        shaderProgram,
-        positionTextureLoc,
-        positionTextureCoordLoc,
-        aspectRatioLoc,
-        midCoordLoc,
-        zoomLevelLoc,
+        frameBuffer,
+        drawParticlesToFrameBufferState: {
+          shaderProgram,
+          positionTextureLoc,
+          positionTextureCoordLoc,
+          aspectRatioLoc,
+          midCoordLoc,
+          zoomLevelLoc,
+        },
       },
       particleCount,
       positionTexture,
       positionTextureCoordBuffer,
     },
   } = glState;
+  // Render to framebuffer
+  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
   // Set viewport
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -458,6 +575,9 @@ export function drawParticles(
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
   gl.depthMask(false);
+
+  gl.clearColor(0, 0, 0, 0.5);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
   // Use program
   gl.useProgram(shaderProgram);
@@ -480,7 +600,59 @@ export function drawParticles(
   // Draw
   gl.drawArrays(gl.POINTS, 0, particleCount);
 
+  // Unbind frame buffer
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
   // Reset set state
+  gl.disable(gl.BLEND);
+  gl.depthMask(true);
+}
+
+function drawFrameBuffer(glState: glState) {
+  const {
+    gl,
+    particleState: {
+      drawState: {
+        frameBufferTexture,
+        drawFrameBufferState: {
+          shaderProgram,
+          vertexBuffer,
+          vertexLoc,
+          particleTextureDimensionsLoc,
+          particleTextureLoc,
+        },
+      },
+    },
+  } = glState;
+
+  // Set viewport
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  // Set GL behavior
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.BLEND);
+  gl.depthMask(false);
+
+  // Use program
+  gl.useProgram(shaderProgram);
+
+  // Set uniforms
+  gl.uniform2f(particleTextureDimensionsLoc, gl.canvas.width, gl.canvas.height);
+
+  // Bind speed vertices
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.vertexAttribPointer(vertexLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexLoc);
+
+  // Bind speed textures
+  gl.uniform1i(particleTextureLoc, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+
+  // Draw
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  // Reset state
   gl.disable(gl.BLEND);
   gl.depthMask(true);
 }
@@ -560,6 +732,7 @@ export function updateParticles(
     textureHeight,
     0,
   );
+  // Unbind frame buffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
