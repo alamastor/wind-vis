@@ -16,7 +16,7 @@ void main() {
   vec2 clipSpace = vec2(max(0.5, 1.0 / aspectRatio), max(2.0, aspectRatio)) *
                    vec2(offsetLon, offsetLat) / vec2(90, 180);
   vec2 zoomed = zoomLevel * clipSpace;
-  gl_PointSize = 3.0 * zoomLevel;
+  gl_PointSize = 2.0 * zoomLevel;
   gl_Position = vec4(zoomed, 0, 1);
 }
 

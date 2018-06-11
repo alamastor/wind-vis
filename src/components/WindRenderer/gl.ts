@@ -9,6 +9,8 @@ import drawParticleTextureFragmentShaderSource from './shaders/drawParticleTextu
 import updateParticleVertexShaderSource from './shaders/updateParticleVertexshader.glsl';
 import updateParticleFragmentShaderSource from './shaders/updateParticleFragmentshader.glsl';
 
+const FRAMEBUFFER_COUNT = 50;
+
 export interface glState {
   gl: WebGLRenderingContext;
   speedState: {
@@ -23,8 +25,10 @@ export interface glState {
   };
   particleState: {
     drawState: {
-      frameBuffer: WebGLFramebuffer;
-      frameBufferTexture: WebGLTexture;
+      frameBuffers: {
+        frameBuffer: WebGLFramebuffer;
+        texture: WebGLTexture;
+      }[];
       drawParticlesToFrameBufferState: {
         shaderProgram: WebGLProgram;
         positionTextureLoc: WebGLUniformLocation;
@@ -39,6 +43,7 @@ export interface glState {
         vertexLoc: number;
         particleTextureLoc: WebGLUniformLocation;
         particleTextureDimensionsLoc: WebGLUniformLocation;
+        alphaLoc: WebGLUniformLocation;
       };
     };
     updateState: {
@@ -221,45 +226,53 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
   );
   const drawFrameBufferState = getDrawFrameBufferProgramState(gl);
 
-  // Create texture for frame buffer
-  const frameBufferTexture = gl.createTexture() as WebGLTexture;
-  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    gl.canvas.width,
-    gl.canvas.height,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
-  );
+  const frameBuffers: {
+    frameBuffer: WebGLFramebuffer;
+    texture: WebGLTexture;
+  }[] = [];
 
-  // Create frame buffer
-  const frameBuffer = gl.createFramebuffer();
-  if (frameBuffer == null) {
-    throw new Error('failed to create frameBuffer');
+  for (let i = 0; i < FRAMEBUFFER_COUNT; i++) {
+    // Create texture for frame buffer
+    const texture = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.canvas.width,
+      gl.canvas.height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
+    );
+
+    // Create frame buffer
+    const frameBuffer = gl.createFramebuffer();
+    if (frameBuffer == null) {
+      throw new Error('failed to create frameBuffer');
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      texture,
+      0,
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    frameBuffers.push({frameBuffer, texture});
   }
-  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-  gl.framebufferTexture2D(
-    gl.FRAMEBUFFER,
-    gl.COLOR_ATTACHMENT0,
-    gl.TEXTURE_2D,
-    frameBufferTexture,
-    0,
-  );
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   return {
-    frameBuffer,
-    frameBufferTexture,
+    frameBuffers,
     drawParticlesToFrameBufferState,
     drawFrameBufferState,
   };
@@ -334,12 +347,14 @@ function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
     shaderProgram,
     'particleTextureDimensions',
   );
+  const alphaLoc = getUniformLocationSafe(gl, shaderProgram, 'alpha');
   return {
     shaderProgram,
     vertexBuffer,
     vertexLoc,
     particleTextureLoc,
     particleTextureDimensionsLoc,
+    alphaLoc,
   };
 }
 
@@ -539,8 +554,9 @@ export function drawParticles(
   zoomLevel: number,
 ) {
   drawParticlesToFrameBuffer(glState, centerCoord, zoomLevel);
-  drawFrameBuffer(glState);
+  drawFrameBuffers(glState);
 }
+
 function drawParticlesToFrameBuffer(
   glState: glState,
   centerCoord: Coord,
@@ -550,7 +566,7 @@ function drawParticlesToFrameBuffer(
     gl,
     particleState: {
       drawState: {
-        frameBuffer,
+        frameBuffers,
         drawParticlesToFrameBufferState: {
           shaderProgram,
           positionTextureLoc,
@@ -565,8 +581,14 @@ function drawParticlesToFrameBuffer(
       positionTextureCoordBuffer,
     },
   } = glState;
-  // Render to framebuffer
-  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+  // Get next frame buffer
+  const frameBufferGroup = frameBuffers.shift();
+  if (frameBufferGroup != null) {
+    frameBuffers.push(frameBufferGroup);
+
+    // Render to frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferGroup.frameBuffer);
+  }
 
   // Set viewport
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -576,7 +598,7 @@ function drawParticlesToFrameBuffer(
   gl.enable(gl.BLEND);
   gl.depthMask(false);
 
-  gl.clearColor(0, 0, 0, 0.5);
+  gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   // Use program
@@ -608,23 +630,23 @@ function drawParticlesToFrameBuffer(
   gl.depthMask(true);
 }
 
-function drawFrameBuffer(glState: glState) {
+function drawFrameBuffers(glState: glState) {
   const {
     gl,
     particleState: {
       drawState: {
-        frameBufferTexture,
+        frameBuffers,
         drawFrameBufferState: {
           shaderProgram,
           vertexBuffer,
           vertexLoc,
           particleTextureDimensionsLoc,
           particleTextureLoc,
+          alphaLoc,
         },
       },
     },
   } = glState;
-
   // Set viewport
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -639,19 +661,24 @@ function drawFrameBuffer(glState: glState) {
   // Set uniforms
   gl.uniform2f(particleTextureDimensionsLoc, gl.canvas.width, gl.canvas.height);
 
-  // Bind speed vertices
+  // Bind vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.vertexAttribPointer(vertexLoc, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vertexLoc);
 
-  // Bind speed textures
-  gl.uniform1i(particleTextureLoc, 0);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+  // Render all textures
+  frameBuffers.forEach(({frameBuffer, texture}, idx, frameBuffers) => {
+    // Set uniforms
+    gl.uniform1f(alphaLoc, idx / frameBuffers.length);
 
-  // Draw
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    // Bind textures
+    gl.uniform1i(particleTextureLoc, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
 
+    // Draw
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  });
   // Reset state
   gl.disable(gl.BLEND);
   gl.depthMask(true);
