@@ -10,7 +10,8 @@ void main() {
   vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
 
   float aspectRatio = canvasDimensions.x / canvasDimensions.y;
-  vec2 clipSpace = 2.0 * ((lonLat -centerCoord) / vec2(359.99, 180))
+  vec2 shifted = vec2(mod(lonLat.x - centerCoord.x + 180.0, 360.0) - 180.0, lonLat.y - centerCoord.y);
+  vec2 clipSpace = 2.0 * (shifted / vec2(359.99, 180))
                     * vec2(max(2.0 / aspectRatio, 1.0), max(aspectRatio / 2.0, 1.0))
                     * zoomLevel;
   gl_Position = vec4(clipSpace, 0, 1);
