@@ -28,22 +28,31 @@ export interface glState {
       frameBuffers: {
         frameBuffer: WebGLFramebuffer;
         texture: WebGLTexture;
+        centerCoord: Coord;
+        zoomLevel: number;
+        screenWidth: number;
+        screenHeight: number;
       }[];
       drawParticlesToFrameBufferState: {
         shaderProgram: WebGLProgram;
         positionTextureLoc: WebGLUniformLocation;
         positionTextureCoordLoc: number;
-        aspectRatioLoc: WebGLUniformLocation;
-        midCoordLoc: WebGLUniformLocation;
         zoomLevelLoc: WebGLUniformLocation;
+        midCoordLoc: WebGLUniformLocation;
+        canvasDimensionsLoc: WebGLUniformLocation;
       };
       drawFrameBufferState: {
         shaderProgram: WebGLProgram;
         vertexBuffer: WebGLBuffer;
         vertexLoc: number;
-        particleTextureLoc: WebGLUniformLocation;
-        particleTextureDimensionsLoc: WebGLUniformLocation;
+        textureLoc: WebGLUniformLocation;
         alphaLoc: WebGLUniformLocation;
+        currentDimensionsLoc: WebGLUniformLocation;
+        textureDimensionsLoc: WebGLUniformLocation;
+        textureZoomLoc: WebGLUniformLocation;
+        currentZoomLoc: WebGLUniformLocation;
+        textureCenterCoordLoc: WebGLUniformLocation;
+        currentCenterCoordLoc: WebGLUniformLocation;
       };
     };
     updateState: {
@@ -160,11 +169,13 @@ function getParticleProgramState(
   const drawState = getParticleDrawProgramState(gl);
   const updateState = getParticleUpdateProgramState(gl, particleCount);
 
-  // Create particles vertices buffer. These just contain the vertex's
-  // own index for doing textures lookups.
+  // Get dimensions of position texture
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
     particleCount,
   );
+
+  // Create particles vertices buffer. These just contain the vertex's
+  // own index for doing textures lookups.
   const positionTextureCoords = new Float32Array(particleCount * 2);
   for (let i = 0; i < particleCount; i++) {
     const x = (i % textureWidth) / (textureWidth - 1);
@@ -229,6 +240,10 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
   const frameBuffers: {
     frameBuffer: WebGLFramebuffer;
     texture: WebGLTexture;
+    centerCoord: Coord;
+    zoomLevel: number;
+    screenWidth: number;
+    screenHeight: number;
   }[] = [];
 
   for (let i = 0; i < FRAMEBUFFER_COUNT; i++) {
@@ -268,7 +283,14 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
     );
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    frameBuffers.push({frameBuffer, texture});
+    frameBuffers.push({
+      frameBuffer,
+      texture,
+      centerCoord: {lon: 180, lat: 0},
+      zoomLevel: 1,
+      screenWidth: gl.canvas.width,
+      screenHeight: gl.canvas.height,
+    });
   }
 
   return {
@@ -296,21 +318,21 @@ function getDrawParticlesToFrameBufferProgramState(gl: WebGLRenderingContext) {
     shaderProgram,
     'positionTexture',
   );
-  const aspectRatioLoc = getUniformLocationSafe(
+  const zoomLevelLoc = getUniformLocationSafe(gl, shaderProgram, 'zoomLevel');
+  const midCoordLoc = getUniformLocationSafe(gl, shaderProgram, 'centerCoord');
+  const canvasDimensionsLoc = getUniformLocationSafe(
     gl,
     shaderProgram,
-    'aspectRatio',
+    'canvasDimensions',
   );
-  const midCoordLoc = getUniformLocationSafe(gl, shaderProgram, 'midCoord');
-  const zoomLevelLoc = getUniformLocationSafe(gl, shaderProgram, 'zoomLevel');
 
   return {
     shaderProgram,
     positionTextureCoordLoc,
     positionTextureLoc,
-    aspectRatioLoc,
-    midCoordLoc,
     zoomLevelLoc,
+    midCoordLoc,
+    canvasDimensionsLoc,
   };
 }
 
@@ -337,24 +359,51 @@ function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
 
   // Get locations
   const vertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
-  const particleTextureLoc = getUniformLocationSafe(
-    gl,
-    shaderProgram,
-    'particleTexture',
-  );
-  const particleTextureDimensionsLoc = getUniformLocationSafe(
-    gl,
-    shaderProgram,
-    'particleTextureDimensions',
-  );
+  const textureLoc = getUniformLocationSafe(gl, shaderProgram, 'texture');
   const alphaLoc = getUniformLocationSafe(gl, shaderProgram, 'alpha');
+  const currentDimensionsLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'currentDimensions',
+  );
+  const textureDimensionsLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'textureDimensions',
+  );
+  const textureZoomLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'textureZoom',
+  );
+  const currentZoomLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'currentZoom',
+  );
+  const textureCenterCoordLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'textureCenterCoord',
+  );
+  const currentCenterCoordLoc = getUniformLocationSafe(
+    gl,
+    shaderProgram,
+    'currentCenterCoord',
+  );
+
   return {
     shaderProgram,
     vertexBuffer,
     vertexLoc,
-    particleTextureLoc,
-    particleTextureDimensionsLoc,
+    textureLoc,
     alphaLoc,
+    currentDimensionsLoc,
+    textureDimensionsLoc,
+    textureZoomLoc,
+    currentZoomLoc,
+    textureCenterCoordLoc,
+    currentCenterCoordLoc,
   };
 }
 
@@ -523,8 +572,8 @@ export function drawSpeeds(
   gl.useProgram(shaderProgram);
 
   // Set uniforms
-  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
   gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
+  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
   gl.uniform1f(zoomLevelLoc, zoomLevel);
 
   // Bind speed vertices
@@ -554,7 +603,7 @@ export function drawParticles(
   zoomLevel: number,
 ) {
   drawParticlesToFrameBuffer(glState, centerCoord, zoomLevel);
-  drawFrameBuffers(glState);
+  drawFrameBuffers(glState, centerCoord, zoomLevel);
 }
 
 function drawParticlesToFrameBuffer(
@@ -571,9 +620,9 @@ function drawParticlesToFrameBuffer(
           shaderProgram,
           positionTextureLoc,
           positionTextureCoordLoc,
-          aspectRatioLoc,
-          midCoordLoc,
           zoomLevelLoc,
+          midCoordLoc,
+          canvasDimensionsLoc,
         },
       },
       particleCount,
@@ -581,13 +630,53 @@ function drawParticlesToFrameBuffer(
       positionTextureCoordBuffer,
     },
   } = glState;
+
   // Get next frame buffer
   const frameBufferGroup = frameBuffers.shift();
   if (frameBufferGroup != null) {
-    frameBuffers.push(frameBufferGroup);
+    frameBufferGroup.centerCoord = centerCoord;
+    frameBufferGroup.zoomLevel = zoomLevel;
 
     // Render to frame buffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferGroup.frameBuffer);
+
+    // If window is resized a new texture will need to be created and used.
+    if (
+      frameBufferGroup.screenWidth !== gl.canvas.width ||
+      frameBufferGroup.screenHeight !== gl.canvas.height
+    ) {
+      const texture = gl.createTexture() as WebGLTexture;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.canvas.width,
+        gl.canvas.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
+      );
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texture,
+        0,
+      );
+      frameBufferGroup.screenWidth = gl.canvas.width;
+      frameBufferGroup.screenHeight = gl.canvas.height;
+      gl.deleteTexture(frameBufferGroup.texture);
+      frameBufferGroup.texture = texture;
+    }
+    frameBuffers.push(frameBufferGroup);
   }
 
   // Set viewport
@@ -605,9 +694,9 @@ function drawParticlesToFrameBuffer(
   gl.useProgram(shaderProgram);
 
   // Set uniforms
-  gl.uniform1f(aspectRatioLoc, gl.canvas.width / gl.canvas.height);
-  gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
   gl.uniform1f(zoomLevelLoc, zoomLevel);
+  gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
+  gl.uniform2f(canvasDimensionsLoc, gl.canvas.width, gl.canvas.height);
 
   // Bind vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, positionTextureCoordBuffer);
@@ -630,7 +719,11 @@ function drawParticlesToFrameBuffer(
   gl.depthMask(true);
 }
 
-function drawFrameBuffers(glState: glState) {
+function drawFrameBuffers(
+  glState: glState,
+  centerCoord: Coord,
+  zoomLevel: number,
+) {
   const {
     gl,
     particleState: {
@@ -640,9 +733,14 @@ function drawFrameBuffers(glState: glState) {
           shaderProgram,
           vertexBuffer,
           vertexLoc,
-          particleTextureDimensionsLoc,
-          particleTextureLoc,
+          textureLoc,
           alphaLoc,
+          textureDimensionsLoc,
+          currentDimensionsLoc,
+          textureZoomLoc,
+          currentZoomLoc,
+          textureCenterCoordLoc,
+          currentCenterCoordLoc,
         },
       },
     },
@@ -659,7 +757,9 @@ function drawFrameBuffers(glState: glState) {
   gl.useProgram(shaderProgram);
 
   // Set uniforms
-  gl.uniform2f(particleTextureDimensionsLoc, gl.canvas.width, gl.canvas.height);
+  gl.uniform2f(currentDimensionsLoc, gl.canvas.width, gl.canvas.height);
+  gl.uniform1f(currentZoomLoc, zoomLevel);
+  gl.uniform2f(currentCenterCoordLoc, centerCoord.lon, centerCoord.lat);
 
   // Bind vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -667,17 +767,30 @@ function drawFrameBuffers(glState: glState) {
   gl.enableVertexAttribArray(vertexLoc);
 
   // Render all textures
-  frameBuffers.forEach(({frameBuffer, texture}, idx, frameBuffers) => {
-    // Set uniforms
-    gl.uniform1f(alphaLoc, idx / frameBuffers.length);
+  frameBuffers.forEach((frameBufferGroup, idx, frameBuffers) => {
+    if (idx === frameBuffers.length - 1 || true) {
+      // Set uniforms
+      gl.uniform1f(alphaLoc, idx / frameBuffers.length);
+      gl.uniform2f(
+        textureDimensionsLoc,
+        frameBufferGroup.screenWidth,
+        frameBufferGroup.screenHeight,
+      );
+      gl.uniform1f(textureZoomLoc, frameBufferGroup.zoomLevel);
+      gl.uniform2f(
+        textureCenterCoordLoc,
+        frameBufferGroup.centerCoord.lon,
+        frameBufferGroup.centerCoord.lat,
+      );
 
-    // Bind textures
-    gl.uniform1i(particleTextureLoc, 0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+      // Bind textures
+      gl.uniform1i(textureLoc, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, frameBufferGroup.texture);
 
-    // Draw
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+      // Draw
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
   });
   // Reset state
   gl.disable(gl.BLEND);

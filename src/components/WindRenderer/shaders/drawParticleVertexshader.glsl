@@ -1,23 +1,21 @@
 attribute vec2 positionTextureCoord;
 uniform sampler2D positionTexture;
-uniform float aspectRatio;
 uniform float zoomLevel;
-uniform vec2 midCoord;
-uniform float positionTextureWidth;
-uniform float positionTextureHeight;
+uniform vec2 centerCoord;
+uniform vec2 canvasDimensions;
 
 vec2 decodeLonLat(in vec4 rgba);
 
 void main() {
   vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
-  vec2 offset = vec2(180, 0) - midCoord;
-  float offsetLon = mod(lonLat.x + offset.x, 360.0) - 180.0;
-  float offsetLat = lonLat.y + offset.y;
-  vec2 clipSpace = vec2(max(0.5, 1.0 / aspectRatio), max(2.0, aspectRatio)) *
-                   vec2(offsetLon, offsetLat) / vec2(90, 180);
-  vec2 zoomed = zoomLevel * clipSpace;
+
+  float aspectRatio = canvasDimensions.x / canvasDimensions.y;
+  vec2 clipSpace = 2.0 * ((lonLat -centerCoord) / vec2(359.99, 180))
+                    * vec2(max(2.0 / aspectRatio, 1.0), max(aspectRatio / 2.0, 1.0))
+                    * zoomLevel;
+  gl_Position = vec4(clipSpace, 0, 1);
+
   gl_PointSize = 2.0 * zoomLevel;
-  gl_Position = vec4(zoomed, 0, 1);
 }
 
 /**
