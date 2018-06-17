@@ -286,20 +286,10 @@ class MapVis extends React.Component<Props, State> {
               height={this.props.height}
               resetParticlesOnInit={refreshParticles}
               frameRate={this.props.frameRate}
+              displayParticles={this.props.displayParticles}
               setGlUnavailable={this.props.setGlUnavailable}
             />
           ) : null}
-          {/*this.props.displayParticles ? (
-            <ParticleRenderer
-              vectorField={vectorField}
-              projState={this.getProjState()}
-              width={this.props.width}
-              height={this.props.height}
-              resetPariclesOnInit={this.state.currentTau === 0}
-              frameRate={this.props.frameRate}
-              setGlUnavailable={this.props.setGlUnavailable}
-            />
-          ) : null*/}
           {this.props.displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}

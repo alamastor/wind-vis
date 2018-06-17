@@ -26,6 +26,7 @@ interface Props {
   height: number;
   resetParticlesOnInit: boolean;
   frameRate: number;
+  displayParticles: boolean;
   setGlUnavailable: () => Action;
 }
 interface State {}
@@ -100,12 +101,14 @@ export default class WindRenderer extends React.Component<Props, State> {
         this.props.projState.centerCoord,
         this.props.projState.zoomLevel,
       );
-      drawParticles(
-        this.glState,
-        this.props.projState.centerCoord,
-        this.props.projState.zoomLevel,
-      );
-      updateParticles(this.glState, deltaT, this.resetParticles);
+      if (this.props.displayParticles) {
+        drawParticles(
+          this.glState,
+          this.props.projState.centerCoord,
+          this.props.projState.zoomLevel,
+        );
+        updateParticles(this.glState, deltaT, this.resetParticles);
+      }
       this.resetParticles = false;
     }
 
