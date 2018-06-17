@@ -25,13 +25,15 @@ export default class DataField {
       // Currently only 1 degrees resolution supported
       throw new Error('resolution must be 1 degree');
     }
+    // prettier incompatible with typscript here, adds a trailing comma
+    // prettier-ignore
     [
       this.data,
       this._minLon,
       this._maxLon,
       this._minLat,
       this._maxLat,
-      this.resolution,
+      this.resolution
     ] = [data, minLon, maxLon, minLat, maxLat, resolution];
   }
 
@@ -77,12 +79,10 @@ export default class DataField {
       throw new Error(`point {lon: ${lon}, lat: ${lat}} out of bounds`);
     }
     const x =
-      (this._dataWidth - 1) *
-      (lon - this._minLon) /
+      ((this._dataWidth - 1) * (lon - this._minLon)) /
       (this._maxLon - this._minLon);
     const y =
-      (this._dataHeight - 1) *
-      (lat - this._minLat) /
+      ((this._dataHeight - 1) * (lat - this._minLat)) /
       (this._maxLat - this._minLat);
     return this._interpolatePoint(x, y);
   }
