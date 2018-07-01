@@ -37,8 +37,8 @@ void main() {
     // Update lat and lon with u, v and deltaT.
     // NOTE: u and v are on range -1-1, not actually wind speeds. Speeds near
     // the poles will be greater than at equator due to projection.
-    lon = lon + deltaT * restoredU / 30.0;
-    lat = lat + deltaT * restoredV / 30.0;
+    lon = lon + deltaT * restoredU / 60.0;
+    lat = lat + deltaT * restoredV / 60.0;
     // Wrap lats to 180˚ around the globe
     if (lat > 90.0) {
       lat = 180.0 - lat;

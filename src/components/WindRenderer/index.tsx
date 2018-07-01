@@ -16,7 +16,7 @@ import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
 const DataTransformer = require('worker-loader!./DataTransformerWorker');
 
-const PARTICLE_COUNT = 40000;
+const PARTICLE_COUNT = 30000;
 
 interface Props {
   vectorField: VectorField;
