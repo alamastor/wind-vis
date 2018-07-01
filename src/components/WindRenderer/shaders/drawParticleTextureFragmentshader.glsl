@@ -14,15 +14,17 @@ void main() {
     float currentAspectRatio = currentDimensions.x / currentDimensions.y;
 
     vec2 texCoord = gl_FragCoord.xy / (currentDimensions - 1.0);
-    vec2 transformed = texCoord + (currentCenterCoord - textureCenterCoord) / vec2(359.99, 180);
-    vec2 zoomed = (transformed - 0.5)
-                   * (textureZoom / currentZoom)
-                   * vec2(min(currentAspectRatio, 2.0) / min(textureAspectRatio, 2.0),
-                          max(textureAspectRatio, 2.0) / max(currentAspectRatio, 2.0))
-                   + 0.5;
-    if (any(lessThan(zoomed, vec2(0, 0))) || any(greaterThan(zoomed, vec2(1, 1)))) {
+    vec2 transformed = (texCoord - 0.5)
+        * (textureZoom / currentZoom)
+        * vec2(min(currentAspectRatio, 2.0) / min(textureAspectRatio, 2.0),
+               min(2.0 / currentAspectRatio, 1.0) / min(textureAspectRatio, 1.0))
+        + (currentCenterCoord - textureCenterCoord)
+        * textureZoom / vec2(359.99, 180)
+        * 1.0 / vec2(min(textureAspectRatio / 2.0, 1.0), min(2.0 / textureAspectRatio, 1.0))
+        + 0.5;
+    if (any(lessThan(transformed, vec2(0, 0))) || any(greaterThan(transformed, vec2(1, 1)))) {
         gl_FragColor = vec4(0, 0, 0, 0);
     } else {
-        gl_FragColor = texture2D(texture, zoomed) * alpha;
+        gl_FragColor = texture2D(texture, transformed) * alpha;
     }
 }
