@@ -16,7 +16,6 @@ import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
 const DataTransformer = require('worker-loader!./DataTransformerWorker');
 
-const PARTICLE_COUNT = 30000;
 
 interface Props {
   vectorField: VectorField;
@@ -52,7 +51,7 @@ export default class WindRenderer extends React.Component<Props, State> {
       this.canvas.getContext('webgl') ||
       this.canvas.getContext('experimental-webgl');
     if (gl != null) {
-      this.glState = getGLState(gl, PARTICLE_COUNT);
+      this.glState = getGLState(gl);
       updateWindTex(
         this.glState,
         transformDataForGPU(

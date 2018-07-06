@@ -10,6 +10,10 @@ import updateParticleVertexShaderSource from './shaders/updateParticleVertexshad
 import updateParticleFragmentShaderSource from './shaders/updateParticleFragmentshader.glsl';
 
 const FRAMEBUFFER_COUNT = 50;
+const PARTICLE_DENSITY = 0.01; // Particles per square pixel
+// Number of particles to be stored in texture, displayed particles will
+// be subset of this.
+const PARTICLE_COUNT = 1000000;
 
 export interface glState {
   gl: WebGLRenderingContext;
@@ -68,7 +72,6 @@ export interface glState {
       resetPositionsLoc: WebGLUniformLocation;
     };
     positionTextureCoordBuffer: WebGLBuffer;
-    particleCount: number;
     positionTexture: WebGLTexture;
   };
   uTexture: WebGLTexture;
@@ -78,12 +81,9 @@ export interface glState {
 /**
  * Initialize GL and return programs, buffers, textures, and locations.
  */
-export function getGLState(
-  gl: WebGLRenderingContext,
-  particleCount: number,
-): glState {
+export function getGLState(gl: WebGLRenderingContext): glState {
   const speedState = getSpeedProgramState(gl);
-  const particleState = getParticleProgramState(gl, particleCount);
+  const particleState = getParticleProgramState(gl);
 
   // Create and bind wind vector textures
   const uTexture = gl.createTexture() as WebGLTexture;
@@ -157,27 +157,24 @@ function getSpeedProgramState(gl: WebGLRenderingContext) {
  * Initialize GL for particle rendering, and return programs, buffers,
  * textures, and locations.
  */
-function getParticleProgramState(
-  gl: WebGLRenderingContext,
-  particleCount: number,
-) {
+function getParticleProgramState(gl: WebGLRenderingContext) {
   // Unfortunately WebGL 1.0 does not allow updating of vertex buffers
   // in the shaders, so instead positions will be encoded in textures
   // which can be updated by drawing to a frame buffer.
 
   // Get child state
   const drawState = getParticleDrawProgramState(gl);
-  const updateState = getParticleUpdateProgramState(gl, particleCount);
+  const updateState = getParticleUpdateProgramState(gl);
 
   // Get dimensions of position texture
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    particleCount,
+    PARTICLE_COUNT,
   );
 
   // Create particles vertices buffer. These just contain the vertex's
   // own index for doing textures lookups.
-  const positionTextureCoords = new Float32Array(particleCount * 2);
-  for (let i = 0; i < particleCount; i++) {
+  const positionTextureCoords = new Float32Array(PARTICLE_COUNT * 2);
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
     const x = (i % textureWidth) / (textureWidth - 1);
     const y = Math.floor(i / textureWidth) / (textureHeight - 1);
     positionTextureCoords[i * 2] = x;
@@ -198,7 +195,7 @@ function getParticleProgramState(
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
 
   const positions = new Uint8Array(textureWidth * textureHeight * 4);
-  for (let i = 0; i < particleCount; i++) {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
     const lon = Math.random() * 359.9;
     const lat = Math.random() * 180 - 90;
     const encoded = encodeCoordToRGBA({lon, lat});
@@ -221,7 +218,6 @@ function getParticleProgramState(
   return {
     drawState,
     updateState,
-    particleCount,
     positionTextureCoordBuffer,
     positionTexture,
   };
@@ -411,10 +407,7 @@ function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
  * Initialize GL for particle updating, and return programs, buffers,
  * textures, and locations.
  */
-function getParticleUpdateProgramState(
-  gl: WebGLRenderingContext,
-  particleCount: number,
-) {
+function getParticleUpdateProgramState(gl: WebGLRenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -430,7 +423,7 @@ function getParticleUpdateProgramState(
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    particleCount,
+    PARTICLE_COUNT,
   );
   gl.texImage2D(
     gl.TEXTURE_2D,
@@ -625,7 +618,6 @@ function drawParticlesToFrameBuffer(
           canvasDimensionsLoc,
         },
       },
-      particleCount,
       positionTexture,
       positionTextureCoordBuffer,
     },
@@ -709,7 +701,12 @@ function drawParticlesToFrameBuffer(
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
 
   // Draw
-  gl.drawArrays(gl.POINTS, 0, particleCount);
+  // Only draw enough particles to meet particle density requirements
+  const particlesToDraw = Math.min(
+    PARTICLE_DENSITY * gl.canvas.width * gl.canvas.height,
+    PARTICLE_COUNT,
+  );
+  gl.drawArrays(gl.POINTS, 0, particlesToDraw);
 
   // Unbind frame buffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -818,7 +815,6 @@ export function updateParticles(
         resetPositionsLoc,
       },
       positionTexture,
-      particleCount,
       positionTextureCoordBuffer,
     },
     uTexture,
@@ -829,7 +825,7 @@ export function updateParticles(
 
   // Set viewport
   const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    particleCount,
+    PARTICLE_COUNT,
   );
   gl.viewport(0, 0, textureWidth, textureHeight);
 
