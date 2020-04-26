@@ -5,8 +5,8 @@ import * as React from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';
-import * as moment from 'moment';
-import * as Loadable from 'react-loadable';
+import moment from 'moment';
+import Loadable from 'react-loadable';
 
 import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
 import VectorField from '../../utils/fielddata/VectorField';
@@ -31,7 +31,9 @@ const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next t
 // Async load the Vector renderer, as by default it's not displayed
 const VectorRenderer = Loadable({
   loader: () =>
-    import(/* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'),
+    import(
+      /* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'
+    ),
   loading: (props: {pastDelay: boolean}) =>
     props.pastDelay ? <Spinner color="white" /> : null,
 });
@@ -174,7 +176,7 @@ class MapVis extends React.Component<Props, State> {
   }
 
   unPause() {
-    this.setNextTauSetTimeoutId = setTimeout(
+    this.setNextTauSetTimeoutId = window.setTimeout(
       this.setNextTau.bind(this),
       this.stepRemainingTime,
     );
@@ -234,7 +236,7 @@ class MapVis extends React.Component<Props, State> {
           // currentTau was just set to zero, particle should be refreshed
           this.refreshParticlesNextRender = true;
         }
-        this.setNextTauSetTimeoutId = setTimeout(
+        this.setNextTauSetTimeoutId = window.setTimeout(
           this.setNextTau.bind(this),
           TAU_STEP_INTERVAL,
         );
@@ -328,7 +330,4 @@ class MapVis extends React.Component<Props, State> {
   }
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(MapVis);
+export default connect(mapStateToProps, mapDispatchToProps)(MapVis);

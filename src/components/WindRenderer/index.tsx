@@ -16,7 +16,6 @@ import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
 const DataTransformer = require('worker-loader!./DataTransformerWorker');
 
-
 interface Props {
   vectorField: VectorField;
   projState: ProjState;
@@ -34,6 +33,7 @@ export default class WindRenderer extends React.Component<Props, State> {
   glState: glState | null = null;
   dataTransformer = new DataTransformer();
   resetParticles: boolean = false;
+  renderLastFrameTime?: number;
 
   constructor(props: Props) {
     super(props);
@@ -47,9 +47,7 @@ export default class WindRenderer extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    const gl =
-      this.canvas.getContext('webgl') ||
-      this.canvas.getContext('experimental-webgl');
+    const gl = this.canvas.getContext('webgl');
     if (gl != null) {
       this.glState = getGLState(gl);
       updateWindTex(
@@ -85,14 +83,14 @@ export default class WindRenderer extends React.Component<Props, State> {
     }
   }
 
-  updateAndRender(prevTime: number, timestamp: number) {
+  updateAndRender(timestamp: number) {
     let deltaT: number;
-    if (timestamp != null) {
-      deltaT = timestamp - prevTime;
+    if (this.renderLastFrameTime != null) {
+      deltaT = timestamp - this.renderLastFrameTime;
     } else {
       deltaT = 0;
-      timestamp = prevTime;
     }
+    this.renderLastFrameTime = timestamp;
 
     if (this.glState != null) {
       drawSpeeds(

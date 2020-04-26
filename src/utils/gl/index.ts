@@ -1,5 +1,9 @@
 function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
   const shader = gl.createShader(type);
+  if (shader == null) {
+    console.log('Failed to create shader.');
+    return null;
+  }
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
@@ -17,12 +21,21 @@ export function createProgramWithShaders(
   fragmentShaderSource: string,
 ) {
   const shaderProgram = gl.createProgram();
+  if (shaderProgram == null) {
+    throw new Error('Failed to create shader program.');
+  }
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+  if (vertexShader == null) {
+    throw new Error('Failed to create to load vertex shader.');
+  }
   const fragmentShader = loadShader(
     gl,
     gl.FRAGMENT_SHADER,
     fragmentShaderSource,
   );
+  if (fragmentShader == null) {
+    throw new Error('Failed to create to load fragment shader.');
+  }
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
@@ -32,9 +45,6 @@ export function createProgramWithShaders(
       'Error initializing shader program: ' +
         gl.getProgramInfoLog(shaderProgram),
     );
-  }
-  if (shaderProgram == null) {
-    throw new Error('shaderProgram is null');
   }
 
   return shaderProgram;
