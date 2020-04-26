@@ -1,6 +1,5 @@
-import * as moment from 'moment';
+import moment from 'moment';
 
-import {Action} from './fieldDataActions';
 import {RootAction} from '../../reducers';
 
 export interface State {
@@ -30,7 +29,7 @@ export const initialState = {
   data: {},
 };
 
-export default function(
+export default function (
   state: State = initialState,
   action: RootAction,
 ): State {

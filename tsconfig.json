@@ -10,7 +10,8 @@
     "jsx": "react",
     "strict": true,
     "downlevelIteration": true,
-    "lib": ["es2017", "dom", "webworker"]
+    "lib": ["es2017", "dom", "webworker"],
+    "esModuleInterop": true
   },
   "include": ["./src/**/*"]
 }

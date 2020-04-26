@@ -15,5 +15,5 @@ module.exports = {
     },
   },
   setupFiles: ['./jest.stubs.js'],
-  setupTestFrameworkScriptFile: './jest.tests.ts',
+  setupFilesAfterEnv: ['./jest.tests.ts'],
 };
