@@ -33,7 +33,6 @@ export default class WindRenderer extends React.Component<Props, State> {
   glState: glState | null = null;
   dataTransformer = new DataTransformer();
   resetParticles: boolean = false;
-  renderLastFrameTime?: number;
 
   constructor(props: Props) {
     super(props);
@@ -61,7 +60,7 @@ export default class WindRenderer extends React.Component<Props, State> {
           this.props.maxSpeed,
         ),
       );
-      window.requestAnimationFrame(this.updateAndRender.bind(this));
+      window.requestAnimationFrame(this.updateAndRender.bind(this, null));
     } else {
       this.props.setGlUnavailable();
     }
@@ -83,14 +82,10 @@ export default class WindRenderer extends React.Component<Props, State> {
     }
   }
 
-  updateAndRender(timestamp: number) {
+  updateAndRender(prevTime: number | null, timestamp: number) {
     let deltaT: number;
-    if (this.renderLastFrameTime != null) {
-      deltaT = timestamp - this.renderLastFrameTime;
-    } else {
-      deltaT = 0;
-    }
-    this.renderLastFrameTime = timestamp;
+    prevTime = prevTime || 0;
+    deltaT = timestamp - prevTime;
 
     if (this.glState != null) {
       drawSpeeds(
