@@ -39,12 +39,11 @@ export default function controlPanel(
       });
 
     case 'CONTROL_PANEL_SET_ZOOM_LEVEL':
-      const zoomLevel = Math.min(
-        Math.max(minZoomLevel, action.zoomLevel),
-        maxZoomLevel,
-      );
       return Object.assign({}, state, {
-        zoomLevel: zoomLevel,
+        zoomLevel: Math.min(
+          Math.max(minZoomLevel, action.zoomLevel),
+          maxZoomLevel,
+        ),
       });
 
     default:

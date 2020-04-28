@@ -25,15 +25,13 @@ export default class DataField {
       // Currently only 1 degrees resolution supported
       throw new Error('resolution must be 1 degree');
     }
-    // prettier incompatible with typscript here, adds a trailing comma
-    // prettier-ignore
     [
       this.data,
       this._minLon,
       this._maxLon,
       this._minLat,
       this._maxLat,
-      this.resolution
+      this.resolution,
     ] = [data, minLon, maxLon, minLat, maxLat, resolution];
   }
 
@@ -65,7 +63,7 @@ export default class DataField {
     }
   }
 
-  pointInBounds(lon: number, lat: number) {
+  pointInBounds(lon: number, lat: number): boolean {
     return (
       lon >= this.getMinLon() &&
       lon <= this.getMaxLon() &&
@@ -74,7 +72,7 @@ export default class DataField {
     );
   }
 
-  getValue(lon: number, lat: number) {
+  getValue(lon: number, lat: number): number {
     if (!this.pointInBounds(lon, lat)) {
       throw new Error(`point {lon: ${lon}, lat: ${lat}} out of bounds`);
     }
@@ -107,7 +105,7 @@ export default class DataField {
     return this._linearInterp(y - Math.floor(y), lPoint, uPoint);
   }
 
-  _linearInterp(x: number, y1: number, y2: number) {
+  _linearInterp(x: number, y1: number, y2: number): number {
     return x * (y2 - y1) + y1;
   }
 

@@ -67,9 +67,6 @@ class App extends React.Component<Props, State> {
       const frameLength = timestamp - this.prevFrameTimestamp;
       this.frameLengths.shift();
       this.frameLengths.push(frameLength);
-      const meanFrameLength =
-        this.frameLengths.reduce((len, cum) => len + cum, 0) /
-        this.frameLengths.length;
       const meanFrameRate = 1000 / frameLength;
       this.props.setFrameRate(meanFrameRate);
     }

@@ -2,10 +2,6 @@ import axios from 'axios';
 import * as moment from 'moment';
 import 'moment-timezone';
 
-import {store} from '../../index';
-import DataField from './DataField';
-import VectorField from './VectorField';
-
 const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 
 export async function getData(

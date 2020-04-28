@@ -15,7 +15,7 @@ const PARTICLE_DENSITY = 0.01; // Particles per square pixel
 // be subset of this.
 const PARTICLE_COUNT = 1000000;
 
-export interface glState {
+export interface GlState {
   gl: WebGLRenderingContext;
   speedState: {
     shaderProgram: WebGLProgram;
@@ -81,7 +81,7 @@ export interface glState {
 /**
  * Initialize GL and return programs, buffers, textures, and locations.
  */
-export function getGLState(gl: WebGLRenderingContext): glState {
+export function getGLState(gl: WebGLRenderingContext): GlState {
   const speedState = getSpeedProgramState(gl);
   const particleState = getParticleProgramState(gl);
 
@@ -500,7 +500,7 @@ function getParticleUpdateProgramState(gl: WebGLRenderingContext) {
 }
 
 export function updateWindTex(
-  glState: glState,
+  glState: GlState,
   uData: Uint8Array,
   vData: Uint8Array,
 ) {
@@ -533,7 +533,7 @@ export function updateWindTex(
 }
 
 export function drawSpeeds(
-  glState: glState,
+  glState: GlState,
   centerCoord: Coord,
   zoomLevel: number,
 ) {
@@ -591,7 +591,7 @@ export function drawSpeeds(
 }
 
 export function drawParticles(
-  glState: glState,
+  glState: GlState,
   centerCoord: Coord,
   zoomLevel: number,
 ) {
@@ -600,7 +600,7 @@ export function drawParticles(
 }
 
 function drawParticlesToFrameBuffer(
-  glState: glState,
+  glState: GlState,
   centerCoord: Coord,
   zoomLevel: number,
 ) {
@@ -717,7 +717,7 @@ function drawParticlesToFrameBuffer(
 }
 
 function drawFrameBuffers(
-  glState: glState,
+  glState: GlState,
   centerCoord: Coord,
   zoomLevel: number,
 ) {
@@ -765,29 +765,27 @@ function drawFrameBuffers(
 
   // Render all textures
   frameBuffers.forEach((frameBufferGroup, idx, frameBuffers) => {
-    if (idx === frameBuffers.length - 1 || true) {
-      // Set uniforms
-      gl.uniform1f(alphaLoc, idx / frameBuffers.length);
-      gl.uniform2f(
-        textureDimensionsLoc,
-        frameBufferGroup.screenWidth,
-        frameBufferGroup.screenHeight,
-      );
-      gl.uniform1f(textureZoomLoc, frameBufferGroup.zoomLevel);
-      gl.uniform2f(
-        textureCenterCoordLoc,
-        frameBufferGroup.centerCoord.lon,
-        frameBufferGroup.centerCoord.lat,
-      );
+    // Set uniforms
+    gl.uniform1f(alphaLoc, idx / frameBuffers.length);
+    gl.uniform2f(
+      textureDimensionsLoc,
+      frameBufferGroup.screenWidth,
+      frameBufferGroup.screenHeight,
+    );
+    gl.uniform1f(textureZoomLoc, frameBufferGroup.zoomLevel);
+    gl.uniform2f(
+      textureCenterCoordLoc,
+      frameBufferGroup.centerCoord.lon,
+      frameBufferGroup.centerCoord.lat,
+    );
 
-      // Bind textures
-      gl.uniform1i(textureLoc, 0);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, frameBufferGroup.texture);
+    // Bind textures
+    gl.uniform1i(textureLoc, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, frameBufferGroup.texture);
 
-      // Draw
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
+    // Draw
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
   });
   // Reset state
   gl.disable(gl.BLEND);
@@ -795,7 +793,7 @@ function drawFrameBuffers(
 }
 
 export function updateParticles(
-  glState: glState,
+  glState: GlState,
   deltaT: number,
   resetPositions: boolean,
 ) {
@@ -815,7 +813,6 @@ export function updateParticles(
         resetPositionsLoc,
       },
       positionTexture,
-      positionTextureCoordBuffer,
     },
     uTexture,
     vTexture,
@@ -878,7 +875,7 @@ function encodeCoordToRGBA(coord: Coord): number[] {
   // Encode lats to from range -90-90 to 0x0-0x10000
   const encodedLat = ((coord.lat + 90.0) * 0xffff) / 180;
 
-  // Get upper and lower bytes from encoded values and conver to 0-1 range in vec4
+  // Get upper and lower bytes from encoded values and convert to 0-1 range in vec4
   const lonUByte = Math.floor(encodedLon / 0x100);
   const lonLByte = ((encodedLon / 0x100) % 1) * 0x100;
   const latUByte = Math.floor(encodedLat / 0x100);

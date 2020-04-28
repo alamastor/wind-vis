@@ -1,5 +1,5 @@
 /*
- * Component containing various visualisations of data on world map.
+ * Component containing various visualizations of data on world map.
  */
 import * as React from 'react';
 import {bindActionCreators} from 'redux';
@@ -29,13 +29,14 @@ import {setGlUnavailable} from '../App/actions';
 const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
 
 // Async load the Vector renderer, as by default it's not displayed
+const loadingComponent = (props: {pastDelay: boolean}) =>
+  props.pastDelay ? <Spinner color="white" /> : null;
 const VectorRenderer = Loadable({
   loader: () =>
     import(
       /* webpackChunkName: "vectorRenderer" */ '../../components/VectorRenderer'
     ),
-  loading: (props: {pastDelay: boolean}) =>
-    props.pastDelay ? <Spinner color="white" /> : null,
+  loading: loadingComponent,
 });
 
 const mapStateToProps = (state: RootState) => ({
@@ -108,7 +109,7 @@ class MapVis extends React.Component<Props, State> {
     this.setMaxWindSpeed();
   }
 
-  componentDidUpdate(prevProps: Props, prevState: State) {
+  componentDidUpdate(prevProps: Props) {
     if (this.props.paused && !prevProps.paused) {
       this.pause();
     } else if (!this.props.paused && prevProps.paused) {
@@ -134,7 +135,7 @@ class MapVis extends React.Component<Props, State> {
   propsChanged(nextProps: Props, ignore?: string[]) {
     let key: keyof Props;
     for (key in nextProps) {
-      if (nextProps.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(nextProps, 'key')) {
         if (
           (ignore == null || ignore.indexOf(key) === -1) &&
           nextProps[key] !== this.props[key]
@@ -154,7 +155,7 @@ class MapVis extends React.Component<Props, State> {
   stateChanged(nextState: State, ignore?: string[]) {
     let key: keyof State;
     for (key in nextState) {
-      if (nextState.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'key')) {
         if (
           (ignore == null || ignore.indexOf(key) === -1) &&
           nextState[key] !== this.state[key]

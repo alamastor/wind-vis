@@ -1,11 +1,10 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import React from 'react';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
+import {ProjState} from '../../utils/Projection';
 import {
-  glState,
+  GlState,
   drawSpeeds,
   drawParticles,
   updateParticles,
@@ -14,7 +13,7 @@ import {
 } from './gl';
 import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
-const DataTransformer = require('worker-loader!./DataTransformerWorker');
+import DataTransformer from 'worker-loader!./DataTransformerWorker';
 
 interface Props {
   vectorField: VectorField;
@@ -27,18 +26,17 @@ interface Props {
   displayParticles: boolean;
   setGlUnavailable: () => Action;
 }
-interface State {}
-export default class WindRenderer extends React.Component<Props, State> {
+export default class WindRenderer extends React.Component<Props, {}> {
   canvas!: HTMLCanvasElement;
-  glState: glState | null = null;
+  glState: GlState | null = null;
   dataTransformer = new DataTransformer();
-  resetParticles: boolean = false;
+  resetParticles = false;
 
   constructor(props: Props) {
     super(props);
     this.dataTransformer.onmessage = (message: {
       data: {uData: Uint8Array; vData: Uint8Array};
-    }) => {
+    }): void => {
       if (this.glState != null) {
         updateWindTex(this.glState, message.data.uData, message.data.vData);
       }
@@ -83,9 +81,8 @@ export default class WindRenderer extends React.Component<Props, State> {
   }
 
   updateAndRender(prevTime: number | null, timestamp: number) {
-    let deltaT: number;
     prevTime = prevTime || 0;
-    deltaT = timestamp - prevTime;
+    const deltaT = timestamp - prevTime;
 
     if (this.glState != null) {
       drawSpeeds(
@@ -107,7 +104,7 @@ export default class WindRenderer extends React.Component<Props, State> {
     window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));
   }
 
-  render() {
+  render(): JSX.Element {
     return (
       <canvas
         className={style({

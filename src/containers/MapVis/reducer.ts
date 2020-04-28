@@ -1,4 +1,3 @@
-import {Action} from './actions';
 import {RootAction} from '../../reducers';
 
 export interface State {
@@ -19,7 +18,7 @@ export const initialState = {
   centerLon: 180,
 };
 
-export default function(
+export default function (
   state: State = initialState,
   action: RootAction,
 ): State {
