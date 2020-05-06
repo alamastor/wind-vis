@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment, {Moment} from 'moment';
 
 import {RootAction} from '../../reducers';
 

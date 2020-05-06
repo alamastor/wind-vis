@@ -15,7 +15,7 @@
   "keywords": [],
   "author": "Alistair McKelvie",
   "license": "ISC",
-  "sideEffects": [
+  "sideEffects": [ 
     "*.css"
   ],
   "devDependencies": {

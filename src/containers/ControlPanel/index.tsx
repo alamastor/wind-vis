@@ -12,14 +12,14 @@ import {
   setDisplayVectors,
   togglePaused,
   setZoomLevel,
-} from './actions';
-import {minZoomLevel, maxZoomLevel} from './reducer';
+} from '../MapVis/actions';
+import {minZoomLevel, maxZoomLevel} from '../MapVis/reducer';
 
 const mapStateToProps = (state: RootState) => ({
-  displayParticles: state.controlPanel.displayParticles,
-  displayVectors: state.controlPanel.displayVectors,
-  paused: state.controlPanel.paused,
-  zoomLevel: state.controlPanel.zoomLevel,
+  displayParticles: state.mapVis.displayParticles,
+  displayVectors: state.mapVis.displayVectors,
+  paused: state.mapVis.paused,
+  zoomLevel: state.mapVis.zoomLevel,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -33,7 +33,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
     dispatch,
   );
 
-interface Props {
+interface ControlPanelProps {
   displayParticles: boolean;
   displayVectors: boolean;
   paused: boolean;
@@ -43,89 +43,69 @@ interface Props {
   togglePaused: () => Action;
   setZoomLevel: (zoomLevel: number) => Action;
 }
+function ControlPanel({
+  displayVectors,
+  paused,
+  zoomLevel,
+  setDisplayVectors,
+  togglePaused,
+  setZoomLevel,
+}: ControlPanelProps) {
+  const handleDisplayVectorsChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setDisplayVectors(event.target.checked);
+  };
 
-class ControlPanel extends React.Component<Props, {}> {
-  constructor(props: Props) {
-    super(props);
-    this.handleDisplayParticlesChange = this.handleDisplayParticlesChange.bind(
-      this,
-    );
-    this.handleDisplayVectorsChange = this.handleDisplayVectorsChange.bind(
-      this,
-    );
-    this.handleTogglePaused = this.handleTogglePaused.bind(this);
-    this.handleZoomLevelChange = this.handleZoomLevelChange.bind(this);
-  }
-
-  handleDisplayParticlesChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.props.setDisplayParticles(event.target.checked);
-  }
-
-  handleDisplayVectorsChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.props.setDisplayVectors(event.target.checked);
-  }
-
-  handleTogglePaused(event: React.MouseEvent<HTMLButtonElement>) {
+  const handleTogglePaused = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    this.props.togglePaused();
-  }
+    togglePaused();
+  };
 
-  handleZoomLevelChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.props.setZoomLevel(Number.parseFloat(event.target.value));
-  }
-
-  render() {
-    return (
-      <form
-        className={style({
-          gridArea: 'control',
-          display: 'flex',
-          position: 'relative',
-          flexDirection: 'column',
-          zIndex: 1,
-          padding: '10px',
-          cursor: 'auto',
-          color: 'white',
-          margin: 0,
-        })}>
-        <label>
-          Display Particles:
-          <input
-            name="displayParticles"
-            type="checkbox"
-            checked={this.props.displayParticles}
-            onChange={this.handleDisplayParticlesChange}
-          />
-        </label>
-        <label>
-          Display Vectors:
-          <input
-            name="displayVectors"
-            type="checkbox"
-            checked={this.props.displayVectors}
-            onChange={this.handleDisplayVectorsChange}
-          />
-        </label>
-        <label>
-          Zoom:
-          <input
-            name="zoomLevel"
-            type="range"
-            min={minZoomLevel.toString()}
-            max={maxZoomLevel.toString()}
-            step="0.1"
-            value={this.props.zoomLevel}
-            onChange={this.handleZoomLevelChange}
-          />
-        </label>
-        <button
-          className={style({width: '100%'})}
-          onClick={this.handleTogglePaused}>
-          {this.props.paused ? 'Resume' : 'Pause'}
-        </button>
-      </form>
-    );
-  }
+  const handleZoomLevelChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setZoomLevel(Number.parseFloat(event.target.value));
+  };
+  return (
+    <form
+      className={style({
+        gridArea: 'control',
+        display: 'flex',
+        position: 'relative',
+        flexDirection: 'column',
+        zIndex: 1,
+        padding: '10px',
+        cursor: 'auto',
+        color: 'white',
+        margin: 0,
+      })}
+    >
+      <label>
+        Display Vectors:
+        <input
+          name="displayVectors"
+          type="checkbox"
+          checked={displayVectors}
+          onChange={handleDisplayVectorsChange}
+        />
+      </label>
+      <label>
+        Zoom:
+        <input
+          name="zoomLevel"
+          type="range"
+          min={minZoomLevel.toString()}
+          max={maxZoomLevel.toString()}
+          step="0.1"
+          value={zoomLevel}
+          onChange={handleZoomLevelChange}
+        />
+      </label>
+      <button className={style({width: '100%'})} onClick={handleTogglePaused}>
+        {paused ? 'Resume' : 'Pause'}
+      </button>
+    </form>
+  );
 }
-
 export default connect(mapStateToProps, mapDispatchToProps)(ControlPanel);

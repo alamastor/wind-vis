@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {Dispatch, connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {style} from 'typestyle';
@@ -23,83 +23,70 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
     dispatch,
   );
 
-interface Props {
+interface AppProps {
   glUnavailable: boolean;
   setFrameRate: (frameRate: number) => Action;
 }
-interface State {
-  width: number;
-  height: number;
-}
-class App extends React.Component<Props, State> {
-  prevFrameTimestamp: number | null = null;
-  frameLengths: number[] = [...Array(FRAME_LENGTH_BUFFER_COUNT)].map(
-    () => 16.67,
+function App({glUnavailable, setFrameRate}: AppProps) {
+  const [width, setWidth] = useState(window.innerWidth);
+  const [height, setHeight] = useState(window.innerHeight);
+  const prevFrameTimestampRef = useRef<number | null>(null);
+  const frameLengthsRef = useRef(
+    [...Array(FRAME_LENGTH_BUFFER_COUNT)].map(() => 16.67),
   );
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      width: window.innerWidth,
-      height: window.innerHeight,
+
+  useEffect(() => {
+    window.addEventListener('resize', () => {
+      setWidth(window.innerWidth);
+      setHeight(window.innerHeight);
+    });
+  }, []);
+
+  useEffect(() => {
+    /*
+     * Estimate and report current frame rate of app. Called with
+     * requestAnimationFrame. Uses average frame length over
+     * FRAME_LENGTH_BUFFER_COUNT.
+     */
+    const updateFrameRate = (timestamp: number) => {
+      if (prevFrameTimestampRef.current != null) {
+        const frameLength = timestamp - prevFrameTimestampRef.current;
+        frameLengthsRef.current.shift();
+        frameLengthsRef.current.push(frameLength);
+        const meanFrameRate = 1000 / frameLength;
+        setFrameRate(meanFrameRate);
+      }
+      prevFrameTimestampRef.current = timestamp;
+      requestAnimationFrame(updateFrameRate);
     };
-    this.onResize = this.onResize.bind(this);
-  }
+    requestAnimationFrame(updateFrameRate);
+  }, [setFrameRate]);
 
-  componentDidMount() {
-    window.addEventListener('resize', this.onResize);
-    requestAnimationFrame(this.updateFrameRate.bind(this));
-  }
+  const className = style({
+    display: 'grid',
+    width: '100%',
+    height: '100%',
+    gridTemplateRows: 'auto 1fr auto',
+    gridTemplateColumns: 'auto 1fr auto',
+    gridTemplateAreas: `".... . ......."
+                          ".... . ......."
+                          "info . control"`,
+    backgroundColor: '#624a72',
+  });
 
-  onResize() {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-  }
-
-  /*
-   * Estimate and report current frame rate of app. Called with
-   * requestAnimationFrame. Uses average frame length over
-   * FRAME_LENGTH_BUFFER_COUNT.
-   */
-  updateFrameRate(timestamp: number) {
-    if (this.prevFrameTimestamp != null) {
-      const frameLength = timestamp - this.prevFrameTimestamp;
-      this.frameLengths.shift();
-      this.frameLengths.push(frameLength);
-      const meanFrameRate = 1000 / frameLength;
-      this.props.setFrameRate(meanFrameRate);
-    }
-    this.prevFrameTimestamp = timestamp;
-    requestAnimationFrame(this.updateFrameRate.bind(this));
-  }
-
-  render() {
-    const className = style({
-      display: 'grid',
-      width: '100%',
-      height: '100%',
-      gridTemplateRows: 'auto 1fr auto',
-      gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateAreas: `".... . ......."
-                              ".... . ......."
-                              "info . control"`,
-      backgroundColor: '#624a72',
-    });
-    return this.props.glUnavailable ? (
-      <div id="app" className={className}>
-        <AppError>
-          Not available in this browser, please try another one!
-        </AppError>
-      </div>
-    ) : (
-      <div id="app" className={className}>
-        <MapVis width={this.state.width} height={this.state.height} />
-        <ControlPanel />
-        <CursorPositionInfo />
-      </div>
-    );
-  }
+  return glUnavailable ? (
+    <div id="app" className={className}>
+      <AppError>
+        Not available in this browser, please try another one!
+      </AppError>
+    </div>
+  ) : (
+    <div id="app" className={className}>
+      <MapVis width={width} height={height} />
+      <ControlPanel />
+      <CursorPositionInfo />
+    </div>
+  );
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

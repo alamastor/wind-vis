@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef, useEffect} from 'react';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
@@ -26,96 +26,90 @@ interface Props {
   displayParticles: boolean;
   setGlUnavailable: () => Action;
 }
-export default class WindRenderer extends React.Component<Props, {}> {
-  canvas!: HTMLCanvasElement;
-  glState: GlState | null = null;
-  dataTransformer = new DataTransformer();
-  resetParticles = false;
+export default function WindRenderer(props: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>();
+  const glStateRef = useRef<GlState | null>(null);
+  const dataTransformerRef = useRef<DataTransformer>();
+  const resetParticlesRef = useRef(false);
+  const projStateRef = useRef(props.projState);
+  projStateRef.current = props.projState;
 
-  constructor(props: Props) {
-    super(props);
-    this.dataTransformer.onmessage = (message: {
-      data: {uData: Uint8Array; vData: Uint8Array};
-    }): void => {
-      if (this.glState != null) {
-        updateWindTex(this.glState, message.data.uData, message.data.vData);
-      }
-    };
-  }
-
-  componentDidMount() {
-    const gl = this.canvas.getContext('webgl');
-    if (gl != null) {
-      this.glState = getGLState(gl);
-      updateWindTex(
-        this.glState,
-        transformDataForGPU(
-          this.props.vectorField.uField.data,
-          this.props.maxSpeed,
-        ),
-        transformDataForGPU(
-          this.props.vectorField.vField.data,
-          this.props.maxSpeed,
-        ),
-      );
-      window.requestAnimationFrame(this.updateAndRender.bind(this, null));
-    } else {
-      this.props.setGlUnavailable();
-    }
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (
-      prevProps.vectorField !== this.props.vectorField &&
-      this.glState != null
-    ) {
-      this.dataTransformer.postMessage({
-        uData: this.props.vectorField.uField.data,
-        vData: this.props.vectorField.vField.data,
-        maxValue: this.props.maxSpeed,
-      });
-      if (this.props.resetParticlesOnInit) {
-        this.resetParticles = true;
-      }
-    }
-  }
-
-  updateAndRender(prevTime: number | null, timestamp: number) {
+  const updateAndRender = (prevTime: number | null, timestamp: number) => {
     prevTime = prevTime || 0;
     const deltaT = timestamp - prevTime;
 
-    if (this.glState != null) {
+    if (glStateRef.current != null) {
       drawSpeeds(
-        this.glState,
-        this.props.projState.centerCoord,
-        this.props.projState.zoomLevel,
+        glStateRef.current,
+        projStateRef.current.centerCoord,
+        projStateRef.current.zoomLevel,
       );
-      if (this.props.displayParticles) {
+      if (props.displayParticles) {
         drawParticles(
-          this.glState,
-          this.props.projState.centerCoord,
-          this.props.projState.zoomLevel,
+          glStateRef.current,
+          projStateRef.current.centerCoord,
+          projStateRef.current.zoomLevel,
         );
-        updateParticles(this.glState, deltaT, this.resetParticles);
+        updateParticles(glStateRef.current, deltaT, resetParticlesRef.current);
       }
-      this.resetParticles = false;
+      resetParticlesRef.current = false;
     }
+    window.requestAnimationFrame(updateAndRender.bind(undefined, timestamp));
+  };
 
-    window.requestAnimationFrame(this.updateAndRender.bind(this, timestamp));
-  }
+  useEffect(() => {
+    dataTransformerRef.current = new DataTransformer();
+    dataTransformerRef.current.onmessage = (message: {
+      data: {uData: Uint8Array; vData: Uint8Array};
+    }): void => {
+      if (glStateRef.current != null) {
+        updateWindTex(
+          glStateRef.current,
+          message.data.uData,
+          message.data.vData,
+        );
+      }
+    };
 
-  render(): JSX.Element {
-    return (
-      <canvas
-        className={style({
-          position: 'fixed',
-        })}
-        width={this.props.width}
-        height={this.props.height}
-        ref={(canvas: HTMLCanvasElement) => {
-          this.canvas = canvas;
-        }}
-      />
-    );
-  }
+    if (canvasRef.current != null) {
+      const gl = canvasRef.current.getContext('webgl');
+      if (gl != null) {
+        glStateRef.current = getGLState(gl);
+        updateWindTex(
+          glStateRef.current,
+          transformDataForGPU(props.vectorField.uField.data, props.maxSpeed),
+          transformDataForGPU(props.vectorField.vField.data, props.maxSpeed),
+        );
+        window.requestAnimationFrame(updateAndRender.bind(undefined, null));
+      } else {
+        props.setGlUnavailable();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (glStateRef.current != null && dataTransformerRef.current != null) {
+      dataTransformerRef.current.postMessage({
+        uData: props.vectorField.uField.data,
+        vData: props.vectorField.vField.data,
+        maxValue: props.maxSpeed,
+      });
+      if (props.resetParticlesOnInit) {
+        resetParticlesRef.current = true;
+      }
+    }
+  });
+
+  return (
+    <canvas
+      className={style({
+        position: 'fixed',
+      })}
+      width={props.width}
+      height={props.height}
+      ref={(canvas: HTMLCanvasElement) => {
+        canvasRef.current = canvas;
+      }}
+    />
+  );
 }

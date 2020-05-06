@@ -3,7 +3,6 @@ import 'moment-timezone';
 
 import reducer, {State, initialState} from '../fieldDataReducer';
 import {setCycle, addData} from '../fieldDataActions';
-import {RootAction as Action} from '../../../reducers';
 
 describe('fieldDataReducer', () => {
   let state: State;
@@ -24,18 +23,6 @@ describe('fieldDataReducer', () => {
       data: {
         0: {
           u: new Float32Array([1, 2, 2, 3]),
-          v: new Float32Array([1, 2, 2, 6]),
-        },
-      },
-    });
-    const expected = Object.assign({}, initialState, {
-      data: {
-        0: {
-          u: new Float32Array([1, 2, 2, 3]),
-          v: new Float32Array([1, 2, 2, 6]),
-        },
-        3: {
-          u: new Float32Array([99, 2, 123, 3]),
           v: new Float32Array([1, 2, 2, 6]),
         },
       },

@@ -1,11 +1,11 @@
 /*
  * Component containing various visualizations of data on world map.
  */
-import * as React from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';
-import moment from 'moment';
+import moment, {Moment} from 'moment';
 import Loadable from 'react-loadable';
 
 import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
@@ -20,12 +20,19 @@ import {RootState, RootAction as Action} from '../../reducers';
 import MouseManager from '../../components/MouseManager';
 import BackgroundMap from '../../components/BackgroundMap';
 import WindRenderer from '../../components/WindRenderer';
-import {setCursorData, resetCursorData, setCenterPoint} from './actions';
+import {
+  moveMap,
+  setCursorData,
+  resetCursorData,
+  setTau,
+  setZoomLevel,
+} from './actions';
 import {setCycle, addData} from './fieldDataActions';
-import {setZoomLevel} from '../ControlPanel/actions';
 import Spinner from '../../components/Spinner';
 import {setGlUnavailable} from '../App/actions';
+import {Tau} from './reducer';
 
+const TAU_INTERVAL = 3; // Hours between taus
 const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
 
 // Async load the Vector renderer, as by default it's not displayed
@@ -40,15 +47,16 @@ const VectorRenderer = Loadable({
 });
 
 const mapStateToProps = (state: RootState) => ({
-  displayParticles: state.controlPanel.displayParticles,
-  displayVectors: state.controlPanel.displayVectors,
+  displayParticles: state.mapVis.displayParticles,
+  displayVectors: state.mapVis.displayVectors,
   displaySpeeds: true,
-  paused: state.controlPanel.paused,
-  zoomLevel: state.controlPanel.zoomLevel,
+  paused: state.mapVis.paused,
+  zoomLevel: state.mapVis.zoomLevel,
   centerLon: state.mapVis.centerLon,
   centerLat: state.mapVis.centerLat,
   fieldData: state.fieldData,
   frameRate: state.app.frameRate,
+  tau: state.mapVis.tau,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
@@ -56,16 +64,17 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
     {
       setCursorData,
       resetCursorData,
-      setCenterPoint,
+      moveMap,
       setZoomLevel,
       setCycle,
       addData,
       setGlUnavailable,
+      setTau,
     },
     dispatch,
   );
 
-interface Props {
+interface MapVisProps {
   width: number;
   height: number;
   zoomLevel: number;
@@ -77,198 +86,148 @@ interface Props {
   paused: boolean;
   fieldData: FieldDataState;
   frameRate: number;
-  setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
-  resetCursorData: () => Action;
-  setCenterPoint: (lon: number, lat: number) => Action;
-  setZoomLevel: (zoomLevel: number) => Action;
-  setCycle: (cycle: moment.Moment) => Action;
-  addData: (tau: number, data: {u: Float32Array; v: Float32Array}) => Action;
-  setGlUnavailable: () => Action;
+  tau: Tau;
+  setCursorData: typeof setCursorData;
+  resetCursorData: typeof resetCursorData;
+  setZoomLevel: typeof setZoomLevel;
+  setCycle: typeof setCycle;
+  addData: typeof addData;
+  setGlUnavailable: typeof setGlUnavailable;
+  setTau: typeof setTau;
+  moveMap: typeof moveMap;
 }
-interface State {
-  currentTau: number; // Tau value currently being displayed
-  maxWindSpeed: number | null; // Max wind speed over all taus
-}
-class MapVis extends React.Component<Props, State> {
-  prevStepTime = new Date(); // time of previous tau step
-  stepRemainingTime = TAU_STEP_INTERVAL; // time remaining before stepping to next tau
-  setNextTauSetTimeoutId: number | null = null; // Id for setTimeout called with setNextTau
-  tausToFetch = [...Array(61).keys()].map((x: number) => 180 - 3 * x); // Queue of times fetch data for
-  awaitingData = false; // Trying to set current tau but that data is not yet available?
-  // When currentTau is set to zero this is set true and all particle will be renewed
-  refreshParticlesNextRender = true;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {currentTau: 0, maxWindSpeed: null};
-  }
-
-  componentDidMount() {
-    this.fetchNextTau();
-    this.setNextTau();
-    this.setMaxWindSpeed();
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.paused && !prevProps.paused) {
-      this.pause();
-    } else if (!this.props.paused && prevProps.paused) {
-      this.unPause();
-    } else if (this.awaitingData) {
-      this.setNextTau();
-    }
-  }
-
-  shouldComponentUpdate(nextProps: Props, nextState: State) {
-    // For perf reasons don't update when frame rate changes
-    return (
-      this.propsChanged(nextProps, ['frameRate']) ||
-      this.stateChanged(nextState)
-    );
-  }
-
-  /*
-   * Check if any props changed, ignoring any props in the
-   * ignore array. Used by shouldComponentUpdate to avoid
-   * updates for some prop changes.
-   */
-  propsChanged(nextProps: Props, ignore?: string[]) {
-    let key: keyof Props;
-    for (key in nextProps) {
-      if (Object.prototype.hasOwnProperty.call(nextProps, 'key')) {
-        if (
-          (ignore == null || ignore.indexOf(key) === -1) &&
-          nextProps[key] !== this.props[key]
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  /*
-   * Check if any state changed, ignoring any state in the
-   * ignore array. Used by shouldComponentUpdate to avoid
-   * updates for some state changes.
-   */
-  stateChanged(nextState: State, ignore?: string[]) {
-    let key: keyof State;
-    for (key in nextState) {
-      if (Object.prototype.hasOwnProperty.call(nextState, 'key')) {
-        if (
-          (ignore == null || ignore.indexOf(key) === -1) &&
-          nextState[key] !== this.state[key]
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  pause() {
-    if (this.setNextTauSetTimeoutId != null) {
-      clearTimeout(this.setNextTauSetTimeoutId);
-      this.setNextTauSetTimeoutId = null;
-    }
-    this.stepRemainingTime =
-      TAU_STEP_INTERVAL - (Date.now() - this.prevStepTime.getTime());
-  }
-
-  unPause() {
-    this.setNextTauSetTimeoutId = window.setTimeout(
-      this.setNextTau.bind(this),
-      this.stepRemainingTime,
-    );
-  }
-
-  getProjState() {
-    return {
-      screen: {
-        width: this.props.width,
-        height: this.props.height,
+const MapVis = React.memo(
+  ({
+    width,
+    height,
+    zoomLevel,
+    centerLat,
+    centerLon,
+    displayParticles,
+    displayVectors,
+    displaySpeeds,
+    paused,
+    fieldData,
+    tau,
+    setCursorData,
+    resetCursorData,
+    moveMap,
+    setZoomLevel,
+    setCycle,
+    addData,
+    setGlUnavailable,
+    setTau,
+  }: MapVisProps) => {
+    const [maxWindSpeed, setMaxWindSpeed] = useState<number | null>(null);
+    const refreshParticlesNextRenderRef = useRef(false);
+    const [waitingToSetTau, setWaitingToSetTau] = useState(true);
+    const projState = {
+      mapDims: {
+        width: width,
+        height: height,
       },
-      zoomLevel: this.props.zoomLevel,
+      zoomLevel: zoomLevel,
       centerCoord: {
-        lon: this.props.centerLon,
-        lat: this.props.centerLat,
+        lon: centerLon,
+        lat: centerLat,
       },
     };
-  }
+    const tausToFetchRef = useRef(
+      [...Array(61).keys()].map((x: number) => 180 - 3 * x),
+    ); // Queue of times fetch data for
+    const prevStepTimeRef = useRef(new Date());
+    const setWaitingToStepTimeoutIdRef = useRef<number | null>(null); // Id for setTimeout called with setNextTau
+    const stepRemainingTimeRef = useRef<number | null>(null); // time remaining in paused step
 
-  /*
-   * Async fetch next data in this.tausToFetch, the call self again until
-   * out of data to fetch.
-   */
-  fetchNextTau() {
-    if (this.props.fieldData.cycle == null) {
-      // Need to know model cycle to fetch tau, get it and try again.
-      getCycle().then((cycle: moment.Moment) => {
-        this.props.setCycle(cycle);
-        this.fetchNextTau();
+    // Update max wind speed
+    useEffect(() => {
+      getMaxWindSpeed().then((maxWindSpeed: number) => {
+        setMaxWindSpeed(maxWindSpeed);
       });
-    } else {
-      const cyc = moment(this.props.fieldData.cycle);
-      if (cyc != null) {
-        const tau = this.tausToFetch.pop();
-        if (tau != null) {
-          getData(cyc, tau).then((data: {u: Float32Array; v: Float32Array}) => {
-            this.props.addData(tau, data);
-            this.fetchNextTau();
+    }, []);
+
+    // Fetch data
+    useEffect(() => {
+      if (fieldData.cycle == null) {
+        // Need to know model cycle to fetch tau, get it and try again.
+        getCycle().then((cycle: moment.Moment) => {
+          setCycle(cycle);
+        });
+      } else {
+        const cyc = moment(fieldData.cycle);
+        if (cyc != null) {
+          const tau = tausToFetchRef.current.pop();
+          if (tau != null) {
+            getData(cyc, tau).then(
+              (data: {u: Float32Array; v: Float32Array}) => {
+                addData(tau, data);
+              },
+            );
+          }
+        } else {
+          throw new Error('Invalid cycle value: ' + fieldData.cycle);
+        }
+      }
+    }, [fieldData, addData, setCycle]);
+
+    useEffect(() => {
+      /*
+       * Step to the next tau value and setup callback for subsequent step.
+       */
+      const stepTau = () => {
+        setWaitingToSetTau(true);
+      };
+
+      if (paused) {
+        if (setWaitingToStepTimeoutIdRef.current != null) {
+          clearTimeout(setWaitingToStepTimeoutIdRef.current);
+          setWaitingToSetTau(false);
+          setWaitingToStepTimeoutIdRef.current = null;
+          stepRemainingTimeRef.current =
+            TAU_STEP_INTERVAL -
+            (Date.now() - prevStepTimeRef.current.getTime());
+        }
+      } else {
+        stepRemainingTimeRef.current = 0;
+        if (!waitingToSetTau && setWaitingToStepTimeoutIdRef.current == null) {
+          setWaitingToStepTimeoutIdRef.current = window.setTimeout(
+            stepTau,
+            stepRemainingTimeRef.current || TAU_STEP_INTERVAL,
+          );
+        }
+      }
+    }, [waitingToSetTau, paused, fieldData]);
+
+    useEffect(() => {
+      if (waitingToSetTau) {
+        const nextTau = (tau ? tau.value + TAU_INTERVAL : 0) % 180;
+        if (tauAvailable(fieldData, nextTau)) {
+          setTau({
+            value: nextTau,
+            setAt: moment(),
           });
+          setWaitingToSetTau(false);
+          setWaitingToStepTimeoutIdRef.current = null;
         }
-      } else {
-        throw new Error('Invalid cycle value: ' + this.props.fieldData.cycle);
       }
-    }
-  }
+    }, [waitingToSetTau, fieldData, tau, setTau]);
 
-  /*
-   * Step to the next tau value and setup callback for subsequent step.
-   */
-  setNextTau() {
-    if (!this.props.paused) {
-      const nextTau = (this.state.currentTau + 3) % 180;
-      if (tauAvailable(this.props.fieldData, nextTau)) {
-        this.prevStepTime = new Date();
-        this.setState({currentTau: nextTau});
-        if (nextTau === 0) {
-          // currentTau was just set to zero, particle should be refreshed
-          this.refreshParticlesNextRender = true;
-        }
-        this.setNextTauSetTimeoutId = window.setTimeout(
-          this.setNextTau.bind(this),
-          TAU_STEP_INTERVAL,
-        );
-        this.awaitingData = false;
-      } else {
-        this.awaitingData = true;
-      }
-    }
-  }
-
-  setMaxWindSpeed() {
-    getMaxWindSpeed().then((maxWindSpeed: number) => {
-      this.setState({maxWindSpeed});
-    });
-  }
-
-  render() {
-    const currentDataDt = tauToDt(this.props.fieldData, this.state.currentTau);
+    // Render
+    const currentDataDt = tau ? tauToDt(fieldData, tau.value) : null;
     if (
       currentDataDt != null &&
-      tauAvailable(this.props.fieldData, this.state.currentTau) &&
-      this.state.maxWindSpeed != null
+      tau != null &&
+      tauAvailable(fieldData, tau.value) &&
+      maxWindSpeed != null
     ) {
-      const currentData = this.props.fieldData.data[this.state.currentTau];
+      const currentData = fieldData.data[tau.value];
       const vectorField = new VectorField(
         new DataField(currentData.u, 0, 359, -90, 90, 1),
         new DataField(currentData.v, 0, 359, -90, 90, 1),
       );
 
-      const refreshParticles = this.refreshParticlesNextRender;
-      this.refreshParticlesNextRender = false;
+      const refreshParticles = refreshParticlesNextRenderRef.current;
+      refreshParticlesNextRenderRef.current = false;
       return (
         <div
           id="map-vis"
@@ -280,38 +239,38 @@ class MapVis extends React.Component<Props, State> {
             justifyContent: 'flex-end',
           })}
         >
-          {this.props.displaySpeeds ? (
+          {displaySpeeds ? (
             <WindRenderer
               vectorField={vectorField}
-              projState={this.getProjState()}
-              maxSpeed={this.state.maxWindSpeed}
-              width={this.props.width}
-              height={this.props.height}
+              projState={projState}
+              maxSpeed={maxWindSpeed}
+              width={width}
+              height={height}
               resetParticlesOnInit={refreshParticles}
-              frameRate={this.props.frameRate}
-              displayParticles={this.props.displayParticles}
-              setGlUnavailable={this.props.setGlUnavailable}
+              frameRate={50}
+              displayParticles={displayParticles}
+              setGlUnavailable={setGlUnavailable}
             />
           ) : null}
-          {this.props.displayVectors ? (
+          {displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}
-              projState={this.getProjState()}
-              width={this.props.width}
-              height={this.props.height}
+              projState={projState}
+              width={width}
+              height={height}
             />
           ) : null}
           <MouseManager
             vectorField={vectorField}
-            projState={this.getProjState()}
-            width={this.props.width}
-            height={this.props.height}
-            setCursorData={this.props.setCursorData}
-            resetCursorData={this.props.resetCursorData}
-            setCenterPoint={this.props.setCenterPoint}
-            setZoomLevel={this.props.setZoomLevel}
+            projState={projState}
+            width={width}
+            height={height}
+            setCursorData={setCursorData}
+            resetCursorData={resetCursorData}
+            moveMap={moveMap}
+            setZoomLevel={setZoomLevel}
           />
-          <BackgroundMap projState={this.getProjState()} />
+          <BackgroundMap projState={projState} />
           <div
             className={style({
               position: 'absolute',
@@ -328,7 +287,36 @@ class MapVis extends React.Component<Props, State> {
     } else {
       return <Spinner color="white" />;
     }
+  },
+  (prevProps, nextProps) => {
+    // For perf reasons don't update when only frame rate changes
+    return !propsChanged(prevProps, nextProps, ['frameRate']);
+  },
+);
+MapVis.displayName = 'MapVis';
+
+/**
+ * Check if any props changed, ignoring any props in the
+ * ignore array. Used by shouldComponentUpdate to avoid
+ * updates for some prop changes.
+ */
+function propsChanged(
+  prevProps: MapVisProps,
+  nextProps: MapVisProps,
+  ignore?: string[],
+) {
+  let key: keyof MapVisProps;
+  for (key in nextProps) {
+    if (Object.prototype.hasOwnProperty.call(nextProps, key)) {
+      if (
+        (ignore == null || ignore.indexOf(key) === -1) &&
+        nextProps[key] !== prevProps[key]
+      ) {
+        return true;
+      }
+    }
   }
+  return false;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MapVis);
