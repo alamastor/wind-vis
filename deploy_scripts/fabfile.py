@@ -17,8 +17,8 @@ def update_source(c):
         c.run('cd %s && git fetch' % source_dir)
     else:
         c.run('git clone %s %s' % (REPO_URL, source_dir))
-    current_commit = c.local('git log -n 1 --format=%H', capture=True)
-    c.run('cd %s && git reset --hard %s' % (source_dir, current_commit))
+    current_commit = c.local('git log -n 1 --format=%H', hide=True).stdout
+    c.run(f'cd {source_dir} && git reset --hard {current_commit}')
 
 
 @task

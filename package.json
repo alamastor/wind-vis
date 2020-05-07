@@ -4,7 +4,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "jest --watch",
+    "test": "jest",
+    "watch": "jest --watch",
     "build": "webpack --config webpack.prod.js",
     "start": "webpack-dev-server --open --config webpack.dev.js",
     "start-ext": "webpack-dev-server --open --config webpack.dev.js --host 0.0.0.0",
@@ -15,7 +16,7 @@
   "keywords": [],
   "author": "Alistair McKelvie",
   "license": "ISC",
-  "sideEffects": [ 
+  "sideEffects": [
     "*.css"
   ],
   "devDependencies": {
