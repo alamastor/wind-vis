@@ -1,28 +1,37 @@
-from fabric.contrib.files import exists
-from fabric.api import env, run, local
+from fabric import task
+from patchwork.files import exists
 
 REPO_URL = 'git@github.com:alamastor/wind-visr.git'
 
 
-def deploy():
-    source_dir = f'~/sites/{env.host}'
-    _get_latest_source(source_dir)
-    _npm_update(source_dir)
-    _npm_build(source_dir)
+@task
+def deploy(c):
+    update_source(c)
+    npm_update(c)
+    npm_build(c)
 
-
-def _get_latest_source(source_dir):
-    if exists(source_dir + '/.git'):
-        run('cd %s && git fetch' % source_dir)
+@task
+def update_source(c):
+    source_dir = get_source_dir(c)
+    if exists(c,source_dir + '/.git'):
+        c.run('cd %s && git fetch' % source_dir)
     else:
-        run('git clone %s %s' % (REPO_URL, source_dir))
-    current_commit = local('git log -n 1 --format=%H', capture=True)
-    run('cd %s && git reset --hard %s' % (source_dir, current_commit))
+        c.run('git clone %s %s' % (REPO_URL, source_dir))
+    current_commit = c.local('git log -n 1 --format=%H', hide=True).stdout
+    c.run(f'cd {source_dir} && git reset --hard {current_commit}')
 
 
-def _npm_update(source_dir):
-    run('cd %s && npm update' % source_dir)
+@task
+def npm_update(c):
+    source_dir = get_source_dir(c)
+    c.run('cd %s && npm ci' % source_dir)
 
 
-def _npm_build(source_dir):
-    run('cd %s && npm run build' % source_dir)
+@task
+def npm_build(c):
+    source_dir = get_source_dir(c)
+    c.run('cd %s && npm run build' % source_dir)
+
+
+def get_source_dir(c):
+    return f'~/sites/{c.host}'

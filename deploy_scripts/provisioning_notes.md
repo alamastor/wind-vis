@@ -1,8 +1,10 @@
-Provisioning a new site
-=======================
+# Provisioning a new site
 
 ## Required packages
-* node 6+
+
+- node 12+
 
 ## Deploying
-- ```fab deploy:host=[USER]@[HOST]```
+
+- Install [Fabric](https://www.fabfile.org/).
+- `fab -H[USER]@[HOST] deploy`
