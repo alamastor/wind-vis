@@ -45,9 +45,11 @@ interface ControlPanelProps {
 }
 function ControlPanel({
   displayVectors,
+  displayParticles,
   paused,
   zoomLevel,
   setDisplayVectors,
+  setDisplayParticles,
   togglePaused,
   setZoomLevel,
 }: ControlPanelProps) {
@@ -55,6 +57,12 @@ function ControlPanel({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setDisplayVectors(event.target.checked);
+  };
+
+  const handleDisplayParticlesChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setDisplayParticles(event.target.checked);
   };
 
   const handleTogglePaused = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -81,6 +89,15 @@ function ControlPanel({
         margin: 0,
       })}
     >
+      <label>
+        Display Particles:
+        <input
+          name="displayParticles"
+          type="checkbox"
+          checked={displayParticles}
+          onChange={handleDisplayParticlesChange}
+        />
+      </label>
       <label>
         Display Vectors:
         <input
