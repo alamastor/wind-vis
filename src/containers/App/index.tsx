@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Dispatch, connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {style} from 'typestyle';
@@ -9,8 +9,6 @@ import ControlPanel from '../ControlPanel';
 import MapVis from '../MapVis';
 import CursorPositionInfo from '../CursorPositionInfo';
 import {setFrameRate} from './actions';
-
-const FRAME_LENGTH_BUFFER_COUNT = 180;
 
 const mapStateToProps = (state: RootState) => ({
   glUnavailable: state.app.glUnavailable,
@@ -27,13 +25,9 @@ interface AppProps {
   glUnavailable: boolean;
   setFrameRate: (frameRate: number) => Action;
 }
-function App({glUnavailable, setFrameRate}: AppProps) {
+function App({glUnavailable}: AppProps) {
   const [width, setWidth] = useState(window.innerWidth);
   const [height, setHeight] = useState(window.innerHeight);
-  const prevFrameTimestampRef = useRef<number | null>(null);
-  const frameLengthsRef = useRef(
-    [...Array(FRAME_LENGTH_BUFFER_COUNT)].map(() => 16.67),
-  );
 
   useEffect(() => {
     window.addEventListener('resize', () => {
@@ -41,26 +35,6 @@ function App({glUnavailable, setFrameRate}: AppProps) {
       setHeight(window.innerHeight);
     });
   }, []);
-
-  useEffect(() => {
-    /*
-     * Estimate and report current frame rate of app. Called with
-     * requestAnimationFrame. Uses average frame length over
-     * FRAME_LENGTH_BUFFER_COUNT.
-     */
-    const updateFrameRate = (timestamp: number) => {
-      if (prevFrameTimestampRef.current != null) {
-        const frameLength = timestamp - prevFrameTimestampRef.current;
-        frameLengthsRef.current.shift();
-        frameLengthsRef.current.push(frameLength);
-        const meanFrameRate = 1000 / frameLength;
-        setFrameRate(meanFrameRate);
-      }
-      prevFrameTimestampRef.current = timestamp;
-      requestAnimationFrame(updateFrameRate);
-    };
-    requestAnimationFrame(updateFrameRate);
-  }, [setFrameRate]);
 
   const className = style({
     display: 'grid',

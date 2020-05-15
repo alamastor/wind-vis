@@ -14,6 +14,7 @@ import {
   setZoomLevel,
 } from '../MapVis/actions';
 import {minZoomLevel, maxZoomLevel} from '../MapVis/reducer';
+import {useFrameRate} from '../../utils/hooks';
 
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.mapVis.displayParticles,
@@ -53,6 +54,8 @@ function ControlPanel({
   togglePaused,
   setZoomLevel,
 }: ControlPanelProps) {
+  const frameRate = useFrameRate(6000);
+
   const handleDisplayVectorsChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -89,6 +92,7 @@ function ControlPanel({
         margin: 0,
       })}
     >
+      <div>{`FPS: ${frameRate.toFixed(1)}`}</div>
       <label>
         Display Particles:
         <input
