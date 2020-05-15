@@ -55,7 +55,6 @@ const mapStateToProps = (state: RootState) => ({
   centerLon: state.mapVis.centerLon,
   centerLat: state.mapVis.centerLat,
   fieldData: state.fieldData,
-  frameRate: state.app.frameRate,
   tau: state.mapVis.tau,
 });
 
@@ -85,7 +84,6 @@ interface MapVisProps {
   displaySpeeds: boolean;
   paused: boolean;
   fieldData: FieldDataState;
-  frameRate: number;
   tau: Tau;
   setCursorData: typeof setCursorData;
   resetCursorData: typeof resetCursorData;
