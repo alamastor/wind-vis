@@ -45,6 +45,22 @@ export default function WindRenderer({
   const displayParticlesRef = useRef(displayParticles);
   displayParticlesRef.current = displayParticles;
 
+  // Set up wind texture rendering
+  useEffect(() => {
+    dataTransformerRef.current = new DataTransformer();
+    dataTransformerRef.current.onmessage = (message: {
+      data: {uData: Uint8Array; vData: Uint8Array};
+    }): void => {
+      if (glStateRef.current != null) {
+        updateWindTex(
+          glStateRef.current,
+          message.data.uData,
+          message.data.vData,
+        );
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const updateAndRender = (prevTime: number | null, timestamp: number) => {
       prevTime = prevTime || 0;
@@ -71,18 +87,6 @@ export default function WindRenderer({
         resetParticlesRef.current = false;
       }
       window.requestAnimationFrame(updateAndRender.bind(undefined, timestamp));
-    };
-    dataTransformerRef.current = new DataTransformer();
-    dataTransformerRef.current.onmessage = (message: {
-      data: {uData: Uint8Array; vData: Uint8Array};
-    }): void => {
-      if (glStateRef.current != null) {
-        updateWindTex(
-          glStateRef.current,
-          message.data.uData,
-          message.data.vData,
-        );
-      }
     };
 
     if (glStateRef.current == null && canvasRef.current != null) {
