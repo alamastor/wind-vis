@@ -4,3 +4,4 @@ dist
 __pycache__
 stats.json
 .vscode
+rust_target

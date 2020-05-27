@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
@@ -66,6 +67,11 @@ module.exports = {
       template: 'src/index.html',
     }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new WasmPackPlugin({
+      crateDirectory: __dirname,
+      outDir: path.resolve(__dirname, 'rust_pkg'),
+      watchDirectories: [path.resolve(__dirname, 'rust_src')],
+    }),
   ],
   optimization: {
     splitChunks: {
