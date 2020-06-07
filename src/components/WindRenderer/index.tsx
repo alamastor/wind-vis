@@ -1,7 +1,6 @@
 import React, {useRef, useEffect} from 'react';
 import {style} from 'typestyle';
 
-import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState} from '../../utils/Projection';
 import {
   GlState,
@@ -12,13 +11,13 @@ import {
   getGLState,
 } from './gl';
 import {RootAction as Action} from '../../reducers';
-import {transformDataForGPU} from './transformData';
 import DataTransformer from 'worker-loader!./DataTransformerWorker';
+import {WindData} from '../../../rust_pkg';
 
 interface WindRendererProps {
-  vectorField: VectorField;
+  windData: WindData;
+  tau: number;
   projState: ProjState;
-  maxSpeed: number;
   width: number;
   height: number;
   resetParticlesOnInit: boolean;
@@ -27,9 +26,9 @@ interface WindRendererProps {
   setGlUnavailable: () => Action;
 }
 export default function WindRenderer({
-  vectorField,
+  windData,
+  tau,
   projState,
-  maxSpeed,
   width,
   height,
   resetParticlesOnInit,
@@ -38,28 +37,11 @@ export default function WindRenderer({
 }: WindRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>();
   const glStateRef = useRef<GlState | null>(null);
-  const dataTransformerRef = useRef<DataTransformer>();
   const resetParticlesRef = useRef(false);
   const projStateRef = useRef(projState);
   projStateRef.current = projState;
   const displayParticlesRef = useRef(displayParticles);
   displayParticlesRef.current = displayParticles;
-
-  // Set up wind texture rendering
-  useEffect(() => {
-    dataTransformerRef.current = new DataTransformer();
-    dataTransformerRef.current.onmessage = (message: {
-      data: {uData: Uint8Array; vData: Uint8Array};
-    }): void => {
-      if (glStateRef.current != null) {
-        updateWindTex(
-          glStateRef.current,
-          message.data.uData,
-          message.data.vData,
-        );
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const updateAndRender = (prevTime: number | null, timestamp: number) => {
@@ -93,35 +75,24 @@ export default function WindRenderer({
       const gl = canvasRef.current.getContext('webgl');
       if (gl != null) {
         glStateRef.current = getGLState(gl);
-        updateWindTex(
-          glStateRef.current,
-          transformDataForGPU(vectorField.uField.data, maxSpeed),
-          transformDataForGPU(vectorField.vField.data, maxSpeed),
-        );
         window.requestAnimationFrame(updateAndRender.bind(undefined, null));
       } else {
         setGlUnavailable();
       }
     }
-  }, [
-    setGlUnavailable,
-    maxSpeed,
-    vectorField.uField.data,
-    vectorField.vField.data,
-  ]);
-
+  }, [setGlUnavailable, windData, tau]);
   useEffect(() => {
-    if (glStateRef.current != null && dataTransformerRef.current != null) {
-      dataTransformerRef.current.postMessage({
-        uData: vectorField.uField.data,
-        vData: vectorField.vField.data,
-        maxValue: maxSpeed,
-      });
+    if (glStateRef.current != null) {
+      updateWindTex(
+        glStateRef.current,
+        windData.u_data_for_gpu(tau),
+        windData.v_data_for_gpu(tau),
+      );
       if (resetParticlesOnInit) {
         resetParticlesRef.current = true;
       }
     }
-  });
+  }, [windData, tau, resetParticlesOnInit]);
 
   return (
     <canvas

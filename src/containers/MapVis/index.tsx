@@ -5,12 +5,10 @@ import React, {useState, useRef, useEffect} from 'react';
 import {bindActionCreators} from 'redux';
 import {Dispatch, connect} from 'react-redux';
 import {style} from 'typestyle';
-import moment, {Moment} from 'moment';
+import moment from 'moment';
 import Loadable from 'react-loadable';
 
 import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
-import VectorField from '../../utils/fielddata/VectorField';
-import DataField from '../../utils/fielddata/DataField';
 import {
   State as FieldDataState,
   tauToDt,
@@ -27,10 +25,11 @@ import {
   setTau,
   setZoomLevel,
 } from './actions';
-import {setCycle, addData} from './fieldDataActions';
+import {setWindData, addData} from './fieldDataActions';
 import Spinner from '../../components/Spinner';
 import {setGlUnavailable} from '../App/actions';
 import {Tau} from './reducer';
+import {WindData} from '../../../rust_pkg';
 
 const TAU_INTERVAL = 3; // Hours between taus
 const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
@@ -65,7 +64,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
       resetCursorData,
       moveMap,
       setZoomLevel,
-      setCycle,
+      setWindData,
       addData,
       setGlUnavailable,
       setTau,
@@ -88,7 +87,7 @@ interface MapVisProps {
   setCursorData: typeof setCursorData;
   resetCursorData: typeof resetCursorData;
   setZoomLevel: typeof setZoomLevel;
-  setCycle: typeof setCycle;
+  setWindData: typeof setWindData;
   addData: typeof addData;
   setGlUnavailable: typeof setGlUnavailable;
   setTau: typeof setTau;
@@ -111,12 +110,11 @@ const MapVis = React.memo(
     resetCursorData,
     moveMap,
     setZoomLevel,
-    setCycle,
+    setWindData,
     addData,
     setGlUnavailable,
     setTau,
   }: MapVisProps) => {
-    const [maxWindSpeed, setMaxWindSpeed] = useState<number | null>(null);
     const refreshParticlesNextRenderRef = useRef(false);
     const [waitingToSetTau, setWaitingToSetTau] = useState(true);
     const projState = {
@@ -137,36 +135,30 @@ const MapVis = React.memo(
     const setWaitingToStepTimeoutIdRef = useRef<number | null>(null); // Id for setTimeout called with setNextTau
     const stepRemainingTimeRef = useRef<number | null>(null); // time remaining in paused step
 
-    // Update max wind speed
-    useEffect(() => {
-      getMaxWindSpeed().then((maxWindSpeed: number) => {
-        setMaxWindSpeed(maxWindSpeed);
-      });
-    }, []);
-
     // Fetch data
     useEffect(() => {
-      if (fieldData.cycle == null) {
-        // Need to know model cycle to fetch tau, get it and try again.
-        getCycle().then((cycle: moment.Moment) => {
-          setCycle(cycle);
-        });
+      const getFieldData = async () => {
+        return WindData.new(
+          (await getCycle()).format(),
+          await getMaxWindSpeed(),
+        );
+      };
+      if (fieldData.windData == null) {
+        getFieldData().then(setWindData);
       } else {
-        const cyc = moment(fieldData.cycle);
+        const cyc = moment(fieldData.windData.cycle());
         if (cyc != null) {
           const tau = tausToFetchRef.current.pop();
           if (tau != null) {
-            getData(cyc, tau).then(
-              (data: {u: Float32Array; v: Float32Array}) => {
-                addData(tau, data);
-              },
-            );
+            getData(cyc, tau).then((data: {u: number[]; v: number[]}) => {
+              addData(tau, data);
+            });
           }
         } else {
-          throw new Error('Invalid cycle value: ' + fieldData.cycle);
+          throw new Error('Invalid cycle value: ' + fieldData.windData.cycle());
         }
       }
-    }, [fieldData, addData, setCycle]);
+    }, [fieldData, addData, setWindData]);
 
     useEffect(() => {
       /*
@@ -213,17 +205,11 @@ const MapVis = React.memo(
     // Render
     const currentDataDt = tau ? tauToDt(fieldData, tau.value) : null;
     if (
+      fieldData.windData != null &&
       currentDataDt != null &&
       tau != null &&
-      tauAvailable(fieldData, tau.value) &&
-      maxWindSpeed != null
+      tauAvailable(fieldData, tau.value)
     ) {
-      const currentData = fieldData.data[tau.value];
-      const vectorField = new VectorField(
-        new DataField(currentData.u, 0, 359, -90, 90, 1),
-        new DataField(currentData.v, 0, 359, -90, 90, 1),
-      );
-
       const refreshParticles = refreshParticlesNextRenderRef.current;
       refreshParticlesNextRenderRef.current = false;
       return (
@@ -239,9 +225,9 @@ const MapVis = React.memo(
         >
           {displaySpeeds ? (
             <WindRenderer
-              vectorField={vectorField}
+              windData={fieldData.windData}
+              tau={tau.value}
               projState={projState}
-              maxSpeed={maxWindSpeed}
               width={width}
               height={height}
               resetParticlesOnInit={refreshParticles}
@@ -250,24 +236,6 @@ const MapVis = React.memo(
               setGlUnavailable={setGlUnavailable}
             />
           ) : null}
-          {displayVectors ? (
-            <VectorRenderer
-              vectorField={vectorField}
-              projState={projState}
-              width={width}
-              height={height}
-            />
-          ) : null}
-          <MouseManager
-            vectorField={vectorField}
-            projState={projState}
-            width={width}
-            height={height}
-            setCursorData={setCursorData}
-            resetCursorData={resetCursorData}
-            moveMap={moveMap}
-            setZoomLevel={setZoomLevel}
-          />
           <BackgroundMap projState={projState} />
           <div
             className={style({

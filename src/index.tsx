@@ -8,7 +8,6 @@ import reducers from './reducers';
 export const store = createStore(reducers);
 
 import App from './containers/App';
-import('../rust_pkg/index.js').catch(console.error);
 
 if (navigator.userAgent.indexOf('Trident') !== -1) {
   // IE not working due to lack of Object.assign, Promises and CSS grid. Should

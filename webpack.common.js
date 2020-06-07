@@ -5,7 +5,7 @@ const webpack = require('webpack');
 
 module.exports = {
   entry: {
-    app: './src/index.tsx',
+    app: './src/bootstrap.ts',
   },
   output: {
     filename: '[name].bundle.js',
