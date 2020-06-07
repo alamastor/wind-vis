@@ -32,6 +32,21 @@ import Spinner from '../../components/Spinner';
 import {setGlUnavailable} from '../App/actions';
 import {Tau} from './reducer';
 
+const mainStyle = style({
+  position: 'absolute',
+  gridArea: '1 / 1 / -1 / -1',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-end',
+});
+const dtStyle = style({
+  position: 'absolute',
+  top: '0',
+  left: '0',
+  color: 'white',
+  padding: '10px',
+});
+
 const TAU_INTERVAL = 3; // Hours between taus
 const TAU_STEP_INTERVAL = 500; // Milliseconds to wait before stepping to next tau
 
@@ -227,16 +242,7 @@ const MapVis = React.memo(
       const refreshParticles = refreshParticlesNextRenderRef.current;
       refreshParticlesNextRenderRef.current = false;
       return (
-        <div
-          id="map-vis"
-          className={style({
-            position: 'absolute',
-            gridArea: '1 / 1 / -1 / -1',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-          })}
-        >
+        <div id="map-vis" className={mainStyle}>
           {displaySpeeds ? (
             <WindRenderer
               vectorField={vectorField}
@@ -269,15 +275,7 @@ const MapVis = React.memo(
             setZoomLevel={setZoomLevel}
           />
           <BackgroundMap projState={projState} />
-          <div
-            className={style({
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              color: 'white',
-              padding: '10px',
-            })}
-          >
+          <div className={dtStyle}>
             {currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}
           </div>
         </div>

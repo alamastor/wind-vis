@@ -5,6 +5,10 @@ import VectorField from '../../utils/fielddata/VectorField';
 import {ProjState, transformCoord} from '../../utils/Projection';
 import mod from '../../utils/mod';
 
+const canvasStyle = style({
+  position: 'fixed',
+});
+
 interface VectorRendererProps {
   vectorField: VectorField;
   projState: ProjState;
@@ -36,9 +40,7 @@ export default function VectorRenderer({
   return (
     <canvas
       id="vector-renderer"
-      className={style({
-        position: 'fixed',
-      })}
+      className={canvasStyle}
       width={width}
       height={height}
       ref={(canvas: HTMLCanvasElement) => {

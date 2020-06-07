@@ -4,6 +4,17 @@ import {style} from 'typestyle';
 import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
 import mod from '../../utils/mod';
 
+const mainStyle = style({
+  overflow: 'hidden',
+  position: 'relative',
+  display: 'block',
+  pointerEvents: 'none',
+});
+const imgStyle = style({
+  position: 'absolute',
+  pointerEvents: 'none',
+});
+
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const defaultGlobeImg = require('../../img/globe-800w.png');
 const srcSet = [200, 400, 800, 1600, 2400, 3600, 4800]
@@ -20,40 +31,35 @@ const BackgroundMap = (props: {projState: ProjState}) => {
   return (
     <div
       id="map"
-      className={style({
+      className={mainStyle}
+      style={{
         width: props.projState.mapDims.width,
         height: props.projState.mapDims.height,
-        overflow: 'hidden',
-        position: 'relative',
-        display: 'block',
-        pointerEvents: 'none',
-      })}
+      }}
     >
       <img
         src={defaultGlobeImg}
         srcSet={srcSet}
         sizes={`${Math.round(width)}px`}
-        className={style({
-          position: 'absolute',
+        className={imgStyle}
+        style={{
           left: mod(topLeft.x, width),
           top: topLeft.y,
           width: width,
           height: height,
-          pointerEvents: 'none',
-        })}
+        }}
       />
       <img
         src={defaultGlobeImg}
         srcSet={srcSet}
         sizes={`${Math.round(width)}px`}
-        className={style({
-          position: 'absolute',
+        className={imgStyle}
+        style={{
           left: mod(topLeft.x, width) - width,
           top: topLeft.y,
           width: width,
           height: height,
-          pointerEvents: 'none',
-        })}
+        }}
       />
     </div>
   );
