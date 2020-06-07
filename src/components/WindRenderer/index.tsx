@@ -15,6 +15,10 @@ import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
 import DataTransformer from 'worker-loader!./DataTransformerWorker';
 
+const canvasStyle = style({
+  position: 'fixed',
+});
+
 interface WindRendererProps {
   vectorField: VectorField;
   projState: ProjState;
@@ -125,9 +129,7 @@ export default function WindRenderer({
 
   return (
     <canvas
-      className={style({
-        position: 'fixed',
-      })}
+      className={canvasStyle}
       width={width}
       height={height}
       ref={(canvas: HTMLCanvasElement) => {

@@ -7,6 +7,14 @@ import {style} from 'typestyle';
 
 import {RootState} from '../../reducers';
 
+const mainStyle = style({
+  gridArea: '3 / 1',
+  zIndex: 1,
+  color: 'white',
+  padding: '10px',
+  marginTop: 'auto',
+});
+
 const mapStateToProps = (state: RootState) => ({
   lon: state.mapVis.cursorLon,
   lat: state.mapVis.cursorLat,
@@ -62,16 +70,7 @@ function CursorPositionInfo({lon, lat, u, v}: CursorPositionInfoProps) {
   };
 
   return (
-    <div
-      id="cursor-position-info"
-      className={style({
-        gridArea: '3 / 1',
-        zIndex: 1,
-        color: 'white',
-        padding: '10px',
-        marginTop: 'auto',
-      })}
-    >
+    <div id="cursor-position-info" className={mainStyle}>
       <div>
         {latString()} {lonString()}
       </div>

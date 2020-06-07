@@ -16,6 +16,19 @@ import {
 import {minZoomLevel, maxZoomLevel} from '../MapVis/reducer';
 import {useFrameRate} from '../../utils/hooks';
 
+const buttonStyle = style({width: '100%'});
+const formStyle = style({
+  gridArea: 'control',
+  display: 'flex',
+  position: 'relative',
+  flexDirection: 'column',
+  zIndex: 1,
+  padding: '10px',
+  cursor: 'auto',
+  color: 'white',
+  margin: 0,
+});
+
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.mapVis.displayParticles,
   displayVectors: state.mapVis.displayVectors,
@@ -79,19 +92,7 @@ function ControlPanel({
     setZoomLevel(Number.parseFloat(event.target.value));
   };
   return (
-    <form
-      className={style({
-        gridArea: 'control',
-        display: 'flex',
-        position: 'relative',
-        flexDirection: 'column',
-        zIndex: 1,
-        padding: '10px',
-        cursor: 'auto',
-        color: 'white',
-        margin: 0,
-      })}
-    >
+    <form className={formStyle}>
       <div>{`FPS: ${frameRate.toFixed(1)}`}</div>
       <label>
         Display Particles:
@@ -123,7 +124,7 @@ function ControlPanel({
           onChange={handleZoomLevelChange}
         />
       </label>
-      <button className={style({width: '100%'})} onClick={handleTogglePaused}>
+      <button className={buttonStyle} onClick={handleTogglePaused}>
         {paused ? 'Resume' : 'Pause'}
       </button>
     </form>
