@@ -1,18 +1,12 @@
-import * as React from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {style} from 'typestyle';
 
-import {ProjState, transformCoord, scaleCoord} from '../../utils/Projection';
-import mod from '../../utils/mod';
+import {MapState, globeDims} from '../../utils/mapState';
+import {BackgroundMapGlState, getGlState, render, updateTexture} from './gl';
+import {setGlUnavailable} from '../../containers/App/actions';
 
-const mainStyle = style({
-  overflow: 'hidden',
-  position: 'relative',
-  display: 'block',
-  pointerEvents: 'none',
-});
-const imgStyle = style({
-  position: 'absolute',
-  pointerEvents: 'none',
+const canvasStyle = style({
+  position: 'fixed',
 });
 
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
@@ -23,45 +17,67 @@ const srcSet = [200, 400, 800, 1600, 2400, 3600, 4800]
   )
   .join(', ');
 
-const BackgroundMap = (props: {projState: ProjState}) => {
-  const topLeft = transformCoord(props.projState, {lon: 0, lat: 90});
-  const dimensions = scaleCoord(props.projState, {lon: 360, lat: 180});
-  const width = Math.abs(dimensions.x);
-  const height = Math.abs(dimensions.y);
+const BackgroundMap = ({mapState}: {mapState: MapState}) => {
+  const {zoomLevel, centerCoord} = mapState;
+  const canvasRef = useRef<HTMLCanvasElement>();
+  const [glState, setGlState] = useState<BackgroundMapGlState>();
+
+  useEffect(() => {
+    if (canvasRef.current != null && glState == null) {
+      const gl = canvasRef.current.getContext('webgl2');
+      if (gl != null) {
+        setGlState(getGlState(gl));
+      } else {
+        setGlUnavailable();
+      }
+    }
+  }, [glState]);
+
+  // Initialize image, and update sizes property if image with
+  // has changed. Updating sizes may cause image to reload with
+  // an image of a new resolution.
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const globeWidth = globeDims(mapState).width;
+  useEffect(() => {
+    if (image == null) {
+      if (glState != null) {
+        const img = new Image();
+        img.src = defaultGlobeImg;
+        img.srcset = srcSet;
+        img.sizes = `${globeWidth}px`;
+        img.onload = () => {
+          updateTexture(glState, img);
+          setImage(img);
+        };
+      }
+    } else {
+      image.sizes = `${globeWidth}px`;
+    }
+  }, [glState, image, globeWidth]);
+
+  const {lon: centerLon, lat: centerLat} = centerCoord;
+  useEffect(() => {
+    if (glState != null) {
+      const requestAnimationFrameId = requestAnimationFrame(() => {
+        render(glState, {lon: centerLon, lat: centerLat}, zoomLevel);
+      });
+      return () => {
+        cancelAnimationFrame(requestAnimationFrameId);
+      };
+    }
+    // Include a dependency on `image` so renders happen then the
+    // image texture is updated.
+  }, [glState, centerLon, centerLat, zoomLevel, image]);
+
   return (
-    <div
-      id="map"
-      className={mainStyle}
-      style={{
-        width: props.projState.mapDims.width,
-        height: props.projState.mapDims.height,
+    <canvas
+      className={canvasStyle}
+      width={mapState.canvasDims.width}
+      height={mapState.canvasDims.height}
+      ref={(canvas: HTMLCanvasElement) => {
+        canvasRef.current = canvas;
       }}
-    >
-      <img
-        src={defaultGlobeImg}
-        srcSet={srcSet}
-        sizes={`${Math.round(width)}px`}
-        className={imgStyle}
-        style={{
-          left: mod(topLeft.x, width),
-          top: topLeft.y,
-          width: width,
-          height: height,
-        }}
-      />
-      <img
-        src={defaultGlobeImg}
-        srcSet={srcSet}
-        sizes={`${Math.round(width)}px`}
-        className={imgStyle}
-        style={{
-          left: mod(topLeft.x, width) - width,
-          top: topLeft.y,
-          width: width,
-          height: height,
-        }}
-      />
-    </div>
+    />
   );
 };
 

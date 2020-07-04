@@ -1,13 +1,13 @@
-import {Coord} from '../../Types';
+import {Coord} from '../../types';
 import {createProgramWithShaders, getUniformLocationSafe} from '../../utils/gl';
-import speedVertexShaderSource from './shaders/speedVertexshader.glsl';
-import speedFragmentShaderSource from './shaders/speedFragmentshader.glsl';
-import drawParticleVertexShaderSource from './shaders/drawParticleVertexshader.glsl';
-import drawParticleFragmentShaderSource from './shaders/drawParticleFragmentshader.glsl';
-import drawParticleTextureVertexShaderSource from './shaders/drawParticleTextureVertexshader.glsl';
-import drawParticleTextureFragmentShaderSource from './shaders/drawParticleTextureFragmentshader.glsl';
-import updateParticleVertexShaderSource from './shaders/updateParticleVertexshader.glsl';
-import updateParticleFragmentShaderSource from './shaders/updateParticleFragmentshader.glsl';
+import speedVertexShaderSource from './shaders/speed.vert';
+import speedFragmentShaderSource from './shaders/speed.frag';
+import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
+import drawParticleFragmentShaderSource from './shaders/draw_particle.frag';
+import drawParticleTextureVertexShaderSource from './shaders/draw_particle_texture.vert';
+import drawParticleTextureFragmentShaderSource from './shaders/draw_particle_texture.frag';
+import updateParticleVertexShaderSource from './shaders/update_particle.vert';
+import updateParticleFragmentShaderSource from './shaders/update_particle.frag';
 
 const FRAMEBUFFER_COUNT = 50;
 const PARTICLE_DENSITY = 0.01; // Particles per square pixel

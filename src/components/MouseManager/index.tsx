@@ -2,12 +2,12 @@ import React, {useRef} from 'react';
 
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
-import {ProjState, transformPoint} from '../../utils/Projection';
+import {MapState, transformPoint} from '../../utils/mapState';
 import mod from '../../utils/mod';
 
 interface MouseManagerProps {
   vectorField: VectorField;
-  projState: ProjState;
+  mapState: MapState;
   width: number;
   height: number;
   setCursorData: (lon: number, lat: number, u: number, v: number) => Action;
@@ -26,7 +26,7 @@ interface MouseManagerProps {
 }
 export default function MouseManager({
   vectorField,
-  projState,
+  mapState,
   width,
   height,
   setCursorData,
@@ -49,7 +49,7 @@ export default function MouseManager({
         divRef.current != null ? event.clientX - divRef.current.offsetLeft : 0;
       const y =
         divRef.current != null ? event.clientY - divRef.current.offsetTop : 0;
-      const coord = transformPoint(projState, {x, y});
+      const coord = transformPoint(mapState, {x, y});
       coord.lon = mod(coord.lon, 360);
       if (vectorField.pointInBounds(coord.lon, coord.lat)) {
         [cursorLonRef.current, cursorLatRef.current] = [coord.lon, coord.lat];
@@ -70,8 +70,8 @@ export default function MouseManager({
     moveMap(
       event.clientX - dragPrevXRef.current,
       event.clientY - dragPrevYRef.current,
-      projState.mapDims.width,
-      projState.mapDims.height,
+      mapState.canvasDims.width,
+      mapState.canvasDims.height,
     );
     dragPrevXRef.current = event.clientX;
     dragPrevYRef.current = event.clientY;
@@ -114,8 +114,12 @@ export default function MouseManager({
         // DOM_DELTA_PAGE
         deltaFactor = 1;
     }
-    const newZoom = projState.zoomLevel - event.deltaY * deltaFactor;
-    setZoomLevel(newZoom, projState.mapDims.width, projState.mapDims.height);
+    const newZoom = mapState.zoomLevel - event.deltaY * deltaFactor;
+    setZoomLevel(
+      newZoom,
+      mapState.canvasDims.width,
+      mapState.canvasDims.height,
+    );
   };
 
   const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -128,7 +132,7 @@ export default function MouseManager({
         divRef.current != null ? touch.clientY - divRef.current.offsetTop : 0;
       dragPrevXRef.current = touch.clientX;
       dragPrevYRef.current = touch.clientY;
-      const coord = transformPoint(projState, {x, y});
+      const coord = transformPoint(mapState, {x, y});
       if (vectorField.pointInBounds(coord.lon, coord.lat)) {
         [cursorLonRef.current, cursorLatRef.current] = [coord.lon, coord.lat];
         setCursorData(
@@ -155,8 +159,8 @@ export default function MouseManager({
       moveMap(
         touch.clientX - dragPrevXRef.current,
         touch.clientY - dragPrevYRef.current,
-        projState.mapDims.width,
-        projState.mapDims.height,
+        mapState.canvasDims.width,
+        mapState.canvasDims.height,
       );
       dragPrevXRef.current = touch.clientX;
       dragPrevYRef.current = touch.clientY;
@@ -168,8 +172,12 @@ export default function MouseManager({
           Math.pow(t1.clientY - t2.clientY, 2),
       );
       const newZoom =
-        projState.zoomLevel * (pinchZoomDist / prevPinchZoomDistRef.current);
-      setZoomLevel(newZoom, projState.mapDims.width, projState.mapDims.height);
+        mapState.zoomLevel * (pinchZoomDist / prevPinchZoomDistRef.current);
+      setZoomLevel(
+        newZoom,
+        mapState.canvasDims.width,
+        mapState.canvasDims.height,
+      );
       prevPinchZoomDistRef.current = pinchZoomDist;
     }
   };

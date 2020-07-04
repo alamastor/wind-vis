@@ -2,7 +2,7 @@ import React, {useRef, useEffect} from 'react';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import {ProjState, transformCoord} from '../../utils/Projection';
+import {MapState, transformCoord} from '../../utils/mapState';
 import mod from '../../utils/mod';
 
 const canvasStyle = style({
@@ -11,13 +11,13 @@ const canvasStyle = style({
 
 interface VectorRendererProps {
   vectorField: VectorField;
-  projState: ProjState;
+  mapState: MapState;
   width: number;
   height: number;
 }
 export default function VectorRenderer({
   vectorField,
-  projState,
+  mapState,
   width,
   height,
 }: VectorRendererProps) {
@@ -34,7 +34,7 @@ export default function VectorRenderer({
         throw new Error('VectorRenderer failed to get canvas context.');
       }
     }
-    renderOnCanvas(ctxRef.current, width, height, projState, vectorField);
+    renderOnCanvas(ctxRef.current, width, height, mapState, vectorField);
   });
 
   return (
@@ -64,19 +64,19 @@ function drawArrow(ctx: CanvasRenderingContext2D, len: number) {
 
 function plotArrow(
   ctx: CanvasRenderingContext2D,
-  projState: ProjState,
+  mapState: MapState,
   lon: number,
   lat: number,
   u: number,
   v: number,
 ) {
   ctx.save();
-  const {x, y} = transformCoord(projState, {lon, lat});
+  const {x, y} = transformCoord(mapState, {lon, lat});
   ctx.translate(x, y);
   ctx.rotate(-Math.atan2(v, u));
   const scaleFactor = Math.abs(
-    transformCoord(projState, {lon: 1, lat: 1}).x -
-      transformCoord(projState, {lon: 0, lat: 0}).x,
+    transformCoord(mapState, {lon: 1, lat: 1}).x -
+      transformCoord(mapState, {lon: 0, lat: 0}).x,
   );
   drawArrow(
     ctx,
@@ -89,7 +89,7 @@ function renderOnCanvas(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  projState: ProjState,
+  mapState: MapState,
   vectorField: VectorField,
 ) {
   ctx.clearRect(0, 0, width, height);
@@ -98,7 +98,7 @@ function renderOnCanvas(
   ctx.beginPath();
   ctx.globalAlpha = 0.2;
 
-  const leftmostLon = Math.floor((projState.centerCoord.lon - 180) / 10) * 10;
+  const leftmostLon = Math.floor((mapState.centerCoord.lon - 180) / 10) * 10;
   const rightmostLon = leftmostLon + 370;
 
   // Draw arrows
@@ -106,7 +106,7 @@ function renderOnCanvas(
     for (let lat = -90; lat <= 90; lat = lat + 5) {
       plotArrow(
         ctx,
-        projState,
+        mapState,
         lon,
         lat,
         vectorField.uField.getValue(mod(lon, 360), lat),
@@ -118,9 +118,9 @@ function renderOnCanvas(
 
   // Add vertical grid lines
   for (let lon = leftmostLon; lon < rightmostLon; lon = lon + 10) {
-    const start = transformCoord(projState, {lon, lat: 90});
+    const start = transformCoord(mapState, {lon, lat: 90});
     ctx.moveTo(start.x, start.y);
-    const end = transformCoord(projState, {lon, lat: -90});
+    const end = transformCoord(mapState, {lon, lat: -90});
     ctx.lineTo(end.x, end.y);
   }
 
@@ -130,7 +130,7 @@ function renderOnCanvas(
     lat <= vectorField.getMaxLat();
     lat = lat + 10
   ) {
-    const y = transformCoord(projState, {lon: 0, lat}).y;
+    const y = transformCoord(mapState, {lon: 0, lat}).y;
     ctx.moveTo(0, y);
     ctx.lineTo(width, y);
   }
