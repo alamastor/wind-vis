@@ -21,7 +21,8 @@ module.exports = {
       '.svg',
       '.jpg',
       '.gif',
-      '.glsl',
+      '.vert',
+      '.frag',
     ],
   },
   module: {
@@ -51,7 +52,7 @@ module.exports = {
       {
         enforce: 'pre',
         exclude: '/node_modules/',
-        test: /\.glsl$/,
+        test: /\.(vert|frag)$/,
         use: 'raw-loader',
       },
       {

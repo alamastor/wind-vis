@@ -2,7 +2,7 @@ import React, {useRef, useEffect} from 'react';
 import {style} from 'typestyle';
 
 import VectorField from '../../utils/fielddata/VectorField';
-import {ProjState} from '../../utils/Projection';
+import {MapState} from '../../utils/mapState';
 import {
   GlState,
   drawSpeeds,
@@ -21,7 +21,7 @@ const canvasStyle = style({
 
 interface WindRendererProps {
   vectorField: VectorField;
-  projState: ProjState;
+  mapState: MapState;
   maxSpeed: number;
   width: number;
   height: number;
@@ -32,7 +32,7 @@ interface WindRendererProps {
 }
 export default function WindRenderer({
   vectorField,
-  projState,
+  mapState,
   maxSpeed,
   width,
   height,
@@ -44,8 +44,8 @@ export default function WindRenderer({
   const glStateRef = useRef<GlState | null>(null);
   const dataTransformerRef = useRef<DataTransformer>();
   const resetParticlesRef = useRef(false);
-  const projStateRef = useRef(projState);
-  projStateRef.current = projState;
+  const projStateRef = useRef(mapState);
+  projStateRef.current = mapState;
   const displayParticlesRef = useRef(displayParticles);
   displayParticlesRef.current = displayParticles;
 

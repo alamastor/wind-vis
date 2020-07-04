@@ -27,6 +27,14 @@ export type Action =
       display: boolean;
     }
   | {
+      type: 'MAP_VIS_DISPLAY_SPEEDS';
+      display: boolean;
+    }
+  | {
+      type: 'MAP_VIS_DISPLAY_BACKGROUND_MAP';
+      display: boolean;
+    }
+  | {
       type: 'MAP_VIS_TOGGLE_PAUSE';
     }
   | {
@@ -69,6 +77,20 @@ export function setDisplayParticles(display: boolean): RootAction {
 export function setDisplayVectors(display: boolean): RootAction {
   return {
     type: 'MAP_VIS_DISPLAY_VECTORS',
+    display,
+  };
+}
+
+export function setDisplaySpeeds(display: boolean): RootAction {
+  return {
+    type: 'MAP_VIS_DISPLAY_SPEEDS',
+    display,
+  };
+}
+
+export function setDisplayBackgroundMap(display: boolean): RootAction {
+  return {
+    type: 'MAP_VIS_DISPLAY_BACKGROUND_MAP',
     display,
   };
 }

@@ -1,6 +1,6 @@
 import {RootAction} from '../../reducers';
 import {Moment} from 'moment';
-import {maxCenterLat, minCenterLat, scalePoint} from '../../utils/Projection';
+import {maxCenterLat, minCenterLat, scalePoint} from '../../utils/mapState';
 
 export const minZoomLevel = 1;
 export const maxZoomLevel = 15;
@@ -15,6 +15,8 @@ export interface MapVisState {
   readonly tau: Tau | null;
   readonly displayParticles: boolean; // Show particles component?
   readonly displayVectors: boolean; // Show vectors component?
+  readonly displayBackgroundMap: boolean; // Show backgroundMap component?
+  readonly displaySpeeds: boolean; // Show wind speeds?
   readonly paused: boolean; // Time stepping is paused?
   readonly zoomLevel: number; // Zoom factor of map. TODO: Consider moving to MapVis.
 }
@@ -33,6 +35,8 @@ export const initialState = {
   tau: null,
   displayParticles: true,
   displayVectors: false,
+  displayBackgroundMap: true,
+  displaySpeeds: true,
   paused: false,
   showParticleTails: true,
   clearParticlesEachFrame: true,
@@ -75,6 +79,16 @@ export default function (
         displayVectors: action.display,
       });
 
+    case 'MAP_VIS_DISPLAY_BACKGROUND_MAP':
+      return Object.assign({}, state, {
+        displayBackgroundMap: action.display,
+      });
+
+    case 'MAP_VIS_DISPLAY_SPEEDS':
+      return Object.assign({}, state, {
+        displaySpeeds: action.display,
+      });
+
     case 'MAP_VIS_TOGGLE_PAUSE':
       return Object.assign({}, state, {
         paused: !state.paused,
@@ -104,15 +118,15 @@ export default function (
 
 function setZoom(
   zoomLevel: number,
-  mapWidth: number,
-  mapHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
   state: MapVisState,
 ) {
   zoomLevel = Math.min(Math.max(minZoomLevel, zoomLevel), maxZoomLevel);
-  const projState = {
-    mapDims: {
-      width: mapWidth,
-      height: mapHeight,
+  const mapState = {
+    canvasDims: {
+      width: canvasWidth,
+      height: canvasHeight,
     },
     zoomLevel: zoomLevel,
     centerCoord: {
@@ -122,8 +136,8 @@ function setZoom(
   };
   return Object.assign({}, state, {
     centerLat: Math.min(
-      Math.max(minCenterLat(projState), state.centerLat),
-      maxCenterLat(projState),
+      Math.max(minCenterLat(mapState), state.centerLat),
+      maxCenterLat(mapState),
     ),
     zoomLevel: zoomLevel,
   });
@@ -136,8 +150,8 @@ function moveMap(
   mapHeight: number,
   state: MapVisState,
 ) {
-  const projState = {
-    mapDims: {
+  const mapState = {
+    canvasDims: {
       width: mapWidth,
       height: mapHeight,
     },
@@ -147,18 +161,18 @@ function moveMap(
       lat: state.centerLat,
     },
   };
-  const deltaCoord = scalePoint(projState, {
+  const deltaCoord = scalePoint(mapState, {
     x: deltaX,
     y: deltaY,
   });
   return Object.assign({}, state, {
-    centerLon: projState.centerCoord.lon - deltaCoord.lon,
+    centerLon: mapState.centerCoord.lon - deltaCoord.lon,
     centerLat: Math.min(
       Math.max(
-        minCenterLat(projState),
-        projState.centerCoord.lat - deltaCoord.lat,
+        minCenterLat(mapState),
+        mapState.centerCoord.lat - deltaCoord.lat,
       ),
-      maxCenterLat(projState),
+      maxCenterLat(mapState),
     ),
   });
 }

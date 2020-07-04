@@ -10,6 +10,8 @@ import {RootState, RootAction as Action} from '../../reducers';
 import {
   setDisplayParticles,
   setDisplayVectors,
+  setDisplaySpeeds,
+  setDisplayBackgroundMap,
   togglePaused,
   setZoomLevel,
 } from '../MapVis/actions';
@@ -32,6 +34,8 @@ const formStyle = style({
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.mapVis.displayParticles,
   displayVectors: state.mapVis.displayVectors,
+  displaySpeeds: state.mapVis.displaySpeeds,
+  displayBackgroundMap: state.mapVis.displayBackgroundMap,
   paused: state.mapVis.paused,
   zoomLevel: state.mapVis.zoomLevel,
 });
@@ -41,6 +45,8 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
     {
       setDisplayParticles,
       setDisplayVectors,
+      setDisplaySpeeds,
+      setDisplayBackgroundMap,
       togglePaused,
       setZoomLevel,
     },
@@ -50,20 +56,28 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
 interface ControlPanelProps {
   displayParticles: boolean;
   displayVectors: boolean;
+  displaySpeeds: boolean;
+  displayBackgroundMap: boolean;
   paused: boolean;
   zoomLevel: number;
-  setDisplayParticles: (display: boolean) => Action;
-  setDisplayVectors: (display: boolean) => Action;
+  setDisplayParticles: typeof setDisplayParticles;
+  setDisplayVectors: typeof setDisplayVectors;
+  setDisplaySpeeds: typeof setDisplaySpeeds;
+  setDisplayBackgroundMap: typeof setDisplayBackgroundMap;
   togglePaused: () => Action;
   setZoomLevel: (zoomLevel: number) => Action;
 }
 function ControlPanel({
   displayVectors,
   displayParticles,
+  displaySpeeds,
+  displayBackgroundMap,
   paused,
   zoomLevel,
   setDisplayVectors,
   setDisplayParticles,
+  setDisplaySpeeds,
+  setDisplayBackgroundMap,
   togglePaused,
   setZoomLevel,
 }: ControlPanelProps) {
@@ -79,6 +93,18 @@ function ControlPanel({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setDisplayParticles(event.target.checked);
+  };
+
+  const handleDisplayBackgroundMapChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setDisplayBackgroundMap(event.target.checked);
+  };
+
+  const handleDisplaySpeedsChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setDisplaySpeeds(event.target.checked);
   };
 
   const handleTogglePaused = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -110,6 +136,24 @@ function ControlPanel({
           type="checkbox"
           checked={displayVectors}
           onChange={handleDisplayVectorsChange}
+        />
+      </label>
+      <label>
+        Display Speeds:
+        <input
+          name="displaySpeeds"
+          type="checkbox"
+          checked={displaySpeeds}
+          onChange={handleDisplaySpeedsChange}
+        />
+      </label>
+      <label>
+        Display Map:
+        <input
+          name="displayBackgroundMap"
+          type="checkbox"
+          checked={displayBackgroundMap}
+          onChange={handleDisplayBackgroundMapChange}
         />
       </label>
       <label>

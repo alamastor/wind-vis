@@ -64,7 +64,8 @@ const VectorRenderer = Loadable({
 const mapStateToProps = (state: RootState) => ({
   displayParticles: state.mapVis.displayParticles,
   displayVectors: state.mapVis.displayVectors,
-  displaySpeeds: true,
+  displaySpeeds: state.mapVis.displaySpeeds,
+  displayBackgroundMap: state.mapVis.displayBackgroundMap,
   paused: state.mapVis.paused,
   zoomLevel: state.mapVis.zoomLevel,
   centerLon: state.mapVis.centerLon,
@@ -97,6 +98,7 @@ interface MapVisProps {
   displayParticles: boolean;
   displayVectors: boolean;
   displaySpeeds: boolean;
+  displayBackgroundMap: boolean;
   paused: boolean;
   fieldData: FieldDataState;
   tau: Tau;
@@ -119,6 +121,7 @@ const MapVis = React.memo(
     displayParticles,
     displayVectors,
     displaySpeeds,
+    displayBackgroundMap,
     paused,
     fieldData,
     tau,
@@ -134,8 +137,8 @@ const MapVis = React.memo(
     const [maxWindSpeed, setMaxWindSpeed] = useState<number | null>(null);
     const refreshParticlesNextRenderRef = useRef(false);
     const [waitingToSetTau, setWaitingToSetTau] = useState(true);
-    const projState = {
-      mapDims: {
+    const mapState = {
+      canvasDims: {
         width: width,
         height: height,
       },
@@ -242,11 +245,11 @@ const MapVis = React.memo(
       const refreshParticles = refreshParticlesNextRenderRef.current;
       refreshParticlesNextRenderRef.current = false;
       return (
-        <div id="map-vis" className={mainStyle}>
+        <div id="map-vis" className={mainStyle} style={{width, height}}>
           {displaySpeeds ? (
             <WindRenderer
               vectorField={vectorField}
-              projState={projState}
+              mapState={mapState}
               maxSpeed={maxWindSpeed}
               width={width}
               height={height}
@@ -259,14 +262,15 @@ const MapVis = React.memo(
           {displayVectors ? (
             <VectorRenderer
               vectorField={vectorField}
-              projState={projState}
+              mapState={mapState}
               width={width}
               height={height}
             />
           ) : null}
+          {displayBackgroundMap ? <BackgroundMap mapState={mapState} /> : null}
           <MouseManager
             vectorField={vectorField}
-            projState={projState}
+            mapState={mapState}
             width={width}
             height={height}
             setCursorData={setCursorData}
@@ -274,7 +278,6 @@ const MapVis = React.memo(
             moveMap={moveMap}
             setZoomLevel={setZoomLevel}
           />
-          <BackgroundMap projState={projState} />
           <div className={dtStyle}>
             {currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}
           </div>
