@@ -16,7 +16,6 @@ import {
   setZoomLevel,
 } from '../MapVis/actions';
 import {minZoomLevel, maxZoomLevel} from '../MapVis/reducer';
-import {useFrameRate} from '../../utils/hooks';
 
 const buttonStyle = style({width: '100%'});
 const formStyle = style({
@@ -81,8 +80,6 @@ function ControlPanel({
   togglePaused,
   setZoomLevel,
 }: ControlPanelProps) {
-  const frameRate = useFrameRate(6000);
-
   const handleDisplayVectorsChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -119,7 +116,6 @@ function ControlPanel({
   };
   return (
     <form className={formStyle}>
-      <div>{`FPS: ${frameRate.toFixed(1)}`}</div>
       <label>
         Display Particles:
         <input
