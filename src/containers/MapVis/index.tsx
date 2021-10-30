@@ -2,10 +2,10 @@
  * Component containing various visualizations of data on world map.
  */
 import React, {useState, useRef, useEffect} from 'react';
-import {bindActionCreators} from 'redux';
-import {Dispatch, connect} from 'react-redux';
+import {Dispatch, bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
 import {style} from 'typestyle';
-import moment, {Moment} from 'moment';
+import moment from 'moment';
 import Loadable from 'react-loadable';
 
 import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
@@ -101,7 +101,7 @@ interface MapVisProps {
   displayBackgroundMap: boolean;
   paused: boolean;
   fieldData: FieldDataState;
-  tau: Tau;
+  tau: Tau | null;
   setCursorData: typeof setCursorData;
   resetCursorData: typeof resetCursorData;
   setZoomLevel: typeof setZoomLevel;

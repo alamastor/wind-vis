@@ -11,9 +11,9 @@ module.exports = {
   globals: {
     window: {},
     'ts-jest': {
-      tsConfig: './tsconfig.json',
+      tsconfig: './tsconfig.json',
     },
   },
-  setupFiles: ['./jest.stubs.js'],
+  setupFiles: ['./jest.stubs.ts'],
   setupFilesAfterEnv: ['./jest.tests.ts'],
 };
