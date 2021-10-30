@@ -2,9 +2,10 @@
  * App level options panel.
  */
 import * as React from 'react';
-import {bindActionCreators} from 'redux';
-import {Dispatch, connect} from 'react-redux';
+import {Dispatch, bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
 import {style} from 'typestyle';
+import {MapState} from '../../utils/mapState';
 
 import {RootState, RootAction as Action} from '../../reducers';
 import {
@@ -59,12 +60,18 @@ interface ControlPanelProps {
   displayBackgroundMap: boolean;
   paused: boolean;
   zoomLevel: number;
+  windowWidth: number;
+  windowHeight: number;
   setDisplayParticles: typeof setDisplayParticles;
   setDisplayVectors: typeof setDisplayVectors;
   setDisplaySpeeds: typeof setDisplaySpeeds;
   setDisplayBackgroundMap: typeof setDisplayBackgroundMap;
   togglePaused: () => Action;
-  setZoomLevel: (zoomLevel: number) => Action;
+  setZoomLevel: (
+    zoomLevel: number,
+    windowWidth: number,
+    windowHeight: number,
+  ) => Action;
 }
 function ControlPanel({
   displayVectors,
@@ -73,6 +80,8 @@ function ControlPanel({
   displayBackgroundMap,
   paused,
   zoomLevel,
+  windowWidth,
+  windowHeight,
   setDisplayVectors,
   setDisplayParticles,
   setDisplaySpeeds,
@@ -112,7 +121,11 @@ function ControlPanel({
   const handleZoomLevelChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setZoomLevel(Number.parseFloat(event.target.value));
+    setZoomLevel(
+      Number.parseFloat(event.target.value),
+      windowWidth,
+      windowHeight,
+    );
   };
   return (
     <form className={formStyle}>

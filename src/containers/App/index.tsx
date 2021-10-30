@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
-import {Dispatch, connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
+import {Dispatch, bindActionCreators} from 'redux';
 import {style} from 'typestyle';
 
 import AppError from '../../components/AppError';
@@ -57,7 +57,7 @@ function App({glUnavailable}: AppProps) {
   ) : (
     <div id="app" className={className}>
       <MapVis width={width} height={height} />
-      <ControlPanel />
+      <ControlPanel windowWidth={width} windowHeight={height} />
       <CursorPositionInfo />
     </div>
   );

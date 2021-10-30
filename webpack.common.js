@@ -39,10 +39,9 @@ module.exports = {
         loader: 'source-map-loader',
       },
       {
-        enforce: 'pre',
         exclude: '/node_modules/',
         test: /\.(png|svg|jpg|gif)$/,
-        loader: 'file-loader',
+        type: 'asset/resource',
       },
       {
         test: /\.css$/,
@@ -57,7 +56,7 @@ module.exports = {
       },
       {
         test: /\.worker\.js$/,
-        use: {loader: 'worker-loader'},
+        use: { loader: 'worker-loader' },
       },
     ],
   },
@@ -66,7 +65,11 @@ module.exports = {
       title: 'Zephrly',
       template: 'src/index.html',
     }),
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    // https://github.com/moment/moment/issues/2373
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^\.\/locale$/,
+      contextRegExp: /moment$/,
+    }),
   ],
   optimization: {
     splitChunks: {
