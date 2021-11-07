@@ -279,7 +279,7 @@ const MapVis = React.memo(
             setZoomLevel={setZoomLevel}
           />
           <div className={dtStyle}>
-            {currentDataDt.toFormat('HH:mm UTC DD/MM/YYYY')}
+            {currentDataDt.toFormat("HH:mm 'UTC' dd/MM/yyyy")}
           </div>
         </div>
       );
