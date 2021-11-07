@@ -1,5 +1,5 @@
 import {RootAction} from '../../reducers';
-import {Moment} from 'moment';
+import {DateTime} from 'luxon';
 import {maxCenterLat, minCenterLat, scalePoint} from '../../utils/mapState';
 
 export const minZoomLevel = 1;
@@ -22,7 +22,7 @@ export interface MapVisState {
 }
 export interface Tau {
   value: number;
-  setAt: Moment;
+  setAt: DateTime;
 }
 
 export const initialState = {

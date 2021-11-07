@@ -5,7 +5,7 @@ import React, {useState, useRef, useEffect} from 'react';
 import {Dispatch, bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
 import {style} from 'typestyle';
-import moment from 'moment';
+import {DateTime} from 'luxon';
 import Loadable from 'react-loadable';
 
 import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
@@ -166,11 +166,11 @@ const MapVis = React.memo(
     useEffect(() => {
       if (fieldData.cycle == null) {
         // Need to know model cycle to fetch tau, get it and try again.
-        getCycle().then((cycle: moment.Moment) => {
+        getCycle().then((cycle: DateTime) => {
           setCycle(cycle);
         });
       } else {
-        const cyc = moment(fieldData.cycle);
+        const cyc = fieldData.cycle;
         if (cyc != null) {
           const tau = tausToFetchRef.current.pop();
           if (tau != null) {
@@ -220,7 +220,7 @@ const MapVis = React.memo(
         if (tauAvailable(fieldData, nextTau)) {
           setTau({
             value: nextTau,
-            setAt: moment(),
+            setAt: DateTime.now(),
           });
           setWaitingToSetTau(false);
           setWaitingToStepTimeoutIdRef.current = null;
@@ -279,7 +279,7 @@ const MapVis = React.memo(
             setZoomLevel={setZoomLevel}
           />
           <div className={dtStyle}>
-            {currentDataDt.tz('UTC').format('HH:mm UTC DD/MM/YYYY')}
+            {currentDataDt.toFormat('HH:mm UTC DD/MM/YYYY')}
           </div>
         </div>
       );

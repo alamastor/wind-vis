@@ -1,11 +1,10 @@
-import * as moment from 'moment';
-
+import {DateTime} from 'luxon';
 import {RootAction} from '../../reducers';
 
 export type Action =
   | {
       type: 'FIELD_DATA/SET_CYCLE';
-      cycle: string;
+      cycle: DateTime;
     }
   | {
       type: 'FIELD_DATA/ADD_DATA';
@@ -13,10 +12,10 @@ export type Action =
       data: {u: Float32Array; v: Float32Array};
     };
 
-export function setCycle(cycle: moment.Moment): RootAction {
+export function setCycle(cycle: DateTime): RootAction {
   return {
     type: 'FIELD_DATA/SET_CYCLE',
-    cycle: cycle.format(),
+    cycle: cycle,
   };
 }
 
