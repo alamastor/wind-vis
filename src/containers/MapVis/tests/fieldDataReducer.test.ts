@@ -1,5 +1,4 @@
-import moment from 'moment';
-import 'moment-timezone';
+import {DateTime} from 'luxon';
 
 import reducer, {State, initialState} from '../fieldDataReducer';
 import {setCycle, addData} from '../fieldDataActions';
@@ -11,9 +10,9 @@ describe('fieldDataReducer', () => {
   });
 
   test('it sets cycle correctly', () => {
-    const cycle = moment();
+    const cycle = DateTime.now();
     const expected = Object.assign({}, state, {
-      cycle: cycle.format(),
+      cycle: cycle,
     });
     expect(reducer(state, setCycle(cycle))).toEqual(expected);
   });

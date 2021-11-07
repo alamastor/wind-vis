@@ -1,9 +1,8 @@
-import moment, {Moment} from 'moment';
-
+import {DateTime} from 'luxon';
 import {RootAction} from '../../reducers';
 
 export interface State {
-  readonly cycle: string | null;
+  readonly cycle: DateTime | null;
   readonly data: {
     [propName: number]: {
       u: Int8Array;
@@ -12,12 +11,8 @@ export interface State {
   };
 }
 
-export function tauToDt(fieldData: State, tau: number): moment.Moment | null {
-  if (fieldData.cycle != null) {
-    return moment(fieldData.cycle).add(tau, 'hours');
-  } else {
-    return null;
-  }
+export function tauToDt(fieldData: State, tau: number): DateTime | null {
+  return fieldData.cycle == null ? null : fieldData.cycle.plus({hours: tau});
 }
 
 export function tauAvailable(fieldData: State, tau: number): boolean {

@@ -1,16 +1,15 @@
 import axios from 'axios';
-import moment from 'moment';
-import 'moment-timezone';
+import {DateTime} from 'luxon';
 
 const GFS_JSON_SERVER = 'https://wind-vis-data.alamastor.me';
 const METADATA_FILE = GFS_JSON_SERVER + '/metadata.json';
 
 export async function getData(
-  cycle: moment.Moment,
+  run: DateTime,
   tau: number,
 ): Promise<{u: Float32Array; v: Float32Array}> {
-  const uResponse = await axios.get(dataFileUrl(cycle, tau, 'wind_u_sfc'));
-  const vResponse = await axios.get(dataFileUrl(cycle, tau, 'wind_v_sfc'));
+  const uResponse = await axios.get(dataFileUrl(run, tau, 'wind_u_sfc'));
+  const vResponse = await axios.get(dataFileUrl(run, tau, 'wind_v_sfc'));
   // Convert JSON data to flat Float32Array
   const uData = new Float32Array(360 * 181);
   const vData = new Float32Array(360 * 181);
@@ -23,9 +22,9 @@ export async function getData(
   return {u: uData, v: vData};
 }
 
-export async function getCycle(): Promise<moment.Moment> {
+export async function getCycle(): Promise<DateTime> {
   const response = await axios.get(METADATA_FILE);
-  return moment(response.data.run);
+  return DateTime.fromISO(response.data.run, {setZone: true});
 }
 
 export async function getMaxWindSpeed(): Promise<number> {
@@ -33,10 +32,8 @@ export async function getMaxWindSpeed(): Promise<number> {
   return response.data.maxWindSpeed;
 }
 
-function dataFileUrl(run: moment.Moment, tau: number, param: string) {
-  return `${GFS_JSON_SERVER}/gfs_100_${run
-    .tz('UTC')
-    .format('YYYY-MM-DDTHH:mm:ssZ')}_${tau
-    .toString()
-    .padStart(3, '0')}_${param}.json`;
+function dataFileUrl(run: DateTime, tau: number, param: string) {
+  return `${GFS_JSON_SERVER}/gfs_100_${run.toFormat(
+    "yyyy-MM-dd'T'HH:mm:ssZZ",
+  )}_${tau.toString().padStart(3, '0')}_${param}.json`;
 }
