@@ -1,9 +1,11 @@
 import {Point, Coord} from '../types';
 
 export interface MapState {
-  canvasDims: {width: number; height: number};
-  zoomLevel: number;
-  centerCoord: Coord;
+  ll: Point;
+  lr: Point;
+  ur: Point;
+  ul: Point;
+  proj4: string;
 }
 
 export function scaleCoord(mapState: MapState, coord: Coord): Point {
