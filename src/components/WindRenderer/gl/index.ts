@@ -1,5 +1,8 @@
-import {Coord} from '../../types';
-import {createProgramWithShaders, getUniformLocationSafe} from '../../utils/gl';
+import {Coord} from '../../../types';
+import {
+  createProgramWithShaders,
+  getUniformLocationSafe,
+} from '../../../utils/gl';
 import drawParticleFragmentShaderSource from './shaders/draw_particle.frag';
 import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
 import drawParticleTextureFragmentShaderSource from './shaders/draw_particle_texture.frag';
