@@ -1,4 +1,4 @@
-import reducer, {State, initialState} from '../reducer';
+import reducer, {initialState, State} from '../reducer';
 
 describe('reducer', () => {
   let state: State;

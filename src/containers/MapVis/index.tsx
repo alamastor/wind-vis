@@ -1,35 +1,34 @@
 /*
  * Component containing various visualizations of data on world map.
  */
-import React, {useState, useRef, useEffect} from 'react';
-import {Dispatch, bindActionCreators} from 'redux';
-import {connect} from 'react-redux';
-import {style} from 'typestyle';
 import {DateTime} from 'luxon';
+import React, {useEffect, useRef, useState} from 'react';
 import Loadable from 'react-loadable';
-
-import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
-import VectorField from '../../utils/fielddata/VectorField';
-import DataField from '../../utils/fielddata/DataField';
-import {
-  State as FieldDataState,
-  tauToDt,
-  tauAvailable,
-} from './fieldDataReducer';
-import {RootState, RootAction as Action} from '../../reducers';
-import MouseManager from '../../components/MouseManager';
+import {connect} from 'react-redux';
+import {bindActionCreators, Dispatch} from 'redux';
+import {style} from 'typestyle';
 import BackgroundMap from '../../components/BackgroundMap';
+import MouseManager from '../../components/MouseManager';
+import Spinner from '../../components/Spinner';
 import WindRenderer from '../../components/WindRenderer';
+import {RootAction as Action, RootState} from '../../reducers';
+import {getCycle, getData, getMaxWindSpeed} from '../../utils/fielddata';
+import DataField from '../../utils/fielddata/DataField';
+import VectorField from '../../utils/fielddata/VectorField';
+import {setGlUnavailable} from '../App/actions';
 import {
   moveMap,
-  setCursorData,
   resetCursorData,
+  setCursorData,
   setTau,
   setZoomLevel,
 } from './actions';
-import {setCycle, addData} from './fieldDataActions';
-import Spinner from '../../components/Spinner';
-import {setGlUnavailable} from '../App/actions';
+import {addData, setCycle} from './fieldDataActions';
+import {
+  State as FieldDataState,
+  tauAvailable,
+  tauToDt,
+} from './fieldDataReducer';
 import {Tau} from './reducer';
 
 const mainStyle = style({

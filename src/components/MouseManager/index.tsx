@@ -1,5 +1,4 @@
 import React, {useRef} from 'react';
-
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
 import {MapState, transformPoint} from '../../utils/mapState';

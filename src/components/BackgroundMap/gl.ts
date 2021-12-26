@@ -1,13 +1,13 @@
 import {Coord} from '../../types';
 import {
-  createProgramWithShaders,
   createBufferSafe,
-  createVertexArraySafe,
+  createProgramWithShaders,
   createTextureSafe,
+  createVertexArraySafe,
   getUniformLocationSafe,
 } from '../../utils/gl';
-import vertexShader from './shaders/background_map.vert';
 import fragmentShader from './shaders/background_map.frag';
+import vertexShader from './shaders/background_map.vert';
 
 export interface BackgroundMapGlState {
   gl: WebGL2RenderingContext;

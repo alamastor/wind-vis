@@ -4,7 +4,6 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {style} from 'typestyle';
-
 import {RootState} from '../../reducers';
 
 const mainStyle = style({

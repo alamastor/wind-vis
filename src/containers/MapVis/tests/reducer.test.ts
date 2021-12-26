@@ -1,4 +1,4 @@
-import reducer, {MapVisState, initialState} from '../reducer';
+import reducer, {initialState, MapVisState} from '../reducer';
 
 describe('mapVisReducer', () => {
   let state: MapVisState;

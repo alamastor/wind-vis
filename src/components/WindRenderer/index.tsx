@@ -1,19 +1,18 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {style} from 'typestyle';
-
+import DataTransformer from 'worker-loader!./DataTransformerWorker';
+import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
 import {MapState} from '../../utils/mapState';
 import {
-  GlState,
-  drawSpeeds,
   drawParticles,
+  drawSpeeds,
+  getGLState,
+  GlState,
   updateParticles,
   updateWindTex,
-  getGLState,
 } from './gl';
-import {RootAction as Action} from '../../reducers';
 import {transformDataForGPU} from './transformData';
-import DataTransformer from 'worker-loader!./DataTransformerWorker';
 
 const canvasStyle = style({
   position: 'fixed',

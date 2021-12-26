@@ -1,13 +1,13 @@
 import {Coord} from '../../types';
 import {createProgramWithShaders, getUniformLocationSafe} from '../../utils/gl';
-import speedVertexShaderSource from './shaders/speed.vert';
-import speedFragmentShaderSource from './shaders/speed.frag';
-import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
 import drawParticleFragmentShaderSource from './shaders/draw_particle.frag';
-import drawParticleTextureVertexShaderSource from './shaders/draw_particle_texture.vert';
+import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
 import drawParticleTextureFragmentShaderSource from './shaders/draw_particle_texture.frag';
-import updateParticleVertexShaderSource from './shaders/update_particle.vert';
+import drawParticleTextureVertexShaderSource from './shaders/draw_particle_texture.vert';
+import speedFragmentShaderSource from './shaders/speed.frag';
+import speedVertexShaderSource from './shaders/speed.vert';
 import updateParticleFragmentShaderSource from './shaders/update_particle.frag';
+import updateParticleVertexShaderSource from './shaders/update_particle.vert';
 
 const FRAMEBUFFER_COUNT = 50;
 const PARTICLE_DENSITY = 0.01; // Particles per square pixel
@@ -167,9 +167,8 @@ function getParticleProgramState(gl: WebGLRenderingContext) {
   const updateState = getParticleUpdateProgramState(gl);
 
   // Get dimensions of position texture
-  const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    PARTICLE_COUNT,
-  );
+  const {textureWidth, textureHeight} =
+    particleCountToTextureDimensions(PARTICLE_COUNT);
 
   // Create particles vertices buffer. These just contain the vertex's
   // own index for doing textures lookups.
@@ -228,9 +227,8 @@ function getParticleProgramState(gl: WebGLRenderingContext) {
  * textures, and locations.
  */
 function getParticleDrawProgramState(gl: WebGLRenderingContext) {
-  const drawParticlesToFrameBufferState = getDrawParticlesToFrameBufferProgramState(
-    gl,
-  );
+  const drawParticlesToFrameBufferState =
+    getDrawParticlesToFrameBufferProgramState(gl);
   const drawFrameBufferState = getDrawFrameBufferProgramState(gl);
 
   const frameBuffers: {
@@ -422,9 +420,8 @@ function getParticleUpdateProgramState(gl: WebGLRenderingContext) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
-  const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    PARTICLE_COUNT,
-  );
+  const {textureWidth, textureHeight} =
+    particleCountToTextureDimensions(PARTICLE_COUNT);
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
@@ -821,9 +818,8 @@ export function updateParticles(
   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
   // Set viewport
-  const {textureWidth, textureHeight} = particleCountToTextureDimensions(
-    PARTICLE_COUNT,
-  );
+  const {textureWidth, textureHeight} =
+    particleCountToTextureDimensions(PARTICLE_COUNT);
   gl.viewport(0, 0, textureWidth, textureHeight);
 
   // Use program

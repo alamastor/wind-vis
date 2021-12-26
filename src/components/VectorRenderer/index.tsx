@@ -1,6 +1,5 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {style} from 'typestyle';
-
 import VectorField from '../../utils/fielddata/VectorField';
 import {MapState, transformCoord} from '../../utils/mapState';
 import mod from '../../utils/mod';
