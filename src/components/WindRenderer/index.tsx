@@ -4,14 +4,9 @@ import DataTransformer from 'worker-loader!./DataTransformerWorker';
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
 import {MapState} from '../../utils/mapState';
-import {
-  drawParticles,
-  drawSpeeds,
-  getGLState,
-  GlState,
-  updateParticles,
-  updateWindTex,
-} from './gl';
+import {getGLState, GlState, updateWindTex} from './gl/index';
+import {drawParticles, updateParticles} from './gl/particles';
+import {drawSpeeds} from './gl/speeds';
 import {transformDataForGPU} from './transformData';
 
 const canvasStyle = style({
