@@ -2,21 +2,19 @@
  * App level options panel.
  */
 import * as React from 'react';
-import {Dispatch, bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
+import {bindActionCreators, Dispatch} from 'redux';
 import {style} from 'typestyle';
-import {MapState} from '../../utils/mapState';
-
-import {RootState, RootAction as Action} from '../../reducers';
+import {RootAction as Action, RootState} from '../../reducers';
 import {
-  setDisplayParticles,
-  setDisplayVectors,
-  setDisplaySpeeds,
   setDisplayBackgroundMap,
-  togglePaused,
+  setDisplayParticles,
+  setDisplaySpeeds,
+  setDisplayVectors,
   setZoomLevel,
+  togglePaused,
 } from '../MapVis/actions';
-import {minZoomLevel, maxZoomLevel} from '../MapVis/reducer';
+import {maxZoomLevel, minZoomLevel} from '../MapVis/reducer';
 
 const buttonStyle = style({width: '100%'});
 const formStyle = style({

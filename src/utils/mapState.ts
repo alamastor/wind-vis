@@ -1,4 +1,4 @@
-import {Point, Coord} from '../types';
+import {Coord, Point} from '../types';
 
 export interface MapState {
   canvasDims: {width: number; height: number};

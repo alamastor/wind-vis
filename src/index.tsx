@@ -2,12 +2,10 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {Provider} from 'react-redux';
 import {createStore} from 'redux';
-
+import App from './containers/App';
 import reducers from './reducers';
 
 export const store = createStore(reducers);
-
-import App from './containers/App';
 
 if (navigator.userAgent.indexOf('Trident') !== -1) {
   // IE not working due to lack of Object.assign, Promises and CSS grid. Should

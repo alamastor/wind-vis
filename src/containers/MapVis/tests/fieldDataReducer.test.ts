@@ -1,7 +1,6 @@
 import {DateTime} from 'luxon';
-
-import reducer, {State, initialState} from '../fieldDataReducer';
-import {setCycle, addData} from '../fieldDataActions';
+import {addData, setCycle} from '../fieldDataActions';
+import reducer, {initialState, State} from '../fieldDataReducer';
 
 describe('fieldDataReducer', () => {
   let state: State;

@@ -1,13 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {connect} from 'react-redux';
-import {Dispatch, bindActionCreators} from 'redux';
+import {bindActionCreators, Dispatch} from 'redux';
 import {style} from 'typestyle';
-
 import AppError from '../../components/AppError';
-import {RootState, RootAction as Action} from '../../reducers';
+import {RootAction as Action, RootState} from '../../reducers';
 import ControlPanel from '../ControlPanel';
-import MapVis from '../MapVis';
 import CursorPositionInfo from '../CursorPositionInfo';
+import MapVis from '../MapVis';
 import {setFrameRate} from './actions';
 
 const mapStateToProps = (state: RootState) => ({

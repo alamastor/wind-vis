@@ -86,18 +86,20 @@ export default class DataField {
   }
 
   _interpolatePoint(x: number, y: number): number {
-    const ulPoint = this.data[
-      this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.ceil(y)
-    ];
-    const urPoint = this.data[
-      this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.ceil(y)
-    ];
-    const lrPoint = this.data[
-      this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.floor(y)
-    ];
-    const llPoint = this.data[
-      this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.floor(y)
-    ];
+    const ulPoint =
+      this.data[
+        this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.ceil(y)
+      ];
+    const urPoint =
+      this.data[this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.ceil(y)];
+    const lrPoint =
+      this.data[
+        this._wrapXVal(Math.ceil(x)) * this._dataHeight + Math.floor(y)
+      ];
+    const llPoint =
+      this.data[
+        this._wrapXVal(Math.floor(x)) * this._dataHeight + Math.floor(y)
+      ];
 
     const uPoint = this._linearInterp(x - Math.floor(x), ulPoint, urPoint);
     const lPoint = this._linearInterp(x - Math.floor(x), llPoint, lrPoint);

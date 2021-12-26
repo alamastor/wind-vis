@@ -1,5 +1,5 @@
-import {RootAction} from '../../reducers';
 import {DateTime} from 'luxon';
+import {RootAction} from '../../reducers';
 import {maxCenterLat, minCenterLat, scalePoint} from '../../utils/mapState';
 
 export const minZoomLevel = 1;

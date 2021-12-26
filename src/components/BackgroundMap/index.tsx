@@ -1,9 +1,8 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {style} from 'typestyle';
-
-import {MapState, globeDims} from '../../utils/mapState';
-import {BackgroundMapGlState, getGlState, render, updateTexture} from './gl';
 import {setGlUnavailable} from '../../containers/App/actions';
+import {globeDims, MapState} from '../../utils/mapState';
+import {BackgroundMapGlState, getGlState, render, updateTexture} from './gl';
 
 const canvasStyle = style({
   position: 'fixed',
