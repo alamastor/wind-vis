@@ -107,25 +107,7 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
 
   for (let i = 0; i < FRAMEBUFFER_COUNT; i++) {
     // Create texture for frame buffer
-    const texture = gl.createTexture() as WebGLTexture;
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      gl.canvas.width,
-      gl.canvas.height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
-    );
+    const texture = getParticleRenderTexture(gl);
 
     // Create frame buffer
     const frameBuffer = gl.createFramebuffer();
@@ -408,25 +390,7 @@ function drawParticlesToFrameBuffer(
       frameBufferGroup.screenWidth !== gl.canvas.width ||
       frameBufferGroup.screenHeight !== gl.canvas.height
     ) {
-      const texture = gl.createTexture() as WebGLTexture;
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.canvas.width,
-        gl.canvas.height,
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
-      );
+      const texture = getParticleRenderTexture(gl);
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         gl.COLOR_ATTACHMENT0,
@@ -659,4 +623,31 @@ function particleCountToTextureDimensions(particleCount: number) {
     textureWidth: size,
     textureHeight: size,
   };
+}
+
+function getParticleRenderTexture(gl: WebGLRenderingContext): WebGLTexture {
+  const texture = gl.createTexture();
+  if (texture == null) {
+    throw Error('Failed to create texture for particle rendering.');
+  }
+
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.canvas.width,
+    gl.canvas.height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array(gl.canvas.width * gl.canvas.height * 4),
+  );
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  return texture;
 }
