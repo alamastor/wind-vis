@@ -1,15 +1,15 @@
-import {Coord} from '../../../types';
 import {GlState} from '.';
+import {Coord} from '../../../types';
 import {
   createProgramWithShaders,
   getUniformLocationSafe,
 } from '../../../utils/gl';
-import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
 import drawParticleFragmentShaderSource from './shaders/draw_particle.frag';
-import drawParticleTextureVertexShaderSource from './shaders/draw_particle_texture.vert';
+import drawParticleVertexShaderSource from './shaders/draw_particle.vert';
 import drawParticleTextureFragmentShaderSource from './shaders/draw_particle_texture.frag';
-import updateParticleVertexShaderSource from './shaders/update_particle.vert';
+import drawParticleTextureVertexShaderSource from './shaders/draw_particle_texture.vert';
 import updateParticleFragmentShaderSource from './shaders/update_particle.frag';
+import updateParticleVertexShaderSource from './shaders/update_particle.vert';
 
 const FRAMEBUFFER_COUNT = 50;
 const PARTICLE_DENSITY = 0.01; // Particles per square pixel
@@ -46,7 +46,7 @@ export function getParticleProgramState(gl: WebGLRenderingContext) {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionTextureCoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, positionTextureCoords, gl.STATIC_DRAW);
 
-  // Create position textures
+  // Create position texture
   const positionTexture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -54,7 +54,6 @@ export function getParticleProgramState(gl: WebGLRenderingContext) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.bindTexture(gl.TEXTURE_2D, positionTexture);
 
   const positions = new Uint8Array(textureWidth * textureHeight * 4);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -77,6 +76,9 @@ export function getParticleProgramState(gl: WebGLRenderingContext) {
     gl.UNSIGNED_BYTE,
     positions,
   );
+
+  gl.bindTexture(gl.TEXTURE_2D, null);
+
   return {
     drawState,
     updateState,
