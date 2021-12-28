@@ -1,7 +1,9 @@
 import {GlState} from '.';
 import {Coord} from '../../../types';
 import {
+  createBufferSafe,
   createProgramWithShaders,
+  createVertexArraySafe,
   getUniformLocationSafe,
 } from '../../../utils/gl';
 import drawParticleFragmentShaderSource from './shaders/draw_particle.frag';
@@ -162,7 +164,7 @@ function getDrawFrameBufferProgramState(gl: WebGL2RenderingContext) {
   );
 
   // Set up vertices
-  const vertexBuffer = gl.createBuffer() as WebGLBuffer;
+  const vertexBuffer = createBufferSafe(gl);
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   // prettier-ignore
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -173,9 +175,14 @@ function getDrawFrameBufferProgramState(gl: WebGL2RenderingContext) {
      1, -1,
     -1, -1,
   ]), gl.STATIC_DRAW);
+  const vertexArray = createVertexArraySafe(gl);
+  gl.bindVertexArray(vertexArray);
+  const vertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
+  gl.enableVertexAttribArray(vertexLoc);
+  gl.vertexAttribPointer(vertexLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
 
   // Get locations
-  const vertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
   const textureLoc = getUniformLocationSafe(gl, shaderProgram, 'textureData');
   const alphaLoc = getUniformLocationSafe(gl, shaderProgram, 'alpha');
   const currentDimensionsLoc = getUniformLocationSafe(
@@ -212,7 +219,7 @@ function getDrawFrameBufferProgramState(gl: WebGL2RenderingContext) {
   return {
     shaderProgram,
     vertexBuffer,
-    vertexLoc,
+    vertexArray,
     textureLoc,
     alphaLoc,
     currentDimensionsLoc,
@@ -272,7 +279,7 @@ function getParticleUpdateProgramState(gl: WebGL2RenderingContext) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   // Set up vertices
-  const frameBufferVertexBuffer = gl.createBuffer() as WebGLBuffer;
+  const frameBufferVertexBuffer = createBufferSafe(gl);
   gl.bindBuffer(gl.ARRAY_BUFFER, frameBufferVertexBuffer);
   // prettier-ignore
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -283,9 +290,14 @@ function getParticleUpdateProgramState(gl: WebGL2RenderingContext) {
      1, -1,
     -1, -1,
   ]), gl.STATIC_DRAW);
+  const frameBufferVertexArray = createVertexArraySafe(gl);
+  gl.bindVertexArray(frameBufferVertexArray);
+  const frameBufferVertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
+  gl.enableVertexAttribArray(frameBufferVertexLoc);
+  gl.vertexAttribPointer(frameBufferVertexLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
 
   // Get locations
-  const frameBufferVertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
   const positionTextureLoc = getUniformLocationSafe(
     gl,
     shaderProgram,
@@ -308,8 +320,7 @@ function getParticleUpdateProgramState(gl: WebGL2RenderingContext) {
   return {
     shaderProgram,
     frameBuffer,
-    frameBufferVertexBuffer,
-    frameBufferVertexLoc,
+    frameBufferVertexArray,
     positionTextureLoc,
     deltaTLoc,
     uTextureLoc,
@@ -439,8 +450,7 @@ function drawFrameBuffers(
         frameBuffers,
         drawFrameBufferState: {
           shaderProgram,
-          vertexBuffer,
-          vertexLoc,
+          vertexArray,
           textureLoc,
           alphaLoc,
           textureDimensionsLoc,
@@ -469,11 +479,6 @@ function drawFrameBuffers(
   gl.uniform1f(currentZoomLoc, zoomLevel);
   gl.uniform2f(currentCenterCoordLoc, centerCoord.lon, centerCoord.lat);
 
-  // Bind vertices
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.vertexAttribPointer(vertexLoc, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vertexLoc);
-
   // Render all textures
   frameBuffers.forEach((frameBufferGroup, idx, frameBuffers) => {
     // Set uniforms
@@ -496,7 +501,9 @@ function drawFrameBuffers(
     gl.bindTexture(gl.TEXTURE_2D, frameBufferGroup.texture);
 
     // Draw
+    gl.bindVertexArray(vertexArray);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.bindVertexArray(null);
   });
   // Reset state
   gl.disable(gl.BLEND);
@@ -514,8 +521,7 @@ export function updateParticles(
       updateState: {
         shaderProgram,
         frameBuffer,
-        frameBufferVertexBuffer,
-        frameBufferVertexLoc,
+        frameBufferVertexArray,
         positionTextureLoc,
         positionTextureDimensionsLoc,
         deltaTLoc,
@@ -557,12 +563,10 @@ export function updateParticles(
   gl.activeTexture(gl.TEXTURE2);
   gl.bindTexture(gl.TEXTURE_2D, vTexture);
 
-  // Bind vertices
-  gl.bindBuffer(gl.ARRAY_BUFFER, frameBufferVertexBuffer);
-  gl.vertexAttribPointer(frameBufferVertexLoc, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(frameBufferVertexLoc);
-
+  // Draw
+  gl.bindVertexArray(frameBufferVertexArray);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.bindVertexArray(null);
 
   gl.bindTexture(gl.TEXTURE_2D, positionTexture);
   gl.copyTexImage2D(

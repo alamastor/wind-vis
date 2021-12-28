@@ -6,8 +6,7 @@ export interface GlState {
   gl: WebGL2RenderingContext;
   speedState: {
     shaderProgram: WebGLProgram;
-    vertexBuffer: WebGLBuffer;
-    vertexLoc: number;
+    vertexArray: WebGLVertexArrayObject;
     aspectRatioLoc: WebGLUniformLocation;
     midCoordLoc: WebGLUniformLocation;
     zoomLevelLoc: WebGLUniformLocation;
@@ -34,8 +33,7 @@ export interface GlState {
       };
       drawFrameBufferState: {
         shaderProgram: WebGLProgram;
-        vertexBuffer: WebGLBuffer;
-        vertexLoc: number;
+        vertexArray: WebGLVertexArrayObject;
         textureLoc: WebGLUniformLocation;
         alphaLoc: WebGLUniformLocation;
         currentDimensionsLoc: WebGLUniformLocation;
@@ -49,8 +47,7 @@ export interface GlState {
     updateState: {
       shaderProgram: WebGLProgram;
       frameBuffer: WebGLFramebuffer;
-      frameBufferVertexBuffer: WebGLBuffer;
-      frameBufferVertexLoc: number;
+      frameBufferVertexArray: WebGLVertexArrayObject;
       positionTextureLoc: WebGLUniformLocation;
       deltaTLoc: WebGLUniformLocation;
       uTextureLoc: WebGLUniformLocation;
