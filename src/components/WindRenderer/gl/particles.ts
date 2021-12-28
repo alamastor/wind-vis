@@ -20,7 +20,7 @@ const PARTICLE_COUNT = 1000000;
  * Initialize GL for particle rendering, and return programs, buffers,
  * textures, and locations.
  */
-export function getParticleProgramState(gl: WebGLRenderingContext) {
+export function getParticleProgramState(gl: WebGL2RenderingContext) {
   // Unfortunately WebGL 1.0 does not allow updating of vertex buffers
   // in the shaders, so instead positions will be encoded in textures
   // which can be updated by drawing to a frame buffer.
@@ -91,7 +91,7 @@ export function getParticleProgramState(gl: WebGLRenderingContext) {
  * Initialize GL for particle drawing, and return programs, buffers,
  * textures, and locations.
  */
-function getParticleDrawProgramState(gl: WebGLRenderingContext) {
+function getParticleDrawProgramState(gl: WebGL2RenderingContext) {
   return {
     frameBuffers: getFrameBuffers(gl),
     drawParticlesToFrameBufferState:
@@ -100,7 +100,7 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
   };
 }
 
-function getFrameBuffers(gl: WebGLRenderingContext) {
+function getFrameBuffers(gl: WebGL2RenderingContext) {
   const frameBuffers: {
     frameBuffer: WebGLFramebuffer;
     texture: WebGLTexture;
@@ -117,7 +117,7 @@ function getFrameBuffers(gl: WebGLRenderingContext) {
   return frameBuffers;
 }
 
-function getDrawParticlesToFrameBufferProgramState(gl: WebGLRenderingContext) {
+function getDrawParticlesToFrameBufferProgramState(gl: WebGL2RenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -153,7 +153,7 @@ function getDrawParticlesToFrameBufferProgramState(gl: WebGLRenderingContext) {
   };
 }
 
-function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
+function getDrawFrameBufferProgramState(gl: WebGL2RenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -228,7 +228,7 @@ function getDrawFrameBufferProgramState(gl: WebGLRenderingContext) {
  * Initialize GL for particle updating, and return programs, buffers,
  * textures, and locations.
  */
-function getParticleUpdateProgramState(gl: WebGLRenderingContext) {
+function getParticleUpdateProgramState(gl: WebGL2RenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -601,7 +601,7 @@ function particleCountToTextureDimensions(particleCount: number) {
   };
 }
 
-function getParticleRenderFrameBufferObject(gl: WebGLRenderingContext) {
+function getParticleRenderFrameBufferObject(gl: WebGL2RenderingContext) {
   const texture = getParticleRenderTexture(gl);
 
   const frameBuffer = gl.createFramebuffer();
@@ -629,7 +629,7 @@ function getParticleRenderFrameBufferObject(gl: WebGLRenderingContext) {
   };
 }
 
-function getParticleRenderTexture(gl: WebGLRenderingContext): WebGLTexture {
+function getParticleRenderTexture(gl: WebGL2RenderingContext): WebGLTexture {
   const texture = gl.createTexture();
   if (texture == null) {
     throw Error('Failed to create texture for particle rendering.');

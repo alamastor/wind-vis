@@ -1,4 +1,4 @@
-function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
+function loadShader(gl: WebGL2RenderingContext, type: GLenum, source: string) {
   const shader = gl.createShader(type);
   if (shader == null) {
     throw new Error('Failed to create shader.');
@@ -14,7 +14,7 @@ function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
 }
 
 export function createProgramWithShaders(
-  gl: WebGLRenderingContext,
+  gl: WebGL2RenderingContext,
   vertexShaderSource: string,
   fragmentShaderSource: string,
 ) {
@@ -43,7 +43,7 @@ export function createProgramWithShaders(
 }
 
 export function getUniformLocationSafe(
-  gl: WebGLRenderingContext,
+  gl: WebGL2RenderingContext,
   shaderProgram: WebGLProgram,
   uniformName: string,
 ): WebGLUniformLocation {
@@ -54,9 +54,7 @@ export function getUniformLocationSafe(
   return location;
 }
 
-export function createBufferSafe(
-  gl: WebGL2RenderingContext | WebGL2RenderingContext,
-) {
+export function createBufferSafe(gl: WebGL2RenderingContext) {
   const buffer = gl.createBuffer();
   if (buffer == null) {
     throw new Error('createBuffer returned null');
@@ -64,9 +62,7 @@ export function createBufferSafe(
   return buffer;
 }
 
-export function createTextureSafe(
-  gl: WebGL2RenderingContext | WebGL2RenderingContext,
-) {
+export function createTextureSafe(gl: WebGL2RenderingContext) {
   const texture = gl.createTexture();
   if (texture == null) {
     throw new Error('createTexture returned null');

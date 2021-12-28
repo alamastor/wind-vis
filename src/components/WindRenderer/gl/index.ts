@@ -3,7 +3,7 @@ import {getParticleProgramState} from './particles';
 import {getSpeedProgramState} from './speeds';
 
 export interface GlState {
-  gl: WebGLRenderingContext;
+  gl: WebGL2RenderingContext;
   speedState: {
     shaderProgram: WebGLProgram;
     vertexBuffer: WebGLBuffer;
@@ -68,7 +68,7 @@ export interface GlState {
 /**
  * Initialize GL and return programs, buffers, textures, and locations.
  */
-export function getGLState(gl: WebGLRenderingContext): GlState {
+export function getGLState(gl: WebGL2RenderingContext): GlState {
   const speedState = getSpeedProgramState(gl);
   const particleState = getParticleProgramState(gl);
 

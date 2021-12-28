@@ -88,7 +88,7 @@ export default function WindRenderer({
     };
 
     if (glStateRef.current == null && canvasRef.current != null) {
-      const gl = canvasRef.current.getContext('webgl');
+      const gl = canvasRef.current.getContext('webgl2');
       if (gl != null) {
         glStateRef.current = getGLState(gl);
         updateWindTex(

@@ -1,17 +1,17 @@
+import {GlState} from '.';
 import {Coord} from '../../../types';
 import {
   createProgramWithShaders,
   getUniformLocationSafe,
 } from '../../../utils/gl';
-import {GlState} from '.';
-import speedVertexShaderSource from './shaders/speed.vert';
 import speedFragmentShaderSource from './shaders/speed.frag';
+import speedVertexShaderSource from './shaders/speed.vert';
 
 /**
  * Initialize GL for wind speed rendering, and return programs, buffers,
  * textures, and locations.
  */
-export function getSpeedProgramState(gl: WebGLRenderingContext) {
+export function getSpeedProgramState(gl: WebGL2RenderingContext) {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
