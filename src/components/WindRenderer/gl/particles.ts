@@ -92,10 +92,15 @@ export function getParticleProgramState(gl: WebGLRenderingContext) {
  * textures, and locations.
  */
 function getParticleDrawProgramState(gl: WebGLRenderingContext) {
-  const drawParticlesToFrameBufferState =
-    getDrawParticlesToFrameBufferProgramState(gl);
-  const drawFrameBufferState = getDrawFrameBufferProgramState(gl);
+  return {
+    frameBuffers: getFrameBuffers(gl),
+    drawParticlesToFrameBufferState:
+      getDrawParticlesToFrameBufferProgramState(gl),
+    drawFrameBufferState: getDrawFrameBufferProgramState(gl),
+  };
+}
 
+function getFrameBuffers(gl: WebGLRenderingContext) {
   const frameBuffers: {
     frameBuffer: WebGLFramebuffer;
     texture: WebGLTexture;
@@ -106,39 +111,10 @@ function getParticleDrawProgramState(gl: WebGLRenderingContext) {
   }[] = [];
 
   for (let i = 0; i < FRAMEBUFFER_COUNT; i++) {
-    // Create texture for frame buffer
-    const texture = getParticleRenderTexture(gl);
-
-    // Create frame buffer
-    const frameBuffer = gl.createFramebuffer();
-    if (frameBuffer == null) {
-      throw new Error('failed to create frameBuffer');
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      texture,
-      0,
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    frameBuffers.push({
-      frameBuffer,
-      texture,
-      centerCoord: {lon: 180, lat: 0},
-      zoomLevel: 1,
-      screenWidth: gl.canvas.width,
-      screenHeight: gl.canvas.height,
-    });
+    frameBuffers.push(getParticleRenderFrameBufferObject(gl));
   }
 
-  return {
-    frameBuffers,
-    drawParticlesToFrameBufferState,
-    drawFrameBufferState,
-  };
+  return frameBuffers;
 }
 
 function getDrawParticlesToFrameBufferProgramState(gl: WebGLRenderingContext) {
@@ -622,6 +598,34 @@ function particleCountToTextureDimensions(particleCount: number) {
   return {
     textureWidth: size,
     textureHeight: size,
+  };
+}
+
+function getParticleRenderFrameBufferObject(gl: WebGLRenderingContext) {
+  const texture = getParticleRenderTexture(gl);
+
+  const frameBuffer = gl.createFramebuffer();
+  if (frameBuffer == null) {
+    throw new Error('failed to create frameBuffer');
+  }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    texture,
+    0,
+  );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  return {
+    frameBuffer,
+    texture,
+    centerCoord: {lon: 180, lat: 0},
+    zoomLevel: 1,
+    screenWidth: gl.canvas.width,
+    screenHeight: gl.canvas.height,
   };
 }
 
