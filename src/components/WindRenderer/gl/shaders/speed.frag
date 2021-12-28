@@ -1,18 +1,22 @@
+#version 300 es
+
 precision mediump float;
+
+in vec2 texCoord;
 
 uniform sampler2D uTexture;
 uniform sampler2D vTexture;
 uniform float maxWind;
 
-varying vec2 texCoord;
+out vec4 fragColor;
 
 vec3 viridis(in float i);
 
 void main() {
-  float restoredU = texture2D(uTexture, texCoord).r / 0.5 - 1.0;
-  float restoredV = texture2D(vTexture, texCoord).r / 0.5 - 1.0;
+  float restoredU = texture(uTexture, texCoord).r / 0.5 - 1.0;
+  float restoredV = texture(vTexture, texCoord).r / 0.5 - 1.0;
   float speed = sqrt(pow(restoredU, 2.0) + pow(restoredV, 2.0));
-  gl_FragColor = vec4(viridis(speed), 1);
+  fragColor = vec4(viridis(speed), 1);
 }
 
 vec3 viridis(in float i) {

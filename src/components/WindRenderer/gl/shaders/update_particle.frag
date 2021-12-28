@@ -1,3 +1,5 @@
+#version 300 es
+
 precision mediump float;
 
 uniform float deltaT;
@@ -11,6 +13,8 @@ vec4 encodeLonLat(in mediump vec2 lonLat);
 vec2 decodeLonLat(in vec4 rgba);
 float random (vec2 st);
 
+out vec4 fragColor;
+
 void main() {
   float lon;
   float lat;
@@ -22,15 +26,15 @@ void main() {
   } else {
     // Read and decode lon and lat from position texture coord
     vec2 positionTextureCoord = floor(gl_FragCoord.xy) / (positionTextureDimensions - 1.0);
-    vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
+    vec2 lonLat = decodeLonLat(texture(positionTexture, positionTextureCoord));
     lon = lonLat.x;
     lat = lonLat.y;
 
     // Read u and v from their respective textures
     // TODO: Check these lookup coords. Are these the correct texture dimensions?
     vec2 uvTextureCoord = vec2(lon / 359.5, (lat + 90.0) / 180.0);
-    float u = texture2D(uTexture, uvTextureCoord).x;
-    float v = texture2D(vTexture, uvTextureCoord).x;
+    float u = texture(uTexture, uvTextureCoord).x;
+    float v = texture(vTexture, uvTextureCoord).x;
     float restoredU = u / 0.5 - 1.0;
     float restoredV = v / 0.5 - 1.0;
 
@@ -51,7 +55,7 @@ void main() {
   }
 
   // Encode position back to RGBA
-  gl_FragColor = encodeLonLat(vec2(lon, lat));
+  fragColor = encodeLonLat(vec2(lon, lat));
 }
 
 /**

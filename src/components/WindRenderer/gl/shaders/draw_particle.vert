@@ -1,4 +1,6 @@
-attribute vec2 positionTextureCoord;
+#version 300 es
+
+in vec2 positionTextureCoord;
 uniform sampler2D positionTexture;
 uniform float zoomLevel;
 uniform vec2 centerCoord;
@@ -7,7 +9,7 @@ uniform vec2 canvasDimensions;
 vec2 decodeLonLat(in vec4 rgba);
 
 void main() {
-  vec2 lonLat = decodeLonLat(texture2D(positionTexture, positionTextureCoord));
+  vec2 lonLat = decodeLonLat(texture(positionTexture, positionTextureCoord));
 
   float aspectRatio = canvasDimensions.x / canvasDimensions.y;
   vec2 shifted = vec2(mod(lonLat.x - centerCoord.x + 180.0, 360.0) - 180.0, lonLat.y - centerCoord.y);

@@ -1,10 +1,12 @@
-attribute vec2 vertex;
+#version 300 es
+
+in vec2 vertex;
 
 uniform float aspectRatio;
 uniform float zoomLevel;
 uniform vec2 midCoord;
 
-varying vec2 texCoord;
+out vec2 texCoord;
 
 void main() {
   gl_Position = vec4(vertex, 0, 1);

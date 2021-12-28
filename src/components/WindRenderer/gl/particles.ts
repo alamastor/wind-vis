@@ -176,7 +176,7 @@ function getDrawFrameBufferProgramState(gl: WebGL2RenderingContext) {
 
   // Get locations
   const vertexLoc = gl.getAttribLocation(shaderProgram, 'vertex');
-  const textureLoc = getUniformLocationSafe(gl, shaderProgram, 'texture');
+  const textureLoc = getUniformLocationSafe(gl, shaderProgram, 'textureData');
   const alphaLoc = getUniformLocationSafe(gl, shaderProgram, 'alpha');
   const currentDimensionsLoc = getUniformLocationSafe(
     gl,

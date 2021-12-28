@@ -1,6 +1,8 @@
+#version 300 es
+
 precision mediump float;
 
-uniform sampler2D texture;
+uniform sampler2D textureData;
 uniform float alpha;
 uniform vec2 textureDimensions;
 uniform vec2 currentDimensions;
@@ -8,6 +10,8 @@ uniform float textureZoom;
 uniform float currentZoom;
 uniform vec2 textureCenterCoord;
 uniform vec2 currentCenterCoord;
+
+out vec4 fragColor;
 
 void main() {
     float textureAspectRatio = textureDimensions.x / textureDimensions.y;
@@ -23,8 +27,8 @@ void main() {
         * vec2(2.0 / min(textureAspectRatio, 2.0), max(textureAspectRatio, 2.0) / 2.0)
         + 0.5;
     if (any(lessThan(transformed, vec2(0, 0))) || any(greaterThan(transformed, vec2(1, 1)))) {
-        gl_FragColor = vec4(0, 0, 0, 0);
+        fragColor = vec4(0, 0, 0, 0);
     } else {
-        gl_FragColor = texture2D(texture, transformed) * alpha;
+        fragColor = texture(textureData, transformed) * alpha;
     }
 }
