@@ -9,11 +9,21 @@ import {
 import speedFragmentShaderSource from './shaders/speed.frag';
 import speedVertexShaderSource from './shaders/speed.vert';
 
+export interface SpeedState {
+  shaderProgram: WebGLProgram;
+  vertexArray: WebGLVertexArrayObject;
+  aspectRatioLoc: WebGLUniformLocation;
+  midCoordLoc: WebGLUniformLocation;
+  zoomLevelLoc: WebGLUniformLocation;
+  uTextureLoc: WebGLUniformLocation;
+  vTextureLoc: WebGLUniformLocation;
+}
+
 /**
  * Initialize GL for wind speed rendering, and return programs, buffers,
  * textures, and locations.
  */
-export function getSpeedProgramState(gl: WebGL2RenderingContext) {
+export function getSpeedProgramState(gl: WebGL2RenderingContext): SpeedState {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,

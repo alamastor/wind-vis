@@ -18,11 +18,60 @@ const PARTICLE_DENSITY = 0.01; // Particles per square pixel
 // Number of particles to be stored in texture, displayed particles will
 // be subset of this.
 const PARTICLE_COUNT = 1000000;
+
+export interface ParticleState {
+  drawState: {
+    frameBuffers: {
+      frameBuffer: WebGLFramebuffer;
+      texture: WebGLTexture;
+      centerCoord: Coord;
+      zoomLevel: number;
+      screenWidth: number;
+      screenHeight: number;
+    }[];
+    drawParticlesToFrameBufferState: {
+      shaderProgram: WebGLProgram;
+      positionTextureLoc: WebGLUniformLocation;
+      positionTextureCoordLoc: number;
+      zoomLevelLoc: WebGLUniformLocation;
+      midCoordLoc: WebGLUniformLocation;
+      canvasDimensionsLoc: WebGLUniformLocation;
+    };
+    drawFrameBufferState: {
+      shaderProgram: WebGLProgram;
+      vertexArray: WebGLVertexArrayObject;
+      textureLoc: WebGLUniformLocation;
+      alphaLoc: WebGLUniformLocation;
+      currentDimensionsLoc: WebGLUniformLocation;
+      textureDimensionsLoc: WebGLUniformLocation;
+      textureZoomLoc: WebGLUniformLocation;
+      currentZoomLoc: WebGLUniformLocation;
+      textureCenterCoordLoc: WebGLUniformLocation;
+      currentCenterCoordLoc: WebGLUniformLocation;
+    };
+  };
+  updateState: {
+    shaderProgram: WebGLProgram;
+    frameBuffer: WebGLFramebuffer;
+    frameBufferVertexArray: WebGLVertexArrayObject;
+    positionTextureLoc: WebGLUniformLocation;
+    deltaTLoc: WebGLUniformLocation;
+    uTextureLoc: WebGLUniformLocation;
+    vTextureLoc: WebGLUniformLocation;
+    positionTextureDimensionsLoc: WebGLUniformLocation;
+    resetPositionsLoc: WebGLUniformLocation;
+  };
+  positionTextureCoordBuffer: WebGLBuffer;
+  positionTexture: WebGLTexture;
+}
+
 /**
  * Initialize GL for particle rendering, and return programs, buffers,
  * textures, and locations.
  */
-export function getParticleProgramState(gl: WebGL2RenderingContext) {
+export function getParticleProgramState(
+  gl: WebGL2RenderingContext,
+): ParticleState {
   // Unfortunately WebGL 1.0 does not allow updating of vertex buffers
   // in the shaders, so instead positions will be encoded in textures
   // which can be updated by drawing to a frame buffer.
