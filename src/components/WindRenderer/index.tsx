@@ -66,18 +66,18 @@ export default function WindRenderer({
 
       if (glStateRef.current != null) {
         drawSpeeds(
-          glStateRef.current,
+          glStateRef.current.speedState,
           projStateRef.current.centerCoord,
           projStateRef.current.zoomLevel,
         );
         if (displayParticlesRef.current) {
           drawParticles(
-            glStateRef.current,
+            glStateRef.current.particleState,
             projStateRef.current.centerCoord,
             projStateRef.current.zoomLevel,
           );
           updateParticles(
-            glStateRef.current,
+            glStateRef.current.particleState,
             deltaT,
             resetParticlesRef.current,
           );

@@ -17,6 +17,7 @@ export function createProgramWithShaders(
   gl: WebGL2RenderingContext,
   vertexShaderSource: string,
   fragmentShaderSource: string,
+  transformFeedbackVaryings?: {varyings: string[]; bufferMode: number},
 ) {
   const shaderProgram = gl.createProgram();
   if (shaderProgram == null) {
@@ -30,12 +31,25 @@ export function createProgramWithShaders(
   );
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
+  if (transformFeedbackVaryings != null) {
+    gl.transformFeedbackVaryings(
+      shaderProgram,
+      transformFeedbackVaryings.varyings,
+      transformFeedbackVaryings.bufferMode,
+    );
+  }
   gl.linkProgram(shaderProgram);
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     throw new Error(
-      'Error initializing shader program: ' +
-        gl.getProgramInfoLog(shaderProgram),
+      'Error linking shader program: ' + gl.getProgramInfoLog(shaderProgram),
+    );
+  }
+
+  gl.validateProgram(shaderProgram);
+  if (!gl.getProgramParameter(shaderProgram, gl.VALIDATE_STATUS)) {
+    throw new Error(
+      'Error validating shader program: ' + gl.getProgramInfoLog(shaderProgram),
     );
   }
 
@@ -76,4 +90,12 @@ export function createVertexArraySafe(gl: WebGL2RenderingContext) {
     throw new Error('createVertexArray returned null');
   }
   return vertexArray;
+}
+
+export function createTransformFeedbackSafe(gl: WebGL2RenderingContext) {
+  const transformFeedback = gl.createTransformFeedback();
+  if (transformFeedback == null) {
+    throw new Error('createTransformFeedbackSafe returned null');
+  }
+  return transformFeedback;
 }

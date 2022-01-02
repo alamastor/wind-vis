@@ -1,15 +1,17 @@
-import {GlState} from '.';
-import {Coord} from '../../../types';
+import {Coord} from '../../../../types';
 import {
   createBufferSafe,
   createProgramWithShaders,
   createVertexArraySafe,
   getUniformLocationSafe,
-} from '../../../utils/gl';
-import speedFragmentShaderSource from './shaders/speed.frag';
-import speedVertexShaderSource from './shaders/speed.vert';
+} from '../../../../utils/gl';
+import speedFragmentShaderSource from './speed.frag';
+import speedVertexShaderSource from './speed.vert';
 
 export interface SpeedState {
+  gl: WebGL2RenderingContext;
+  uTexture: WebGLTexture;
+  vTexture: WebGLTexture;
   shaderProgram: WebGLProgram;
   vertexArray: WebGLVertexArrayObject;
   aspectRatioLoc: WebGLUniformLocation;
@@ -19,11 +21,11 @@ export interface SpeedState {
   vTextureLoc: WebGLUniformLocation;
 }
 
-/**
- * Initialize GL for wind speed rendering, and return programs, buffers,
- * textures, and locations.
- */
-export function getSpeedProgramState(gl: WebGL2RenderingContext): SpeedState {
+export function getSpeedProgramState(
+  gl: WebGL2RenderingContext,
+  uTexture: WebGLTexture,
+  vTexture: WebGLTexture,
+): SpeedState {
   // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -61,7 +63,10 @@ export function getSpeedProgramState(gl: WebGL2RenderingContext): SpeedState {
   const midCoordLoc = getUniformLocationSafe(gl, shaderProgram, 'midCoord');
 
   return {
+    gl,
     shaderProgram,
+    uTexture,
+    vTexture,
     vertexArray,
     uTextureLoc,
     vTextureLoc,
@@ -72,25 +77,21 @@ export function getSpeedProgramState(gl: WebGL2RenderingContext): SpeedState {
 }
 
 export function drawSpeeds(
-  glState: GlState,
+  {
+    gl,
+    shaderProgram,
+    vertexArray,
+    aspectRatioLoc,
+    midCoordLoc,
+    zoomLevelLoc,
+    uTexture,
+    vTexture,
+    uTextureLoc,
+    vTextureLoc,
+  }: SpeedState,
   centerCoord: Coord,
   zoomLevel: number,
 ) {
-  const {
-    gl,
-    speedState: {
-      shaderProgram,
-      vertexArray,
-      aspectRatioLoc,
-      midCoordLoc,
-      zoomLevelLoc,
-      uTextureLoc,
-      vTextureLoc,
-    },
-    uTexture,
-    vTexture,
-  } = glState;
-
   // Set viewport
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 

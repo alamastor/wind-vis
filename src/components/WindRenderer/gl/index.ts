@@ -16,12 +16,14 @@ export interface GlState {
  * Initialize GL and return programs, buffers, textures, and locations.
  */
 export function getGLState(gl: WebGL2RenderingContext): GlState {
+  const uTexture = createWindMagTex(gl);
+  const vTexture = createWindMagTex(gl);
   return {
     gl,
-    speedState: getSpeedProgramState(gl),
-    particleState: getParticleProgramState(gl),
-    uTexture: createWindMagTex(gl),
-    vTexture: createWindMagTex(gl),
+    speedState: getSpeedProgramState(gl, uTexture, vTexture),
+    particleState: getParticleProgramState(gl, uTexture, vTexture),
+    uTexture,
+    vTexture,
   };
 }
 
