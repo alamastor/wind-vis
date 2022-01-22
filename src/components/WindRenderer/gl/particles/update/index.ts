@@ -4,7 +4,7 @@ import {
   createVertexArraySafe,
   getUniformLocationSafe,
 } from '../../../../../utils/gl';
-import {getNumberOfParticlesToDraw} from '../util';
+import {getNumberOfParticlesToDraw, PARTICLE_FRAME_LIFETIME} from '../util';
 import updateParticleFragmentShaderSource from './update.frag';
 import updateParticleVertexShaderSource from './update.vert';
 
@@ -19,28 +19,42 @@ export interface UpdateState {
   vTextureLoc: WebGLUniformLocation;
   deltaTLoc: WebGLUniformLocation;
   resetPositionsLoc: WebGLUniformLocation;
+  particleFrameLifetimeLoc: WebGLUniformLocation;
 }
 
-export function getParticleUpdateProgramState(
+export function getUpdateProgramState(
   gl: WebGL2RenderingContext,
   uTexture: WebGLTexture,
   vTexture: WebGLTexture,
-  readBuffer: WebGLBuffer,
-  writeBuffer: WebGLBuffer,
+  coordReadBuffer: WebGLBuffer,
+  coordWriteBuffer: WebGLBuffer,
+  ageReadBuffer: WebGLBuffer,
+  ageWriteBuffer: WebGLBuffer,
 ): UpdateState {
-  // Create program
   const shaderProgram = createProgramWithShaders(
     gl,
     updateParticleVertexShaderSource,
     updateParticleFragmentShaderSource,
-    {varyings: ['coord'], bufferMode: gl.SEPARATE_ATTRIBS},
+    {
+      varyings: ['coord', 'age'],
+      bufferMode: gl.SEPARATE_ATTRIBS,
+    },
   );
 
   return {
     gl,
     shaderProgram,
-    vertexArray: getParticleUpdateVertexArray(gl, shaderProgram, readBuffer),
-    coordTransformFeedback: getParticleUpdateTransformFeedback(gl, writeBuffer),
+    vertexArray: getUpdateVertexArray(
+      gl,
+      shaderProgram,
+      coordReadBuffer,
+      ageReadBuffer,
+    ),
+    coordTransformFeedback: getUpdateTransformFeedback(
+      gl,
+      coordWriteBuffer,
+      ageWriteBuffer,
+    ),
     uTexture,
     vTexture,
     uTextureLoc: getUniformLocationSafe(gl, shaderProgram, 'uTexture'),
@@ -51,23 +65,32 @@ export function getParticleUpdateProgramState(
       shaderProgram,
       'resetPositions',
     ),
+    particleFrameLifetimeLoc: getUniformLocationSafe(
+      gl,
+      shaderProgram,
+      'particleFrameLifetime',
+    ),
   };
 }
 
-export function getParticleUpdateVertexArray(
+export function getUpdateVertexArray(
   gl: WebGL2RenderingContext,
   shaderProgram: WebGLProgram,
   coordBuffer: WebGLBuffer,
+  ageBuffer: WebGLBuffer,
 ): WebGLVertexArrayObject {
-  const coordInLoc = gl.getAttribLocation(shaderProgram, 'coordIn');
-
   const vertexArray = createVertexArraySafe(gl);
   gl.bindVertexArray(vertexArray);
 
+  const coordInLoc = gl.getAttribLocation(shaderProgram, 'coordIn');
   gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
-
   gl.enableVertexAttribArray(coordInLoc);
   gl.vertexAttribPointer(coordInLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const ageInLoc = gl.getAttribLocation(shaderProgram, 'ageIn');
+  gl.bindBuffer(gl.ARRAY_BUFFER, ageBuffer);
+  gl.enableVertexAttribArray(ageInLoc);
+  gl.vertexAttribIPointer(ageInLoc, 1, gl.UNSIGNED_INT, 0, 0);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -76,16 +99,21 @@ export function getParticleUpdateVertexArray(
   return vertexArray;
 }
 
-export function getParticleUpdateTransformFeedback(
+export function getUpdateTransformFeedback(
   gl: WebGL2RenderingContext,
   coordBuffer: WebGLBuffer,
+  ageBuffer: WebGLBuffer,
 ): WebGLTransformFeedback {
-  const coordTransformFeedback = createTransformFeedbackSafe(gl);
-  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, coordTransformFeedback);
+  const transformFeedback = createTransformFeedbackSafe(gl);
+  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+
   gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, coordBuffer);
+  gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, ageBuffer);
+
   gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
   gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-  return coordTransformFeedback;
+
+  return transformFeedback;
 }
 
 export function updateParticleBuffers(
@@ -100,6 +128,7 @@ export function updateParticleBuffers(
     uTextureLoc,
     vTextureLoc,
     resetPositionsLoc,
+    particleFrameLifetimeLoc,
   }: UpdateState,
   deltaT: number,
   resetPositions: boolean,
@@ -111,6 +140,7 @@ export function updateParticleBuffers(
   // Set uniforms
   gl.uniform1f(deltaTLoc, deltaT);
   gl.uniform1i(resetPositionsLoc, resetPositions ? 1 : 0);
+  gl.uniform1ui(particleFrameLifetimeLoc, PARTICLE_FRAME_LIFETIME);
 
   // Bind wind uv textures
   gl.uniform1i(uTextureLoc, 1);
@@ -124,7 +154,11 @@ export function updateParticleBuffers(
   gl.enable(gl.RASTERIZER_DISCARD);
   gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, coordTransformFeedback);
   gl.beginTransformFeedback(gl.POINTS);
-  gl.drawArrays(gl.POINTS, 0, getNumberOfParticlesToDraw(gl));
+  gl.drawArrays(
+    gl.POINTS,
+    0,
+    getNumberOfParticlesToDraw(gl) * PARTICLE_FRAME_LIFETIME,
+  );
   gl.endTransformFeedback();
   gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
   gl.disable(gl.RASTERIZER_DISCARD);

@@ -3,17 +3,17 @@ import {createBufferSafe} from '../../../../utils/gl';
 import {
   drawParticles as drawParticlesDraw,
   DrawState,
-  getDrawParticlesToFrameBufferVertexArray,
-  getParticleDrawProgramState,
+  getDrawProgramState,
+  getDrawVertexArray,
 } from './draw';
 import {
-  getParticleUpdateProgramState,
-  getParticleUpdateTransformFeedback,
-  getParticleUpdateVertexArray,
+  getUpdateProgramState,
+  getUpdateTransformFeedback,
+  getUpdateVertexArray,
   updateParticleBuffers,
   UpdateState,
 } from './update';
-import {MAX_PARTICLE_COUNT} from './util';
+import {MAX_PARTICLE_COUNT, PARTICLE_FRAME_LIFETIME} from './util';
 
 export interface ParticleState {
   gl: WebGL2RenderingContext;
@@ -24,6 +24,12 @@ export interface ParticleState {
     updateVertexArray: WebGLVertexArrayObject;
     updateTransformFeedback: WebGLTransformFeedback;
   };
+  buffers: {
+    ageRead: WebGLBuffer;
+    ageWrite: WebGLBuffer;
+    coordRead: WebGLBuffer;
+    coordWrite: WebGLBuffer;
+  };
 }
 
 export function getParticleProgramState(
@@ -33,20 +39,28 @@ export function getParticleProgramState(
 ): ParticleState {
   const points = [];
   for (let i = 0; i < MAX_PARTICLE_COUNT; i++) {
-    points.push(Math.random() * 359.9);
-    points.push(Math.random() * 180 - 90);
+    let lon = Math.random() * 359.9;
+    let lat = Math.random() * 180 - 90;
+    for (let j = 0; j < PARTICLE_FRAME_LIFETIME; j++) {
+      points.push(lon);
+      points.push(lat);
+    }
   }
 
-  const readBuffer = getParticleBuffer(gl, points);
-  const writeBuffer = getParticleBuffer(gl, points);
+  const coordReadBuffer = getCoordBuffer(gl, points);
+  const ageReadBuffer = getUintBuffer(gl);
+  const coordWriteBuffer = getCoordBuffer(gl, points);
+  const ageWriteBuffer = getUintBuffer(gl);
 
-  const drawState = getParticleDrawProgramState(gl, readBuffer);
-  const updateState = getParticleUpdateProgramState(
+  const drawState = getDrawProgramState(gl, coordReadBuffer, ageReadBuffer);
+  const updateState = getUpdateProgramState(
     gl,
     uTexture,
     vTexture,
-    readBuffer,
-    writeBuffer,
+    coordReadBuffer,
+    coordWriteBuffer,
+    ageReadBuffer,
+    ageWriteBuffer,
   );
 
   return {
@@ -54,31 +68,52 @@ export function getParticleProgramState(
     drawState,
     updateState,
     nextState: {
-      drawVertexArray: getDrawParticlesToFrameBufferVertexArray(
+      drawVertexArray: getDrawVertexArray(
         gl,
-        drawState.drawParticlesToFrameBufferState.shaderProgram,
-        writeBuffer,
+        drawState.shaderProgram,
+        coordWriteBuffer,
+        ageWriteBuffer,
       ),
-      updateVertexArray: getParticleUpdateVertexArray(
+      updateVertexArray: getUpdateVertexArray(
         gl,
         updateState.shaderProgram,
-        writeBuffer,
+        coordWriteBuffer,
+        ageWriteBuffer,
       ),
-      updateTransformFeedback: getParticleUpdateTransformFeedback(
+      updateTransformFeedback: getUpdateTransformFeedback(
         gl,
-        readBuffer,
+        coordReadBuffer,
+        ageReadBuffer,
       ),
+    },
+    buffers: {
+      ageRead: ageReadBuffer,
+      ageWrite: ageWriteBuffer,
+      coordRead: coordReadBuffer,
+      coordWrite: coordWriteBuffer,
     },
   };
 }
 
-function getParticleBuffer(
+function getCoordBuffer(
   gl: WebGL2RenderingContext,
   points: number[],
 ): WebGLBuffer {
   const buffer = createBufferSafe(gl);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  return buffer;
+}
+
+function getUintBuffer(gl: WebGL2RenderingContext): WebGLBuffer {
+  const buffer = createBufferSafe(gl);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Uint32Array(PARTICLE_FRAME_LIFETIME * MAX_PARTICLE_COUNT),
+    gl.DYNAMIC_DRAW,
+  );
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
   return buffer;
 }
@@ -102,14 +137,12 @@ export function updateParticles(
 
 function switchReadWriteBuffers(particleState: ParticleState): void {
   const nextParticlesState = {
-    drawVertexArray:
-      particleState.drawState.drawParticlesToFrameBufferState.vertexArray,
+    drawVertexArray: particleState.drawState.vertexArray,
     updateVertexArray: particleState.updateState.vertexArray,
     updateTransformFeedback: particleState.updateState.coordTransformFeedback,
   };
 
-  particleState.drawState.drawParticlesToFrameBufferState.vertexArray =
-    particleState.nextState.drawVertexArray;
+  particleState.drawState.vertexArray = particleState.nextState.drawVertexArray;
   particleState.updateState.vertexArray =
     particleState.nextState.updateVertexArray;
   particleState.updateState.coordTransformFeedback =
