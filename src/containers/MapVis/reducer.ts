@@ -3,7 +3,7 @@ import {RootAction} from '../../reducers';
 import {maxCenterLat, minCenterLat, scalePoint} from '../../utils/mapState';
 
 export const minZoomLevel = 1;
-export const maxZoomLevel = 15;
+export const maxZoomLevel = 8;
 
 export interface MapVisState {
   readonly cursorLon: number | null;
