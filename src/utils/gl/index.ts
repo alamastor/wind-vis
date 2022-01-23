@@ -1,4 +1,4 @@
-function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
+function loadShader(gl: WebGL2RenderingContext, type: GLenum, source: string) {
   const shader = gl.createShader(type);
   if (shader == null) {
     throw new Error('Failed to create shader.');
@@ -14,9 +14,10 @@ function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string) {
 }
 
 export function createProgramWithShaders(
-  gl: WebGLRenderingContext,
+  gl: WebGL2RenderingContext,
   vertexShaderSource: string,
   fragmentShaderSource: string,
+  transformFeedbackVaryings?: {varyings: string[]; bufferMode: number},
 ) {
   const shaderProgram = gl.createProgram();
   if (shaderProgram == null) {
@@ -30,12 +31,25 @@ export function createProgramWithShaders(
   );
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
+  if (transformFeedbackVaryings != null) {
+    gl.transformFeedbackVaryings(
+      shaderProgram,
+      transformFeedbackVaryings.varyings,
+      transformFeedbackVaryings.bufferMode,
+    );
+  }
   gl.linkProgram(shaderProgram);
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     throw new Error(
-      'Error initializing shader program: ' +
-        gl.getProgramInfoLog(shaderProgram),
+      'Error linking shader program: ' + gl.getProgramInfoLog(shaderProgram),
+    );
+  }
+
+  gl.validateProgram(shaderProgram);
+  if (!gl.getProgramParameter(shaderProgram, gl.VALIDATE_STATUS)) {
+    throw new Error(
+      'Error validating shader program: ' + gl.getProgramInfoLog(shaderProgram),
     );
   }
 
@@ -43,7 +57,7 @@ export function createProgramWithShaders(
 }
 
 export function getUniformLocationSafe(
-  gl: WebGLRenderingContext,
+  gl: WebGL2RenderingContext,
   shaderProgram: WebGLProgram,
   uniformName: string,
 ): WebGLUniformLocation {
@@ -54,9 +68,7 @@ export function getUniformLocationSafe(
   return location;
 }
 
-export function createBufferSafe(
-  gl: WebGL2RenderingContext | WebGL2RenderingContext,
-) {
+export function createBufferSafe(gl: WebGL2RenderingContext) {
   const buffer = gl.createBuffer();
   if (buffer == null) {
     throw new Error('createBuffer returned null');
@@ -64,9 +76,7 @@ export function createBufferSafe(
   return buffer;
 }
 
-export function createTextureSafe(
-  gl: WebGL2RenderingContext | WebGL2RenderingContext,
-) {
+export function createTextureSafe(gl: WebGL2RenderingContext) {
   const texture = gl.createTexture();
   if (texture == null) {
     throw new Error('createTexture returned null');
@@ -80,4 +90,24 @@ export function createVertexArraySafe(gl: WebGL2RenderingContext) {
     throw new Error('createVertexArray returned null');
   }
   return vertexArray;
+}
+
+export function createTransformFeedbackSafe(gl: WebGL2RenderingContext) {
+  const transformFeedback = gl.createTransformFeedback();
+  if (transformFeedback == null) {
+    throw new Error('createTransformFeedbackSafe returned null');
+  }
+  return transformFeedback;
+}
+
+export function debugReadBufferData(
+  gl: WebGL2RenderingContext,
+  buffer: WebGLBuffer,
+  size: number,
+) {
+  const result = new Float32Array(size);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.getBufferSubData(gl.ARRAY_BUFFER, 0, result);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  return result;
 }

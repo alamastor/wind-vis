@@ -4,7 +4,7 @@ import DataTransformer from 'worker-loader!./DataTransformerWorker';
 import {RootAction as Action} from '../../reducers';
 import VectorField from '../../utils/fielddata/VectorField';
 import {MapState} from '../../utils/mapState';
-import {getGLState, GlState, updateWindTex} from './gl/index';
+import {getGLState, GlState, updateWindTextures} from './gl/index';
 import {drawParticles, updateParticles} from './gl/particles';
 import {drawSpeeds} from './gl/speeds';
 import {transformDataForGPU} from './transformData';
@@ -50,7 +50,7 @@ export default function WindRenderer({
       data: {uData: Uint8Array; vData: Uint8Array};
     }): void => {
       if (glStateRef.current != null) {
-        updateWindTex(
+        updateWindTextures(
           glStateRef.current,
           message.data.uData,
           message.data.vData,
@@ -66,18 +66,18 @@ export default function WindRenderer({
 
       if (glStateRef.current != null) {
         drawSpeeds(
-          glStateRef.current,
+          glStateRef.current.speedState,
           projStateRef.current.centerCoord,
           projStateRef.current.zoomLevel,
         );
         if (displayParticlesRef.current) {
           drawParticles(
-            glStateRef.current,
+            glStateRef.current.particleState,
             projStateRef.current.centerCoord,
             projStateRef.current.zoomLevel,
           );
           updateParticles(
-            glStateRef.current,
+            glStateRef.current.particleState,
             deltaT,
             resetParticlesRef.current,
           );
@@ -88,10 +88,10 @@ export default function WindRenderer({
     };
 
     if (glStateRef.current == null && canvasRef.current != null) {
-      const gl = canvasRef.current.getContext('webgl');
+      const gl = canvasRef.current.getContext('webgl2');
       if (gl != null) {
         glStateRef.current = getGLState(gl);
-        updateWindTex(
+        updateWindTextures(
           glStateRef.current,
           transformDataForGPU(vectorField.uField.data, maxSpeed),
           transformDataForGPU(vectorField.vField.data, maxSpeed),
