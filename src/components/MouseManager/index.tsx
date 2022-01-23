@@ -100,11 +100,10 @@ export default function MouseManager({
   };
 
   const onWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
     let deltaFactor;
     switch (event.deltaMode) {
       case 0: // DOM_DELTA_PIXEL
-        deltaFactor = 0.01;
+        deltaFactor = 0.003;
         break;
       case 1: // DOM_DELTA_LINE
         deltaFactor = 0.1;
