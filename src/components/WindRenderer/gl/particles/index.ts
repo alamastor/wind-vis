@@ -4,7 +4,6 @@ import {
   drawParticles as drawParticlesDraw,
   DrawState,
   getDrawProgramState,
-  getDrawVertexArray,
 } from './draw';
 import {
   getUpdateProgramState,
@@ -12,24 +11,25 @@ import {
   getUpdateVertexArray,
   updateParticleBuffers,
   UpdateState,
-} from './update';
-import {MAX_PARTICLE_COUNT, PARTICLE_FRAME_LIFETIME} from './util';
+} from './updateHead';
+import {
+  getNumberOfParticlesToDraw,
+  MAX_PARTICLE_COUNT,
+  PARTICLE_FRAME_LIFETIME,
+} from './util';
 
 export interface ParticleState {
   gl: WebGL2RenderingContext;
   drawState: DrawState;
   updateState: UpdateState;
   nextState: {
-    drawVertexArray: WebGLVertexArrayObject;
     updateVertexArray: WebGLVertexArrayObject;
     updateTransformFeedback: WebGLTransformFeedback;
+    coordBuffer: WebGLBuffer;
   };
-  buffers: {
-    ageRead: WebGLBuffer;
-    ageWrite: WebGLBuffer;
-    coordRead: WebGLBuffer;
-    coordWrite: WebGLBuffer;
-  };
+  coordBuffer: WebGLBuffer;
+  tailBuffer: WebGLBuffer;
+  tailHeadIndex: number;
 }
 
 export function getParticleProgramState(
@@ -38,21 +38,29 @@ export function getParticleProgramState(
   vTexture: WebGLTexture,
 ): ParticleState {
   const points = [];
+  const ages = [];
   for (let i = 0; i < MAX_PARTICLE_COUNT; i++) {
     let lon = Math.random() * 359.9;
     let lat = Math.random() * 180 - 90;
-    for (let j = 0; j < PARTICLE_FRAME_LIFETIME; j++) {
-      points.push(lon);
-      points.push(lat);
-    }
+    points.push(lon);
+    points.push(lat);
+
+    ages.push(Math.floor(Math.random() * (PARTICLE_FRAME_LIFETIME - 1)));
   }
 
-  const coordReadBuffer = getCoordBuffer(gl, points);
-  const ageReadBuffer = getUintBuffer(gl);
-  const coordWriteBuffer = getCoordBuffer(gl, points);
-  const ageWriteBuffer = getUintBuffer(gl);
+  const coordReadBuffer = getBuffer(gl, new Float32Array(points));
+  const ageReadBuffer = getBuffer(gl, new Uint32Array(ages));
+  const coordWriteBuffer = getBuffer(
+    gl,
+    new Float32Array(MAX_PARTICLE_COUNT * 2),
+  );
+  const ageWriteBuffer = getBuffer(gl, new Uint32Array(MAX_PARTICLE_COUNT));
+  const tailBuffer = getBuffer(
+    gl,
+    new Float32Array(MAX_PARTICLE_COUNT * PARTICLE_FRAME_LIFETIME * 2),
+  );
 
-  const drawState = getDrawProgramState(gl, coordReadBuffer, ageReadBuffer);
+  const drawState = getDrawProgramState(gl, tailBuffer);
   const updateState = getUpdateProgramState(
     gl,
     uTexture,
@@ -68,12 +76,6 @@ export function getParticleProgramState(
     drawState,
     updateState,
     nextState: {
-      drawVertexArray: getDrawVertexArray(
-        gl,
-        drawState.shaderProgram,
-        coordWriteBuffer,
-        ageWriteBuffer,
-      ),
       updateVertexArray: getUpdateVertexArray(
         gl,
         updateState.shaderProgram,
@@ -85,35 +87,18 @@ export function getParticleProgramState(
         coordReadBuffer,
         ageReadBuffer,
       ),
+      coordBuffer: coordWriteBuffer,
     },
-    buffers: {
-      ageRead: ageReadBuffer,
-      ageWrite: ageWriteBuffer,
-      coordRead: coordReadBuffer,
-      coordWrite: coordWriteBuffer,
-    },
+    coordBuffer: coordReadBuffer,
+    tailBuffer,
+    tailHeadIndex: 0,
   };
 }
 
-function getCoordBuffer(
-  gl: WebGL2RenderingContext,
-  points: number[],
-): WebGLBuffer {
+function getBuffer(gl: WebGL2RenderingContext, data: ArrayBuffer): WebGLBuffer {
   const buffer = createBufferSafe(gl);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.DYNAMIC_DRAW);
-  gl.bindBuffer(gl.ARRAY_BUFFER, null);
-  return buffer;
-}
-
-function getUintBuffer(gl: WebGL2RenderingContext): WebGLBuffer {
-  const buffer = createBufferSafe(gl);
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Uint32Array(PARTICLE_FRAME_LIFETIME * MAX_PARTICLE_COUNT),
-    gl.DYNAMIC_DRAW,
-  );
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
   return buffer;
 }
@@ -123,7 +108,12 @@ export function drawParticles(
   centerCoord: Coord,
   zoomLevel: number,
 ) {
-  drawParticlesDraw(particleState.drawState, centerCoord, zoomLevel);
+  drawParticlesDraw(
+    particleState.drawState,
+    centerCoord,
+    zoomLevel,
+    particleState.tailHeadIndex,
+  );
 }
 
 export function updateParticles(
@@ -132,21 +122,48 @@ export function updateParticles(
   resetPositions: boolean,
 ) {
   updateParticleBuffers(particleState.updateState, deltaT, resetPositions);
+  copyHeadCoordsToTail(particleState);
   switchReadWriteBuffers(particleState);
+}
+
+function copyHeadCoordsToTail(particleState: ParticleState) {
+  const {gl, coordBuffer, tailBuffer} = particleState;
+
+  gl.bindBuffer(gl.COPY_READ_BUFFER, coordBuffer);
+  gl.bindBuffer(gl.COPY_WRITE_BUFFER, tailBuffer);
+
+  gl.copyBufferSubData(
+    gl.COPY_READ_BUFFER,
+    gl.COPY_WRITE_BUFFER,
+    0,
+    getNumberOfParticlesToDraw(gl) *
+      particleState.tailHeadIndex *
+      2 * // Points per particle
+      4, // Bytes per 32 bit float
+    getNumberOfParticlesToDraw(gl) *
+      2 * // Points per particle
+      4, // Bytes per 32 bit float
+  );
+
+  particleState.tailHeadIndex =
+    (particleState.tailHeadIndex + 1) % PARTICLE_FRAME_LIFETIME;
+
+  gl.bindBuffer(gl.COPY_READ_BUFFER, null);
+  gl.bindBuffer(gl.COPY_WRITE_BUFFER, null);
 }
 
 function switchReadWriteBuffers(particleState: ParticleState): void {
   const nextParticlesState = {
-    drawVertexArray: particleState.drawState.vertexArray,
     updateVertexArray: particleState.updateState.vertexArray,
     updateTransformFeedback: particleState.updateState.coordTransformFeedback,
+    coordBuffer: particleState.coordBuffer,
   };
 
-  particleState.drawState.vertexArray = particleState.nextState.drawVertexArray;
   particleState.updateState.vertexArray =
     particleState.nextState.updateVertexArray;
   particleState.updateState.coordTransformFeedback =
     particleState.nextState.updateTransformFeedback;
+  particleState.coordBuffer = particleState.nextState.coordBuffer;
 
   particleState.nextState = nextParticlesState;
 }

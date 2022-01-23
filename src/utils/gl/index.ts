@@ -99,3 +99,15 @@ export function createTransformFeedbackSafe(gl: WebGL2RenderingContext) {
   }
   return transformFeedback;
 }
+
+export function debugReadBufferData(
+  gl: WebGL2RenderingContext,
+  buffer: WebGLBuffer,
+  size: number,
+) {
+  const result = new Float32Array(size);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.getBufferSubData(gl.ARRAY_BUFFER, 0, result);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  return result;
+}

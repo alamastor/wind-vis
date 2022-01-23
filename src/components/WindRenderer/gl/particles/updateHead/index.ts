@@ -4,7 +4,7 @@ import {
   createVertexArraySafe,
   getUniformLocationSafe,
 } from '../../../../../utils/gl';
-import {getNumberOfParticlesToDraw, PARTICLE_FRAME_LIFETIME} from '../util';
+import {getNumberOfParticlesToDraw} from '../util';
 import updateParticleFragmentShaderSource from './update.frag';
 import updateParticleVertexShaderSource from './update.vert';
 
@@ -19,7 +19,6 @@ export interface UpdateState {
   vTextureLoc: WebGLUniformLocation;
   deltaTLoc: WebGLUniformLocation;
   resetPositionsLoc: WebGLUniformLocation;
-  particleFrameLifetimeLoc: WebGLUniformLocation;
 }
 
 export function getUpdateProgramState(
@@ -64,11 +63,6 @@ export function getUpdateProgramState(
       gl,
       shaderProgram,
       'resetPositions',
-    ),
-    particleFrameLifetimeLoc: getUniformLocationSafe(
-      gl,
-      shaderProgram,
-      'particleFrameLifetime',
     ),
   };
 }
@@ -128,7 +122,6 @@ export function updateParticleBuffers(
     uTextureLoc,
     vTextureLoc,
     resetPositionsLoc,
-    particleFrameLifetimeLoc,
   }: UpdateState,
   deltaT: number,
   resetPositions: boolean,
@@ -140,7 +133,6 @@ export function updateParticleBuffers(
   // Set uniforms
   gl.uniform1f(deltaTLoc, deltaT);
   gl.uniform1i(resetPositionsLoc, resetPositions ? 1 : 0);
-  gl.uniform1ui(particleFrameLifetimeLoc, PARTICLE_FRAME_LIFETIME);
 
   // Bind wind uv textures
   gl.uniform1i(uTextureLoc, 1);
@@ -154,11 +146,7 @@ export function updateParticleBuffers(
   gl.enable(gl.RASTERIZER_DISCARD);
   gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, coordTransformFeedback);
   gl.beginTransformFeedback(gl.POINTS);
-  gl.drawArrays(
-    gl.POINTS,
-    0,
-    getNumberOfParticlesToDraw(gl) * PARTICLE_FRAME_LIFETIME,
-  );
+  gl.drawArrays(gl.POINTS, 0, getNumberOfParticlesToDraw(gl));
   gl.endTransformFeedback();
   gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
   gl.disable(gl.RASTERIZER_DISCARD);

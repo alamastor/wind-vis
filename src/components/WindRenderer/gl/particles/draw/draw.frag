@@ -9,5 +9,5 @@ in float trailFrac;
 out vec4 fragColor;
 
 void main() {
-  fragColor = vec4(0.5, 0.5, 0, pow(trailFrac, 2.0));
+  fragColor = vec4(1, 1, 0, pow(trailFrac * 0.4, 3.0));
 }

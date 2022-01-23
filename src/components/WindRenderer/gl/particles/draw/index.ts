@@ -15,12 +15,13 @@ export interface DrawState {
   zoomLevelLoc: WebGLUniformLocation;
   midCoordLoc: WebGLUniformLocation;
   canvasDimensionsLoc: WebGLUniformLocation;
+  particleCountLoc: WebGLUniformLocation;
   particleFrameLifetimeLoc: WebGLUniformLocation;
+  particleHeadIndexLoc: WebGLUniformLocation;
 }
 export function getDrawProgramState(
   gl: WebGL2RenderingContext,
   coordBuffer: WebGLBuffer,
-  ageBuffer: WebGLBuffer,
 ): DrawState {
   const shaderProgram = createProgramWithShaders(
     gl,
@@ -31,7 +32,7 @@ export function getDrawProgramState(
   return {
     gl,
     shaderProgram,
-    vertexArray: getDrawVertexArray(gl, shaderProgram, coordBuffer, ageBuffer),
+    vertexArray: getDrawVertexArray(gl, shaderProgram, coordBuffer),
     zoomLevelLoc: getUniformLocationSafe(gl, shaderProgram, 'zoomLevel'),
     midCoordLoc: getUniformLocationSafe(gl, shaderProgram, 'centerCoord'),
     canvasDimensionsLoc: getUniformLocationSafe(
@@ -39,19 +40,28 @@ export function getDrawProgramState(
       shaderProgram,
       'canvasDimensions',
     ),
+    particleCountLoc: getUniformLocationSafe(
+      gl,
+      shaderProgram,
+      'particleCount',
+    ),
     particleFrameLifetimeLoc: getUniformLocationSafe(
       gl,
       shaderProgram,
       'particleFrameLifetime',
     ),
+    particleHeadIndexLoc: getUniformLocationSafe(
+      gl,
+      shaderProgram,
+      'particleHeadIndex',
+    ),
   };
 }
 
-export function getDrawVertexArray(
+function getDrawVertexArray(
   gl: WebGL2RenderingContext,
   shaderProgram: WebGLProgram,
   coordBuffer: WebGLBuffer,
-  ageBuffer: WebGLBuffer,
 ) {
   const vertexArray = createVertexArraySafe(gl);
   gl.bindVertexArray(vertexArray);
@@ -60,11 +70,6 @@ export function getDrawVertexArray(
   gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
   gl.enableVertexAttribArray(coordLoc);
   gl.vertexAttribPointer(coordLoc, 2, gl.FLOAT, false, 0, 0);
-
-  const ageLoc = gl.getAttribLocation(shaderProgram, 'age');
-  gl.bindBuffer(gl.ARRAY_BUFFER, ageBuffer);
-  gl.enableVertexAttribArray(ageLoc);
-  gl.vertexAttribIPointer(ageLoc, 1, gl.UNSIGNED_INT, 0, 0);
 
   gl.bindVertexArray(null);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -80,10 +85,13 @@ export function drawParticles(
     zoomLevelLoc,
     midCoordLoc,
     canvasDimensionsLoc,
+    particleCountLoc,
     particleFrameLifetimeLoc,
+    particleHeadIndexLoc,
   }: DrawState,
   centerCoord: Coord,
   zoomLevel: number,
+  particleHeadIndex: number,
 ) {
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -99,7 +107,9 @@ export function drawParticles(
   gl.uniform1f(zoomLevelLoc, zoomLevel);
   gl.uniform2f(midCoordLoc, centerCoord.lon, centerCoord.lat);
   gl.uniform2f(canvasDimensionsLoc, gl.canvas.width, gl.canvas.height);
+  gl.uniform1ui(particleCountLoc, getNumberOfParticlesToDraw(gl));
   gl.uniform1ui(particleFrameLifetimeLoc, PARTICLE_FRAME_LIFETIME);
+  gl.uniform1ui(particleHeadIndexLoc, particleHeadIndex);
 
   // Draw
   gl.bindVertexArray(vertexArray);
