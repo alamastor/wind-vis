@@ -1,5 +1,7 @@
 #version 300 es
 
+precision highp float;
+
 in vec2 coordIn;
 in uint ageIn;
 
@@ -20,12 +22,13 @@ float resetProb = 0.1;
 
 // Forward declarations
 float hash12 (vec2 p);
+float hash13 (vec3 p);
 vec2 hash22 (vec2 p);
 vec2 hash23 (vec3 p);
 float coordTexelFetch(sampler2D texture, vec2 coord);
 
 void main() {
-  if (resetPositions || (ageIn > particleMinLifetime && hash12(vec2(float(gl_VertexID), deltaT)) < resetProb)) {
+  if (resetPositions || (ageIn > particleMinLifetime && hash13(vec3(float(gl_VertexID), deltaT, float(ageIn))) < resetProb)) {
     coord = hash23(vec3(float(gl_VertexID), deltaT, float(ageIn))) * vec2(359.99, 180) - vec2(0, 90);
     age = uint(0);
   } else {
@@ -63,6 +66,13 @@ float hash12(vec2 p)
 {
 	vec3 p3  = fract(vec3(p.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float hash13(vec3 p3)
+{
+	p3  = fract(p3 * .1031);
+    p3 += dot(p3, p3.zyx + 31.32);
     return fract((p3.x + p3.y) * p3.z);
 }
 

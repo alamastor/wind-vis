@@ -71,15 +71,15 @@ export default function WindRenderer({
           projStateRef.current.zoomLevel,
         );
         if (displayParticlesRef.current) {
-          drawParticles(
-            glStateRef.current.particleState,
-            projStateRef.current.centerCoord,
-            projStateRef.current.zoomLevel,
-          );
           updateParticles(
             glStateRef.current.particleState,
             deltaT,
             resetParticlesRef.current,
+          );
+          drawParticles(
+            glStateRef.current.particleState,
+            projStateRef.current.centerCoord,
+            projStateRef.current.zoomLevel,
           );
         }
         resetParticlesRef.current = false;
